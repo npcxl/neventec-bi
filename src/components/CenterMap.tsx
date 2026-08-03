@@ -267,18 +267,22 @@ function normalizeBooth(item: SafetyCoordItem): DemoBooth | null {
   const width = Number(item.width ?? (bbox ? bbox[2] - bbox[0] : NaN));
   const height = Number(item.height ?? (bbox ? bbox[3] - bbox[1] : NaN));
 
-  // Filter invalid coordinates: corners < 3 and no valid bbox/center
-  const hasValidCorners = Array.isArray(corners) && corners.length >= 3;
-  const hasValidBbox = bbox && center && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
-  if (!hasValidCorners && !hasValidBbox) return null;
+  // Validate corners: >= 3 points, each with >= 2 finite coords
+  const validCorners = Array.isArray(corners) && corners.length >= 3 &&
+    corners.every((c) => Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]));
 
-  // Filter NaN/Infinity in corners
-  if (hasValidCorners && !hasValidBbox) {
-    const allFinite = corners.every((c) =>
-      Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])
-    );
-    if (!allFinite) return null;
-  }
+  // Validate bbox: 4 finite items, center: 2 finite items, width/height finite > 0
+  const validBbox = Array.isArray(bbox) && bbox.length >= 4 &&
+    bbox.every((v) => Number.isFinite(v)) &&
+    Array.isArray(center) && center.length >= 2 &&
+    center.every((v) => Number.isFinite(v)) &&
+    Number.isFinite(width) && width > 0 &&
+    Number.isFinite(height) && height > 0;
+
+  if (!validCorners && !validBbox) return null;
+
+  // If corners are invalid but bbox is valid, clear corners to avoid bad data in series
+  const safeCorners = validCorners ? corners : undefined;
 
   return {
     booth_no: item.booth_no ?? null,
@@ -289,7 +293,7 @@ function normalizeBooth(item: SafetyCoordItem): DemoBooth | null {
     center: center ?? [0, 0],
     width: Number.isFinite(width) && width > 0 ? width : 0,
     height: Number.isFinite(height) && height > 0 ? height : 0,
-    corners,
+    corners: safeCorners as any,
   };
 }
 
