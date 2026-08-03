@@ -240,7 +240,15 @@ function normalizeSafetyCoordResponse(
   response: SafetyCoordResponse | null | undefined,
 ) {
   const payload = response?.data ?? response;
-  const parsed = payload?.dataJson ? JSON.parse(payload.dataJson) : null;
+  let parsed: any = null;
+  if (payload?.dataJson) {
+    try {
+      parsed = JSON.parse(payload.dataJson);
+    } catch {
+      console.warn("[CenterMap] failed to parse safety coord dataJson, falling back to raw");
+      parsed = null;
+    }
+  }
   const booths = (parsed?.booths ?? payload?.booths ?? []) as SafetyCoordItem[];
   const imageSize = parsed?.image_size ?? payload?.image_size;
   const imageWidth = Number(imageSize?.width);
@@ -385,25 +393,26 @@ const DemoChart = memo(function DemoChart({
     chartInstance.current = chart;
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
-    let focusTimer: number | null = null;
+    let rafId: number | null = null;
+    let pendingDataZoom: (() => void) | null = null;
+    const prevDataIndexRef = { current: -1 };
+    const prevZoomLevelRef = { current: 1 };
+    const prevResizeDimsRef = { width: 0, height: 0 };
 
+    // --- Optimized hover: only downplay previous, highlight new ---
     const focusPoint = (index: number) => {
-      if (focusTimer !== null) {
-        window.clearTimeout(focusTimer);
+      const currentPoints = pointsRef.current;
+      if (!currentPoints.length || disposed || chart.isDisposed()) return;
+      const nextIndex =
+        ((index % currentPoints.length) + currentPoints.length) % currentPoints.length;
+      if (prevDataIndexRef.current === nextIndex) return; // same booth, skip
+      // Downplay only the previous highlighted item
+      if (prevDataIndexRef.current >= 0) {
+        chart.dispatchAction({ type: "downplay", seriesIndex: 0, dataIndex: prevDataIndexRef.current });
       }
-      focusTimer = window.setTimeout(() => {
-        const currentPoints = pointsRef.current;
-        if (!currentPoints.length || disposed || chart.isDisposed()) return;
-        const nextIndex =
-          ((index % currentPoints.length) + currentPoints.length) % currentPoints.length;
-        activeIndexRef.current = nextIndex;
-        chart.dispatchAction({ type: "downplay", seriesIndex: 0 });
-        chart.dispatchAction({
-          type: "highlight",
-          seriesIndex: 0,
-          dataIndex: nextIndex,
-        });
-      }, 16);
+      chart.dispatchAction({ type: "highlight", seriesIndex: 0, dataIndex: nextIndex });
+      prevDataIndexRef.current = nextIndex;
+      activeIndexRef.current = nextIndex;
     };
 
     if (!pointsRef.current.length) {
@@ -411,12 +420,10 @@ const DemoChart = memo(function DemoChart({
       chart.setOption({ backgroundColor: "transparent" }, true);
       return () => {
         disposed = true;
-        if (focusTimer !== null) {
-          window.clearTimeout(focusTimer);
-        }
         resizeObserver?.disconnect();
         chart.off("click");
         chart.off("mouseover");
+        if (rafId !== null) cancelAnimationFrame(rafId);
       };
     }
 
@@ -445,7 +452,6 @@ const DemoChart = memo(function DemoChart({
       containerWidth / baseWidth,
       containerHeight / baseHeight,
     );
-    // 默认稍微放大一点地图视图，但保持原有坐标系、渲染和交互逻辑不变
     const visibleRatio = Math.max(
       MIN_ZOOM_VISIBLE_RATIO,
       Math.min(1, 1 / Math.max(coverScale, 1)) * 0.25,
@@ -673,8 +679,9 @@ const DemoChart = memo(function DemoChart({
 
     const handleChartClick = (params: any) => {
       if (params.componentType === "series" && params.seriesType === "custom") {
+        const currentPoints = pointsRef.current;
         const clickedIndex = params.dataIndex;
-        const clickedBooth = points[clickedIndex];
+        const clickedBooth = currentPoints[clickedIndex];
         if (!clickedBooth) return;
         onSelect({
           code: clickedBooth.code,
@@ -689,17 +696,40 @@ const DemoChart = memo(function DemoChart({
       }
     };
 
-    const updateZoomLevel = () => {
-      const zooms = chart.getOption().dataZoom as Array<{ start?: number; end?: number }> | undefined;
-      const xZoom = zooms?.[0];
-      if (typeof xZoom?.start === "number" && typeof xZoom?.end === "number") {
-        zoomLevelRef.current = Math.max(0.01, (xZoom.end - xZoom.start) / 100);
+    // --- Optimized datazoom: rAF-merged, no getOption/refreshImmediately ---
+    const TEXT_LEVEL_THRESHOLD = MIN_ZOOM_VISIBLE_RATIO;
+    const handleDataZoom = (params: any) => {
+      // Use event params to get zoom level without getOption()
+      const batch = params?.batch;
+      let newLevel = zoomLevelRef.current;
+      if (Array.isArray(batch) && batch.length > 0) {
+        const zoom = batch[0];
+        if (typeof zoom?.start === "number" && typeof zoom?.end === "number") {
+          newLevel = Math.max(0.01, (zoom.end - zoom.start) / 100);
+        }
       }
-    };
+      zoomLevelRef.current = newLevel;
 
-    const handleDataZoom = () => {
-      updateZoomLevel();
-      chart.getZr().refreshImmediately();
+      // Only update series when crossing text visibility threshold
+      const wasShowingText = prevZoomLevelRef.current >= TEXT_LEVEL_THRESHOLD;
+      const isShowingText = newLevel >= TEXT_LEVEL_THRESHOLD;
+      if (wasShowingText !== isShowingText) {
+        prevZoomLevelRef.current = newLevel;
+        // Merge via rAF: only process latest in each frame
+        pendingDataZoom = () => {
+          if (disposed || chart.isDisposed()) return;
+          chart.setOption({ series: [{ data: pointsRef.current }] }, false, true);
+        };
+        if (rafId === null) {
+          rafId = requestAnimationFrame(() => {
+            rafId = null;
+            if (pendingDataZoom) {
+              pendingDataZoom();
+              pendingDataZoom = null;
+            }
+          });
+        }
+      }
     };
 
     const handleMouseOver = (params: any) => {
@@ -718,15 +748,30 @@ const DemoChart = memo(function DemoChart({
     chart.on("mouseover", handleMouseOver);
     chart.on("datazoom", handleDataZoom);
 
+    // --- Optimized ResizeObserver: rAF-merged, skip no-change ---
+    prevResizeDimsRef.width = chartRef.current.clientWidth || 0;
+    prevResizeDimsRef.height = chartRef.current.clientHeight || 0;
     resizeObserver = new ResizeObserver(() => {
-      if (!disposed && !chart.isDisposed()) chart.resize();
+      if (disposed || chart.isDisposed()) return;
+      const w = chartRef.current?.clientWidth || 0;
+      const h = chartRef.current?.clientHeight || 0;
+      if (w === prevResizeDimsRef.width && h === prevResizeDimsRef.height) return;
+      prevResizeDimsRef.width = w;
+      prevResizeDimsRef.height = h;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          if (!disposed && !chart.isDisposed()) chart.resize();
+        });
+      }
     });
     resizeObserver.observe(chartRef.current);
 
     return () => {
       disposed = true;
-      if (focusTimer !== null) {
-        window.clearTimeout(focusTimer);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
       }
       resizeObserver?.disconnect();
       chart.off("click", handleChartClick);

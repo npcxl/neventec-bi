@@ -607,7 +607,6 @@ export default function App() {
       if (d.constructProcessData !== undefined) setConstructProcessData(d.constructProcessData);
       if (d.constructMaterialData !== undefined) setConstructMaterialData(d.constructMaterialData);
       if (d.boothProgressData !== undefined) setBoothProgressData(d.boothProgressData);
-      if (d.boothProgressPictures !== undefined) setConstructCarouselState({ key: "cache", pictures: d.boothProgressPictures });
       if (d.exhibitionProcessData !== undefined) setExhibitionProcessData(d.exhibitionProcessData);
       if (d.safetyRows !== undefined) setSafetyRows(d.safetyRows);
       if (d.safetyCollect !== undefined) setSafetyCollect(d.safetyCollect);
