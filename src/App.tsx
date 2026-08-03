@@ -334,14 +334,12 @@ export default function App() {
   const [constructProcessData, setConstructProcessData] = useState<any>(null); //搭建进度
   const [constructMaterialData, setConstructMaterialData] = useState<any>(null); //搭建材料
   const [boothProgressData, setBoothProgressData] = useState<any>(null); //展位进度
-  const [boothProgressPictures, setBoothProgressPictures] = useState<any[]>([]); //展位进度图片
+  const [constructCarouselState, setConstructCarouselState] = useState<{ key: string; pictures: any[] }>({ key: "", pictures: [] });
+  const [safetyCarouselState, setSafetyCarouselState] = useState<{ key: string; pictures: any[] }>({ key: "", pictures: [] });
   const [selectedBoothId, setSelectedBoothId] = useState<string>(""); //选中展位
   const [constructCarouselLoading, setConstructCarouselLoading] =
     useState(false);
   const [safetyCarouselLoading, setSafetyCarouselLoading] = useState(false);
-  const [safetyCarouselPicturesState, setSafetyCarouselPictures] = useState<
-    any[]
-  >([]);
   const [exhibitionProcessData, setExhibitionProcessData] = useState<any>(null); //展会进度
   const [safetyRows, setSafetyRows] = useState<
     Array<{
@@ -396,7 +394,7 @@ export default function App() {
     constructProcessData,
     constructMaterialData,
     boothProgressData,
-    boothProgressPictures,
+    constructCarouselState,
     exhibitionProcessData,
     safetyRows,
     safetyCollect,
@@ -418,7 +416,7 @@ export default function App() {
       constructProcessData,
       constructMaterialData,
       boothProgressData,
-      boothProgressPictures,
+      constructCarouselState,
       exhibitionProcessData,
       safetyRows,
       safetyCollect,
@@ -429,7 +427,7 @@ export default function App() {
     };
   }, [
     boothProgressData,
-    boothProgressPictures,
+    constructCarouselState,
     boothRows,
     constructMaterialData,
     constructOverviewData,
@@ -609,7 +607,7 @@ export default function App() {
       if (d.constructProcessData !== undefined) setConstructProcessData(d.constructProcessData);
       if (d.constructMaterialData !== undefined) setConstructMaterialData(d.constructMaterialData);
       if (d.boothProgressData !== undefined) setBoothProgressData(d.boothProgressData);
-      if (d.boothProgressPictures !== undefined) setBoothProgressPictures(d.boothProgressPictures);
+      if (d.boothProgressPictures !== undefined) setConstructCarouselState({ key: "cache", pictures: d.boothProgressPictures });
       if (d.exhibitionProcessData !== undefined) setExhibitionProcessData(d.exhibitionProcessData);
       if (d.safetyRows !== undefined) setSafetyRows(d.safetyRows);
       if (d.safetyCollect !== undefined) setSafetyCollect(d.safetyCollect);
@@ -984,16 +982,22 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
+    const cacheKey = `construct:${selectedHallId}`;
+
+    // On hall change, clear display immediately (no stale pictures from other hall)
+    if (hallMode !== "ConstructOverview") {
+      setConstructCarouselLoading(false);
+      return;
+    }
+    setConstructCarouselState({ key: cacheKey, pictures: [] });
+
     const loadCarousel = async () => {
-      if (hallMode !== "ConstructOverview") {
-        setConstructCarouselLoading(false);
-        return;
-      }
-      const cacheKey = `construct:${selectedHallId}`;
       const cached = carouselCacheRef.current[cacheKey];
       if (cached && Date.now() - cached.at < CAROUSEL_CACHE_TTL) {
-        setBoothProgressPictures(cached.pictures);
-        setConstructCarouselLoading(false);
+        if (!cancelled) {
+          setConstructCarouselState({ key: cacheKey, pictures: cached.pictures });
+          setConstructCarouselLoading(false);
+        }
         return;
       }
       setConstructCarouselLoading(true);
@@ -1006,10 +1010,16 @@ export default function App() {
         const nextPictures = Array.isArray(response?.data ?? response)
           ? (response?.data ?? response)
           : [];
-        // Only update if non-empty (don't overwrite with empty array on error)
-        if (nextPictures.length > 0 || !cached) {
-          setBoothProgressPictures(nextPictures);
-          carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+        // Only update state if this cacheKey is still the current one
+        if (!cancelled) {
+          setConstructCarouselState((prev) => {
+            if (prev.key !== cacheKey) return prev; // stale request, ignore
+            return { key: cacheKey, pictures: nextPictures };
+          });
+          // Update cache (even empty arrays - but don't overwrite existing non-empty)
+          if (nextPictures.length > 0 || !cached) {
+            carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+          }
         }
       } catch (error) {
         if (!isAbortError(error)) {
@@ -1029,15 +1039,20 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
+    const cacheKey = `safety:${selectedHallId}`;
+
+    if (hallMode !== "SafetyOverview") {
+      return;
+    }
+    setSafetyCarouselState({ key: cacheKey, pictures: [] });
+
     const loadSafetyCarousel = async () => {
-      if (hallMode !== "SafetyOverview") {
-        return;
-      }
-      const cacheKey = `safety:${selectedHallId}`;
       const cached = carouselCacheRef.current[cacheKey];
       if (cached && Date.now() - cached.at < CAROUSEL_CACHE_TTL) {
-        setSafetyCarouselPictures(cached.pictures);
-        setSafetyCarouselLoading(false);
+        if (!cancelled) {
+          setSafetyCarouselState({ key: cacheKey, pictures: cached.pictures });
+          setSafetyCarouselLoading(false);
+        }
         return;
       }
       setSafetyCarouselLoading(true);
@@ -1050,11 +1065,15 @@ export default function App() {
         const nextPictures = Array.isArray(response?.data ?? response)
           ? (response?.data ?? response)
           : [];
-        if (nextPictures.length > 0 || !cached) {
-          setSafetyCarouselPictures(nextPictures);
-          carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+        if (!cancelled) {
+          setSafetyCarouselState((prev) => {
+            if (prev.key !== cacheKey) return prev;
+            return { key: cacheKey, pictures: nextPictures };
+          });
+          if (nextPictures.length > 0 || !cached) {
+            carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+          }
         }
-        setSafetyCarouselPictures(nextPictures);
       } catch (error) {
         if (!isAbortError(error)) {
           console.error("[App][SafetyCarousel] failed", error);
@@ -1112,12 +1131,12 @@ export default function App() {
     loading: isModuleLoading && hallMode === "SafetyOverview",
   };
   const constructCarouselPicturesMemo = useMemo(
-    () => normalizeCarouselPictures(boothProgressPictures),
-    [boothProgressPictures],
+    () => normalizeCarouselPictures(constructCarouselState.pictures),
+    [constructCarouselState],
   );
   const safetyCarouselPicturesMemo = useMemo(
-    () => normalizeCarouselPictures(safetyCarouselPicturesState),
-    [safetyCarouselPicturesState],
+    () => normalizeCarouselPictures(safetyCarouselState.pictures),
+    [safetyCarouselState],
   );
 
   const pollingTasks = useMemo(() => {
@@ -1423,7 +1442,7 @@ export default function App() {
       constructProcessData,
       constructMaterialData,
       boothProgressData,
-      boothProgressPictures,
+      constructCarouselState,
       exhibitionProcessData,
       safetyRows,
       safetyCollect,
@@ -1434,7 +1453,7 @@ export default function App() {
     };
   }, [
     boothProgressData,
-    boothProgressPictures,
+    constructCarouselState,
     boothRows,
     constructMaterialData,
     constructOverviewData,
