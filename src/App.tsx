@@ -316,8 +316,10 @@ export default function App() {
       : "overview",
   );
   const initialLoadingTimerRef = useRef<number | null>(null);
-  const [hallMode, setHallMode] = useState<ModuleKey>("ExhibitionOverview");
-  const [selectedHallId, setSelectedHallId] = useState<string>("all");
+  const initialOverviewLoadedRef = useRef(false);
+  const initialPrefs = useMemo(() => readPersistedPrefs(DEFAULT_EXHIBITION_ID), [DEFAULT_EXHIBITION_ID]);
+  const [hallMode, setHallMode] = useState<ModuleKey>(initialPrefs?.hallMode ?? "ExhibitionOverview");
+  const [selectedHallId, setSelectedHallId] = useState<string>(initialPrefs?.selectedHallId ?? "all");
   const [initData, setInitData] = useState<{
     exhibitionId: string;
     halls: Array<{ hallId: string; hallName: string }>;
@@ -359,7 +361,7 @@ export default function App() {
   const [violationSituationData, setViolationSituationData] =
     useState<any>(null); //违规情况
   const [orderCollectData, setOrderCollectData] = useState<any>(null); //水电网络申报
-  const [expoName, setExpoName] = useState<string>("展会标题-v1.0"); //展会标题
+  const [expoName, setExpoName] = useState<string>(initialPrefs?.expoName || "展会标题-v1.0"); //展会标题
   const memoryMonitorTimerRef = useRef<number | null>(null);
   const memoryMonitorSnapshotRef = useRef<{
     usedJSHeapSize?: number;
@@ -399,14 +401,6 @@ export default function App() {
     violationSituationData,
     orderCollectData,
   });
-
-  useEffect(() => {
-    const prefs = readPersistedPrefs(DEFAULT_EXHIBITION_ID);
-    if (!prefs) return;
-    setHallMode(prefs.hallMode);
-    setSelectedHallId(prefs.selectedHallId);
-    if (prefs.expoName) setExpoName(prefs.expoName);
-  }, [DEFAULT_EXHIBITION_ID]);
 
   useEffect(() => {
     latestStateRef.current = {
@@ -509,10 +503,11 @@ export default function App() {
         hallName: item.hallName || "未知",
       })),
     });
-    // Only set defaults if not already restored from prefs
-    if (hallMode === "ExhibitionOverview" && selectedHallId === "all") {
-      // Check if restored hallId still exists in loaded halls
-      if (!normalizedRows.some((h) => h.hallId === selectedHallId && selectedHallId !== "all")) {
+    // Validate restored selectedHallId against loaded halls
+    const savedHallId = initialPrefs?.selectedHallId;
+    if (savedHallId && savedHallId !== "all") {
+      const exists = normalizedRows.some((h) => h.hallId === savedHallId);
+      if (!exists) {
         setSelectedHallId("all");
       }
     }
@@ -537,6 +532,15 @@ export default function App() {
         if (cancelled) return;
         if (initialLoadingTimerRef.current !== null) {
           window.clearTimeout(initialLoadingTimerRef.current);
+        }
+        initialOverviewLoadedRef.current = true;
+        // Pre-warm cache for default ExhibitionOverview to avoid repeat request
+        const cacheKey = `ExhibitionOverview:${selectedHallId}`;
+        if (!moduleFetchCacheRef.current[cacheKey]) {
+          moduleFetchCacheRef.current[cacheKey] = {
+            at: Date.now(),
+            data: { summary: {}, boothRows: boothRows, orderCollectData: orderCollectData },
+          };
         }
         setIsInitialLoading(false);
       });
@@ -724,58 +728,39 @@ export default function App() {
               ? [
                   "getConstructOverview",
                   "getConstructProcess",
+                  "getMaterialStatistics",
                   "getBoothProcess",
                   "getExhibitionProcess",
-                  "getBoothProgressPicture",
                 ]
               : [
                   "getConstructOverviewByHallId",
                   "getConstructProcessByHallId",
+                  "getMaterialStatistics",
                   "getBoothProcessByHallId",
                   "getExhibitionProcessByHallId",
-                  "getBoothProgressPictureByHallId",
                 ];
           logRequestGroup("ConstructOverview", requestLabels);
 
+          // Critical: constructOverview + constructProcess + materialStatistics + boothProcess
           const criticalRequests =
             selectedHallId === "all"
               ? [
-                  screenApi.getConstructOverview(
-                    DEFAULT_EXHIBITION_ID,
-                    controller.signal,
-                  ),
-                  screenApi.getConstructProcess(
-                    DEFAULT_EXHIBITION_ID,
-                    controller.signal,
-                  ),
+                  screenApi.getConstructOverview(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getConstructProcess(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getBoothProcess(DEFAULT_EXHIBITION_ID, controller.signal),
                 ]
               : [
-                  screenApi.getConstructOverviewByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    controller.signal,
-                  ),
-                  screenApi.getConstructProcessByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    controller.signal,
-                  ),
+                  screenApi.getConstructOverviewByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
+                  screenApi.getConstructProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
+                  screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getBoothProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
                 ];
+          // Background: exhibitionProcess only (boothProgressPicture is handled by ConstructCarousel effect)
           const backgroundRequests =
             selectedHallId === "all"
-              ? [
-                  screenApi.getExhibitionProcess(
-                    DEFAULT_EXHIBITION_ID,
-                    controller.signal,
-                  ),
-                ]
-              : [
-                  screenApi.getExhibitionProcessByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    controller.signal,
-                  ),
-                ];
+              ? [screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, controller.signal)]
+              : [screenApi.getExhibitionProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal)];
 
           const criticalResult = await withTimeout(
             Promise.all(criticalRequests),
@@ -786,43 +771,40 @@ export default function App() {
               delete moduleFetchCacheRef.current[throttleKey];
               logRequestError("ConstructOverview", error);
             }
-            return null as [unknown, unknown] | null;
+            return null;
           });
 
           if (cancelled || !criticalResult) return;
-          const [overviewRes, processRes] = criticalResult as any[];
-          const nextConstructOverviewData =
-            (overviewRes as any)?.data ?? overviewRes ?? null;
-          const nextConstructProcessData =
-            (processRes as any)?.data ?? processRes ?? null;
+          const [overviewRes, processRes, materialRes, boothProcessRes] = criticalResult as any[];
+          const nextConstructOverviewData = (overviewRes as any)?.data ?? overviewRes ?? null;
+          const nextConstructProcessData = (processRes as any)?.data ?? processRes ?? null;
+          const nextConstructMaterialData = (materialRes as any)?.data ?? materialRes ?? null;
+          const nextBoothProgressData = (boothProcessRes as any)?.data ?? boothProcessRes ?? null;
+
           setConstructOverviewData(nextConstructOverviewData);
           setConstructProcessData(nextConstructProcessData);
-          setBoothProgressData(nextConstructOverviewData);
+          setConstructMaterialData(nextConstructMaterialData);
+          setBoothProgressData(nextBoothProgressData);
 
           void Promise.all(backgroundRequests)
-            .then(([exhibitionProcessRes, pictureRes]) => {
+            .then(([exhibitionProcessRes]) => {
               if (cancelled) return;
-              const nextExhibitionProcessData =
-                exhibitionProcessRes?.data ?? exhibitionProcessRes ?? null;
-              const nextConstructPictures = Array.isArray(
-                pictureRes?.data ?? pictureRes,
-              )
-                ? (pictureRes?.data ?? pictureRes)
-                : [];
+              const nextExhibitionProcessData = (exhibitionProcessRes as any)?.data ?? exhibitionProcessRes ?? null;
               setExhibitionProcessData(nextExhibitionProcessData);
-              setBoothProgressPictures(nextConstructPictures);
               saveCache(
                 {
                   constructOverviewData: nextConstructOverviewData,
                   constructProcessData: nextConstructProcessData,
+                  constructMaterialData: nextConstructMaterialData,
+                  boothProgressData: nextBoothProgressData,
                   exhibitionProcessData: nextExhibitionProcessData,
-                  boothProgressPictures: nextConstructPictures,
                 },
                 {
                   constructOverviewData: nextConstructOverviewData,
                   constructProcessData: nextConstructProcessData,
+                  constructMaterialData: nextConstructMaterialData,
+                  boothProgressData: nextBoothProgressData,
                   exhibitionProcessData: nextExhibitionProcessData,
-                  boothProgressPictures: nextConstructPictures,
                 },
               );
             })
@@ -984,7 +966,7 @@ export default function App() {
       cancelled = true;
       controller.abort();
     };
-  }, [hallMode, selectedHallId]);
+  }, [hallMode, selectedHallId, isInitialLoading]);
 
   const handleMenuClick = (key: string) => {
     const nextMode = key as ModuleKey;
@@ -1458,22 +1440,15 @@ export default function App() {
     violationTypeData,
   ]);
 
-  // Cache cleanup only (no localStorage write)
+  // Cache cleanup: delete expired entries (do NOT trim active entry data)
   useEffect(() => {
     if (isInitialLoading) return;
     const timer = window.setInterval(() => {
       const now = Date.now();
-      const current = lastActiveModuleRef.current;
       for (const [key, entry] of Object.entries(moduleFetchCacheRef.current)) {
-        if (now - entry.at > MODULE_CACHE_TTL_MS && key !== `${current.hallMode}:${current.selectedHallId}`) {
+        if (now - entry.at > MODULE_CACHE_TTL_MS) {
           delete moduleFetchCacheRef.current[key];
         }
-      }
-      // Trim active entry data to summary only
-      const activeKey = `${current.hallMode}:${current.selectedHallId}`;
-      const activeEntry = moduleFetchCacheRef.current[activeKey];
-      if (activeEntry) {
-        activeEntry.data = { summary: activeEntry.data.summary ?? {} };
       }
     }, MEMORY_RELEASE_INTERVAL_MS);
     return () => window.clearInterval(timer);
