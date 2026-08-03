@@ -1614,10 +1614,10 @@ export default function App() {
 
   return (
     <div
-      className={`relative h-dvh w-screen overflow-hidden  text-slate-100 ${fontScaleClass}`}
+      className={`relative h-dvh w-screen overflow-hidden text-slate-100 ${fontScaleClass}`}
+      style={{ backgroundColor: "#020A25" }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(63,124,255,0.2),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(0,198,255,0.12),transparent_28%),linear-gradient(180deg,#07172b_0%,#040d18_100%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_0%,rgba(255,255,255,0.02)_50%,transparent_100%)] opacity-40" />
+      <div className="pointer-events-none absolute inset-0 bg-[url('/img/背景边框.png')] bg-[length:100%_100%] bg-no-repeat z-0" />
       {isInitialLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(4,13,24,0.86)] backdrop-blur-sm">
           <Loader />
