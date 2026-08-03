@@ -1,0 +1,66 @@
+/* From Uiverse.io by mrhyddenn */
+.Button-base {
+    position: relative;
+    background: rgba(18, 38, 66, 0.72);
+    color: rgba(226, 232, 240, 0.9);
+    border: 1px solid rgba(116, 170, 255, 0.18);
+    border-radius: 10px;
+    padding: clamp(4px, 0.35vw, 8px) clamp(12px, 0.9vw, 18px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: clamp(92px, 6.4vw, 132px);
+    font-size: clamp(13px, 0.9vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    transform: skew(-12deg);
+    margin: clamp(6px, 0.45vw, 10px) clamp(8px, 0.55vw, 12px) clamp(6px, 0.45vw, 10px) 0;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+  }
+  
+  .Button-base span {
+    display: inline-block;
+    transform: skew(12deg);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  
+  .Button-base::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.16), rgba(59, 130, 246, 0.32));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    z-index: 0;
+  }
+  
+  .Button-base:hover {
+    color: #fff;
+    border-color: rgba(96, 165, 250, 0.45);
+    transform: skew(-12deg) translateY(-1px);
+    box-shadow: 0 10px 24px rgba(20, 72, 140, 0.28);
+  }
+  
+  .Button-base:hover::before {
+    opacity: 1;
+  }
+  
+  .Button-base.is-active {
+    color: #ffffff;
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.9), rgba(14, 165, 233, 0.78));
+    border-color: rgba(191, 219, 254, 0.75);
+    box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.24), 0 14px 28px rgba(2, 132, 199, 0.35);
+  }
+  
+  .Button-base.is-active::before {
+    opacity: 1;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2));
+  }
+  
+  .Button-base:focus-visible {
+    outline: 2px solid rgba(125, 211, 252, 0.9);
+    outline-offset: 3px;
+  }

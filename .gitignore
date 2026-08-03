@@ -1,0 +1,34 @@
+# dependencies
+node_modules/
+# cursor
+.cursor/
+# build outputs
+dist/
+build/
+coverage/
+dist.zip
+dist/
+nginx.conf
+
+# caches
+.vite/
+.cache/
+.eslintcache
+.tsbuildinfo
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor/system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

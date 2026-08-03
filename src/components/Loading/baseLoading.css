@@ -1,0 +1,18 @@
+.base-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trace {
+  stroke-dasharray: 175;
+  stroke-dashoffset: 175;
+  animation: circuitDraw 3s linear infinite;
+}
+
+/* Stroke "eats" itself forward continuously */
+@keyframes circuitDraw {
+  to {
+    stroke-dashoffset: -175;
+  }
+}

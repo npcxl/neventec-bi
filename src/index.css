@@ -1,0 +1,402 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'PangMenZhengDao';
+  src: url('/庞门正道标题体2.0增强版.ttf') format('truetype');
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  font-size: clamp(14px, 0.75vw + 11px, 16px);
+}
+
+body {
+  overflow: hidden;
+  background: #060d17;
+  color: #e8f3ff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.container-bg {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: #060d17;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* 2. 用伪元素承载复杂的纹理背景 */
+.container-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle farthest-side at 0% 50%, #282828 23.5%, rgba(255, 170, 0, 0) 0) 21px 30px,
+    radial-gradient(circle farthest-side at 0% 50%, #2c3539 24%, rgba(240, 166, 17, 0) 0) 19px 30px,
+    linear-gradient(#282828 14%, rgba(240, 166, 17, 0) 0, rgba(240, 166, 17, 0) 85%, #282828 0) 0 0,
+    linear-gradient(150deg, #282828 24%, #2c3539 0, #2c3539 26%, rgba(240, 166, 17, 0) 0, rgba(240, 166, 17, 0) 74%, #2c3539 0, #2c3539 76%, #282828 0) 0 0,
+    linear-gradient(30deg, #282828 24%, #2c3539 0, #2c3539 26%, rgba(240, 166, 17, 0) 0, rgba(240, 166, 17, 0) 74%, #2c3539 0, #2c3539 76%, #282828 0) 0 0,
+    linear-gradient(90deg, #2c3539 2%, #282828 0, #282828 98%, #2c3539 0%) 0 0 #282828;
+  background-size: clamp(24px, 2.8vw, 40px) clamp(36px, 4.2vw, 60px);
+
+  /* 核心：添加呼吸动画 */
+  animation: textureBreathe 4s ease-in-out infinite;
+}
+
+/* 3. 呼吸动画关键帧 */
+@keyframes textureBreathe {
+  0% {
+    opacity: 0.1;
+
+  }
+
+  50% {
+    opacity: 0.65;
+  }
+
+  100% {
+    opacity: 0.1;
+  }
+}
+
+/* 数据卡片入场动画 */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+  /* 确保初始状态不可见，等待动画执行 */
+}
+
+/* 流光边框核心动画容器 */
+.flowing-border {
+  position: relative;
+  overflow: hidden;
+}
+
+.flowing-border::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(transparent 0%,
+      transparent 35%,
+      #00e5ff 50%,
+      transparent 50%,
+      transparent 85%,
+      #0066ff 100%);
+  animation: borderRotate 4s linear infinite;
+  z-index: 0;
+}
+
+@keyframes borderRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+@keyframes demo-br2-scroll {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(var(--demo-br2-scroll-distance, -50%));
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-120%) rotate(16deg);
+  }
+
+  100% {
+    transform: translateX(380%) rotate(16deg);
+  }
+}
+
+/* 闪烁动画 */
+/* From Uiverse.io by dylanharriscameron */
+
+.bg {
+  position: absolute;
+  inset: clamp(0.25rem, 0.8vw, 0.5rem);
+  width: min(100%, clamp(12rem, 22vw, 18rem));
+  aspect-ratio: 190 / 240;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  border-radius: clamp(0.5rem, 0.9vw, 0.625rem);
+  overflow: hidden;
+  outline: 2px solid white;
+}
+
+
+
+
+@keyframes scan-vertical {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.95;
+  }
+
+  65% {
+    opacity: 0.75;
+  }
+
+  100% {
+    transform: translateY(240%);
+    opacity: 0;
+  }
+}
+
+@keyframes scan-horizontal {
+  0% {
+    transform: translateX(-150%);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.9;
+  }
+
+  68% {
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: translateX(410%);
+    opacity: 0;
+  }
+}
+
+@keyframes float-slow {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes edge-glow {
+
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-line {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+@keyframes border-pulse {
+
+  0%,
+  100% {
+    opacity: 0.65;
+    filter: brightness(0.95);
+  }
+
+  50% {
+    opacity: 1;
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes blob-bounce {
+  0% {
+    transform: translate(-50%, -50%) translate3d(-28%, -28%, 0) scale(0.92);
+  }
+
+  25% {
+    transform: translate(-50%, -50%) translate3d(28%, -28%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate3d(28%, 28%, 0) scale(1.06);
+  }
+
+  75% {
+    transform: translate(-50%, -50%) translate3d(-28%, 28%, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) translate3d(-28%, -28%, 0) scale(0.92);
+  }
+}
+
+
+
+
+@keyframes ring-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-scan {
+  animation: scan-vertical 4.6s linear infinite;
+}
+
+.animate-scan-horizontal {
+  animation: scan-horizontal 5.8s linear infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 6.8s ease-in-out infinite;
+}
+
+.animate-border-pulse {
+  animation: border-pulse 3.8s ease-in-out infinite;
+}
+
+.animate-edge-glow {
+  animation: edge-glow 2.8s ease-in-out infinite;
+}
+
+.animate-pulse-line {
+  animation: pulse-line 3.6s linear infinite;
+}
+
+.demo-br2-scroll-track {
+  animation-name: demo-br2-scroll;
+  animation-duration: var(--demo-br2-scroll-duration, 360s);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: running;
+  will-change: transform;
+}
+
+.demo-br2-scroll:hover .demo-br2-scroll-track {
+  animation-play-state: paused;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+.map-tab-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.6) rgba(8, 17, 32, 0.2);
+}
+
+.map-tab-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.map-tab-scrollbar::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border-radius: 999px;
+}
+
+.map-tab-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(1, 9, 10, 0.88), rgba(56, 189, 248, 0.58));
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.18), 0 0 12px rgba(39, 55, 58, 0.18);
+}
+
+.map-tab-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(125, 249, 255, 0.96), rgba(34, 211, 238, 0.74));
+}
+
+.map-overview-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.42) rgba(8, 17, 32, 0.08);
+}
+
+.map-overview-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.map-overview-scrollbar::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.005));
+  border-radius: 999px;
+}
+
+.map-overview-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(26, 43, 66, 0.94), rgba(56, 189, 248, 0.68));
+  border-radius: 999px;
+  border: 1px solid rgba(6, 13, 23, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(148, 226, 255, 0.08), 0 0 8px rgba(56, 189, 248, 0.12);
+}
+
+.map-overview-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(44, 74, 109, 0.96), rgba(103, 232, 249, 0.8));
+}
+
+.map-overview-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}

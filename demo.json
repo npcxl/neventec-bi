@@ -1,0 +1,2678 @@
+{
+  "image": "c53f69549d68445c289e94c71120d407.png",
+  "image_size": {
+    "width": 3640,
+    "height": 7070
+  },
+  "booth_count": 111,
+  "with_booth_no": 110,
+  "with_exhibitor": 111,
+  "unassigned_ocr_count": 0,
+  "booths": [
+    {
+      "booth_no": "9B151",
+      "exhibitor": "宁议阀",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "98151",
+        "宁议阀"
+      ],
+      "booth_no_score": 0.8884958863258362,
+      "bbox": [
+        116,
+        134,
+        234,
+        249
+      ],
+      "center": [
+        175,
+        191
+      ],
+      "width": 118,
+      "height": 115
+    },
+    {
+      "booth_no": "9B150",
+      "exhibitor": "9315U浙江佳合",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9315U",
+        "浙江佳合",
+        "9B150"
+      ],
+      "booth_no_score": 0.9996779799461365,
+      "bbox": [
+        345,
+        140,
+        564,
+        247
+      ],
+      "center": [
+        454,
+        193
+      ],
+      "width": 219,
+      "height": 107
+    },
+    {
+      "booth_no": "9B138",
+      "exhibitor": "超硕",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9B138",
+        "超硕"
+      ],
+      "booth_no_score": 0.6625221490859985,
+      "bbox": [
+        569,
+        140,
+        675,
+        247
+      ],
+      "center": [
+        622,
+        193
+      ],
+      "width": 106,
+      "height": 107
+    },
+    {
+      "booth_no": "9B137",
+      "exhibitor": "'ELAS瀚鼎",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "'ELAS",
+        "瀚鼎",
+        "9B137"
+      ],
+      "booth_no_score": 0.9989807963371277,
+      "bbox": [
+        680,
+        140,
+        787,
+        247
+      ],
+      "center": [
+        733,
+        193
+      ],
+      "width": 107,
+      "height": 107
+    },
+    {
+      "booth_no": "5B135",
+      "exhibitor": "吉克尔",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "SB135",
+        "吉克尔"
+      ],
+      "booth_no_score": 0.6678561210632324,
+      "bbox": [
+        792,
+        140,
+        899,
+        247
+      ],
+      "center": [
+        845,
+        193
+      ],
+      "width": 107,
+      "height": 107
+    },
+    {
+      "booth_no": "9B135",
+      "exhibitor": "法宝",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "法宝",
+        "9B135"
+      ],
+      "booth_no_score": 0.9986965298652649,
+      "bbox": [
+        904,
+        140,
+        1122,
+        247
+      ],
+      "center": [
+        1013,
+        193
+      ],
+      "width": 218,
+      "height": 107
+    },
+    {
+      "booth_no": "9B132",
+      "exhibitor": "蓝光",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "98132",
+        "蓝光"
+      ],
+      "booth_no_score": 0.7927574455738068,
+      "bbox": [
+        1127,
+        140,
+        1234,
+        247
+      ],
+      "center": [
+        1180,
+        193
+      ],
+      "width": 107,
+      "height": 107
+    },
+    {
+      "booth_no": "9B131",
+      "exhibitor": "LELAR瑞迪佳源",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "LELAR",
+        "瑞迪佳源",
+        "9B131"
+      ],
+      "booth_no_score": 0.9999051213264465,
+      "bbox": [
+        1239,
+        140,
+        1457,
+        247
+      ],
+      "center": [
+        1348,
+        193
+      ],
+      "width": 218,
+      "height": 107
+    },
+    {
+      "booth_no": "9B129",
+      "exhibitor": "成丰",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "成丰",
+        "9B129"
+      ],
+      "booth_no_score": 0.9983897089958191,
+      "bbox": [
+        1462,
+        140,
+        1681,
+        247
+      ],
+      "center": [
+        1571,
+        193
+      ],
+      "width": 219,
+      "height": 107
+    },
+    {
+      "booth_no": "9B127",
+      "exhibitor": "登发电子",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "98127",
+        "登发",
+        "电子"
+      ],
+      "booth_no_score": 0.8835862457752228,
+      "bbox": [
+        1903,
+        134,
+        2018,
+        253
+      ],
+      "center": [
+        1960,
+        193
+      ],
+      "width": 115,
+      "height": 119
+    },
+    {
+      "booth_no": "9B126",
+      "exhibitor": "风菜尔",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "98126",
+        "风菜尔"
+      ],
+      "booth_no_score": 0.9013579487800598,
+      "bbox": [
+        2018,
+        134,
+        2130,
+        253
+      ],
+      "center": [
+        2074,
+        193
+      ],
+      "width": 112,
+      "height": 119
+    },
+    {
+      "booth_no": "9B125",
+      "exhibitor": "不芯",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9B125",
+        "不芯"
+      ],
+      "booth_no_score": 0.9387303113937377,
+      "bbox": [
+        2130,
+        134,
+        2242,
+        253
+      ],
+      "center": [
+        2186,
+        193
+      ],
+      "width": 112,
+      "height": 119
+    },
+    {
+      "booth_no": "9T086",
+      "exhibitor": "BF气虹新林达",
+      "area": "3*9",
+      "name_part_count": 2,
+      "raw_texts": [
+        "22186",
+        "BF气虹",
+        "新林达",
+        "3*9"
+      ],
+      "booth_no_score": 0.710265064239502,
+      "bbox": [
+        2242,
+        134,
+        2581,
+        253
+      ],
+      "center": [
+        2411,
+        193
+      ],
+      "width": 339,
+      "height": 119
+    },
+    {
+      "booth_no": "9B065",
+      "exhibitor": "新材",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "新材",
+        "9B065",
+        "顺鹏"
+      ],
+      "booth_no_score": 0.999801242351532,
+      "bbox": [
+        3356,
+        134,
+        3475,
+        249
+      ],
+      "center": [
+        3415,
+        191
+      ],
+      "width": 119,
+      "height": 115
+    },
+    {
+      "booth_no": "9T179",
+      "exhibitor": "双羽",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T179",
+        "双羽"
+      ],
+      "booth_no_score": 0.9918714761734009,
+      "bbox": [
+        2686,
+        134,
+        2800,
+        361
+      ],
+      "center": [
+        2743,
+        247
+      ],
+      "width": 114,
+      "height": 227
+    },
+    {
+      "booth_no": "9T179-1",
+      "exhibitor": "F-\"1",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T179-1",
+        "F-\"1"
+      ],
+      "booth_no_score": 0.9918714761734009,
+      "bbox": [
+        2800,
+        134,
+        2916,
+        361
+      ],
+      "center": [
+        2858,
+        247
+      ],
+      "width": 116,
+      "height": 227
+    },
+    {
+      "booth_no": "9B152",
+      "exhibitor": "华韵",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9B152",
+        "华韵"
+      ],
+      "booth_no_score": 0.9360282063484192,
+      "bbox": [
+        116,
+        249,
+        234,
+        473
+      ],
+      "center": [
+        175,
+        361
+      ],
+      "width": 118,
+      "height": 224
+    },
+    {
+      "booth_no": "9T180",
+      "exhibitor": "洪田",
+      "area": "12*672",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T180",
+        "洪田",
+        "12*672"
+      ],
+      "booth_no_score": 0.9993449091911316,
+      "bbox": [
+        3021,
+        134,
+        3251,
+        588
+      ],
+      "center": [
+        3136,
+        361
+      ],
+      "width": 230,
+      "height": 454
+    },
+    {
+      "booth_no": "9B063",
+      "exhibitor": "SHOSR贝内克",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "SHOSR",
+        "贝内克",
+        "9B063"
+      ],
+      "booth_no_score": 0.9998873829841614,
+      "bbox": [
+        3356,
+        249,
+        3475,
+        361
+      ],
+      "center": [
+        3415,
+        305
+      ],
+      "width": 119,
+      "height": 112
+    },
+    {
+      "booth_no": "9T172",
+      "exhibitor": "搏信",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T172",
+        "搏信",
+        "6*954"
+      ],
+      "booth_no_score": 0.9975392103195191,
+      "bbox": [
+        339,
+        358,
+        677,
+        588
+      ],
+      "center": [
+        508,
+        473
+      ],
+      "width": 338,
+      "height": 230
+    },
+    {
+      "booth_no": "9T173",
+      "exhibitor": "忆研",
+      "area": "6*636",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T173",
+        "忆研",
+        "6*636"
+      ],
+      "booth_no_score": 0.999152934551239,
+      "bbox": [
+        677,
+        358,
+        905,
+        588
+      ],
+      "center": [
+        791,
+        473
+      ],
+      "width": 228,
+      "height": 230
+    },
+    {
+      "booth_no": "9T175",
+      "exhibitor": "深视",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T175",
+        "深视",
+        "6*954"
+      ],
+      "booth_no_score": 0.9991233944892883,
+      "bbox": [
+        1010,
+        358,
+        1348,
+        588
+      ],
+      "center": [
+        1179,
+        473
+      ],
+      "width": 338,
+      "height": 230
+    },
+    {
+      "booth_no": "9T176",
+      "exhibitor": "恒日精",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T176",
+        "恒日精",
+        "6*954"
+      ],
+      "booth_no_score": 0.9985930800437928,
+      "bbox": [
+        1348,
+        358,
+        1687,
+        588
+      ],
+      "center": [
+        1517,
+        473
+      ],
+      "width": 339,
+      "height": 230
+    },
+    {
+      "booth_no": "9T177",
+      "exhibitor": "辰豪",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T177",
+        "辰豪",
+        "6*954"
+      ],
+      "booth_no_score": 0.9988598108291626,
+      "bbox": [
+        1903,
+        358,
+        2242,
+        588
+      ],
+      "center": [
+        2072,
+        473
+      ],
+      "width": 339,
+      "height": 230
+    },
+    {
+      "booth_no": "9T178",
+      "exhibitor": "新栋力",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T178",
+        "新栋力",
+        "6*954"
+      ],
+      "booth_no_score": 0.9983203768730163,
+      "bbox": [
+        2242,
+        358,
+        2581,
+        588
+      ],
+      "center": [
+        2411,
+        473
+      ],
+      "width": 339,
+      "height": 230
+    },
+    {
+      "booth_no": "9T181",
+      "exhibitor": "仙前行梓靖",
+      "area": "6*3",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T181",
+        "仙前行梓靖",
+        "6*3"
+      ],
+      "booth_no_score": 0.9667708690349872,
+      "bbox": [
+        2686,
+        361,
+        2800,
+        588
+      ],
+      "center": [
+        2743,
+        474
+      ],
+      "width": 114,
+      "height": 227
+    },
+    {
+      "booth_no": "9T181-1",
+      "exhibitor": "E9",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T181-1",
+        "E9"
+      ],
+      "booth_no_score": 0.9667708690349872,
+      "bbox": [
+        2800,
+        361,
+        2916,
+        588
+      ],
+      "center": [
+        2858,
+        474
+      ],
+      "width": 116,
+      "height": 227
+    },
+    {
+      "booth_no": "5B051",
+      "exhibitor": "吉模目",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "SB051",
+        "吉",
+        "模目"
+      ],
+      "booth_no_score": 0.8811839818954468,
+      "bbox": [
+        3356,
+        361,
+        3475,
+        584
+      ],
+      "center": [
+        3415,
+        472
+      ],
+      "width": 119,
+      "height": 223
+    },
+    {
+      "booth_no": "9B015",
+      "exhibitor": "可竹",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9815b",
+        "可竹"
+      ],
+      "booth_no_score": 0.8410741448402405,
+      "bbox": [
+        116,
+        473,
+        234,
+        696
+      ],
+      "center": [
+        175,
+        584
+      ],
+      "width": 118,
+      "height": 223
+    },
+    {
+      "booth_no": "5B050",
+      "exhibitor": "广州坤安",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "SB050",
+        "广州",
+        "坤安"
+      ],
+      "booth_no_score": 0.791495418548584,
+      "bbox": [
+        3356,
+        584,
+        3475,
+        696
+      ],
+      "center": [
+        3415,
+        640
+      ],
+      "width": 119,
+      "height": 112
+    },
+    {
+      "booth_no": "9B157",
+      "exhibitor": "骏恒",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9B157",
+        "骏恒"
+      ],
+      "booth_no_score": 0.9255825638771057,
+      "bbox": [
+        116,
+        696,
+        234,
+        924
+      ],
+      "center": [
+        175,
+        810
+      ],
+      "width": 118,
+      "height": 228
+    },
+    {
+      "booth_no": "9T171",
+      "exhibitor": "莱德",
+      "area": "6*3",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T171",
+        "莱德",
+        "6*3"
+      ],
+      "booth_no_score": 0.989419573545456,
+      "bbox": [
+        339,
+        693,
+        454,
+        924
+      ],
+      "center": [
+        396,
+        808
+      ],
+      "width": 115,
+      "height": 231
+    },
+    {
+      "booth_no": "9T170",
+      "exhibitor": "超鸿",
+      "area": "6*12=72",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T170",
+        "超鸿",
+        "6*12=72"
+      ],
+      "booth_no_score": 0.989419573545456,
+      "bbox": [
+        454,
+        693,
+        904,
+        924
+      ],
+      "center": [
+        679,
+        808
+      ],
+      "width": 450,
+      "height": 231
+    },
+    {
+      "booth_no": "9T169",
+      "exhibitor": "宇顺",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T169",
+        "宇顺",
+        "6*954"
+      ],
+      "booth_no_score": 0.9986353039741516,
+      "bbox": [
+        1010,
+        693,
+        1348,
+        924
+      ],
+      "center": [
+        1179,
+        808
+      ],
+      "width": 338,
+      "height": 231
+    },
+    {
+      "booth_no": "9T168",
+      "exhibitor": "金帆",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T168",
+        "金帆",
+        "6*954"
+      ],
+      "booth_no_score": 0.9987100958824158,
+      "bbox": [
+        1348,
+        693,
+        1687,
+        924
+      ],
+      "center": [
+        1517,
+        808
+      ],
+      "width": 339,
+      "height": 231
+    },
+    {
+      "booth_no": "9T167",
+      "exhibitor": "佐尔",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T167",
+        "佐尔",
+        "6*954"
+      ],
+      "booth_no_score": 0.998810076713562,
+      "bbox": [
+        1903,
+        693,
+        2242,
+        924
+      ],
+      "center": [
+        2072,
+        808
+      ],
+      "width": 339,
+      "height": 231
+    },
+    {
+      "booth_no": "9T166",
+      "exhibitor": "哲乐",
+      "area": "69-54",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T166",
+        "哲乐",
+        "69-54"
+      ],
+      "booth_no_score": 0.9984040021896362,
+      "bbox": [
+        2242,
+        693,
+        2581,
+        924
+      ],
+      "center": [
+        2411,
+        808
+      ],
+      "width": 339,
+      "height": 231
+    },
+    {
+      "booth_no": "9T165",
+      "exhibitor": "莱恩光电",
+      "area": "6*636",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T165",
+        "莱恩",
+        "光电",
+        "6*636"
+      ],
+      "booth_no_score": 0.9989081501960755,
+      "bbox": [
+        2686,
+        693,
+        2912,
+        924
+      ],
+      "center": [
+        2799,
+        808
+      ],
+      "width": 226,
+      "height": 231
+    },
+    {
+      "booth_no": "9T163",
+      "exhibitor": "奥普拓",
+      "area": "6*954",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T163",
+        "奥普拓",
+        "6*954"
+      ],
+      "booth_no_score": 0.9991146564483643,
+      "bbox": [
+        2912,
+        693,
+        3251,
+        924
+      ],
+      "center": [
+        3081,
+        808
+      ],
+      "width": 339,
+      "height": 231
+    },
+    {
+      "booth_no": "5T059",
+      "exhibitor": "滤威",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "SE059",
+        "滤威"
+      ],
+      "booth_no_score": 0.8057750225067138,
+      "bbox": [
+        3356,
+        696,
+        3475,
+        924
+      ],
+      "center": [
+        3415,
+        810
+      ],
+      "width": 119,
+      "height": 228
+    },
+    {
+      "booth_no": "9T161-1",
+      "exhibitor": "中聚",
+      "area": "6'6-36",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T161-1",
+        "中聚",
+        "6'6-36"
+      ],
+      "booth_no_score": 0.9992978913443429,
+      "bbox": [
+        2689,
+        1028,
+        2916,
+        1255
+      ],
+      "center": [
+        2802,
+        1141
+      ],
+      "width": 227,
+      "height": 227
+    },
+    {
+      "booth_no": "9T162",
+      "exhibitor": "西安新达",
+      "area": "6*636",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T162",
+        "西安",
+        "新达",
+        "6*636"
+      ],
+      "booth_no_score": 0.998721468448639,
+      "bbox": [
+        3021,
+        1028,
+        3251,
+        1255
+      ],
+      "center": [
+        3136,
+        1141
+      ],
+      "width": 230,
+      "height": 227
+    },
+    {
+      "booth_no": "9B057",
+      "exhibitor": "大连美天",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "大连",
+        "美天",
+        "9B057"
+      ],
+      "booth_no_score": 0.999791395664215,
+      "bbox": [
+        3362,
+        1034,
+        3469,
+        1253
+      ],
+      "center": [
+        3415,
+        1143
+      ],
+      "width": 107,
+      "height": 219
+    },
+    {
+      "booth_no": "9T158",
+      "exhibitor": "格雷希尔",
+      "area": "12*3",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T158",
+        "格雷",
+        "希尔",
+        "12*3"
+      ],
+      "booth_no_score": 0.997384774684906,
+      "bbox": [
+        116,
+        1028,
+        234,
+        1482
+      ],
+      "center": [
+        175,
+        1255
+      ],
+      "width": 118,
+      "height": 454
+    },
+    {
+      "booth_no": "9T155",
+      "exhibitor": "田边能源",
+      "area": "12*9=10B",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T155",
+        "田边",
+        "能源",
+        "12*9=10B"
+      ],
+      "booth_no_score": 0.999158525466919,
+      "bbox": [
+        339,
+        1028,
+        677,
+        1482
+      ],
+      "center": [
+        508,
+        1255
+      ],
+      "width": 338,
+      "height": 454
+    },
+    {
+      "booth_no": "9T156",
+      "exhibitor": "Chroma致茂/中茂",
+      "area": "12*672",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T156",
+        "Chroma",
+        "致茂/中茂",
+        "12*672"
+      ],
+      "booth_no_score": 0.9989854216575622,
+      "bbox": [
+        677,
+        1028,
+        905,
+        1482
+      ],
+      "center": [
+        791,
+        1255
+      ],
+      "width": 228,
+      "height": 454
+    },
+    {
+      "booth_no": "9T157",
+      "exhibitor": "奥特维ATW",
+      "area": "12*18=216",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T157",
+        "奥特维",
+        "ATW",
+        "12*18=216"
+      ],
+      "booth_no_score": 0.9989790797233582,
+      "bbox": [
+        1010,
+        1028,
+        1687,
+        1482
+      ],
+      "center": [
+        1348,
+        1255
+      ],
+      "width": 677,
+      "height": 454
+    },
+    {
+      "booth_no": "9T159",
+      "exhibitor": "苏州冠鸿",
+      "area": "12*12=144",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T159",
+        "苏州冠鸿",
+        "12*12=144"
+      ],
+      "booth_no_score": 0.998388922214508,
+      "bbox": [
+        1903,
+        1028,
+        2357,
+        1482
+      ],
+      "center": [
+        2130,
+        1255
+      ],
+      "width": 454,
+      "height": 454
+    },
+    {
+      "booth_no": "9T161",
+      "exhibitor": "烽禾升",
+      "area": "12'6=72",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T161",
+        "烽禾升",
+        "12'6=72"
+      ],
+      "booth_no_score": 0.9984064698219299,
+      "bbox": [
+        2462,
+        1028,
+        2689,
+        1482
+      ],
+      "center": [
+        2575,
+        1255
+      ],
+      "width": 227,
+      "height": 454
+    },
+    {
+      "booth_no": "9T161-2",
+      "exhibitor": "擎立6*63G",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T161-2",
+        "擎立",
+        "6*63G"
+      ],
+      "booth_no_score": 0.9976712209837777,
+      "bbox": [
+        2689,
+        1255,
+        2916,
+        1482
+      ],
+      "center": [
+        2802,
+        1368
+      ],
+      "width": 227,
+      "height": 227
+    },
+    {
+      "booth_no": "9T136",
+      "exhibitor": "瑞史博",
+      "area": "6*636",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T136",
+        "瑞史博",
+        "6*636"
+      ],
+      "booth_no_score": 0.9972119450569152,
+      "bbox": [
+        3021,
+        1255,
+        3251,
+        1482
+      ],
+      "center": [
+        3136,
+        1368
+      ],
+      "width": 230,
+      "height": 227
+    },
+    {
+      "booth_no": "9B055",
+      "exhibitor": "伊特克斯",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "伊特",
+        "克斯",
+        "9B055"
+      ],
+      "booth_no_score": 0.9998371362686157,
+      "bbox": [
+        3362,
+        1258,
+        3469,
+        1476
+      ],
+      "center": [
+        3415,
+        1367
+      ],
+      "width": 107,
+      "height": 218
+    },
+    {
+      "booth_no": "1R057",
+      "exhibitor": "东街",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "1R057",
+        "东街"
+      ],
+      "booth_no_score": 0.6995697826147079,
+      "bbox": [
+        3362,
+        1481,
+        3469,
+        1700
+      ],
+      "center": [
+        3415,
+        1590
+      ],
+      "width": 107,
+      "height": 219
+    },
+    {
+      "booth_no": "9B050",
+      "exhibitor": "SD050诺派",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "SD050",
+        "诺派",
+        "9B050",
+        "诺辰"
+      ],
+      "booth_no_score": 0.9998106122016907,
+      "bbox": [
+        3362,
+        1705,
+        3469,
+        1883
+      ],
+      "center": [
+        3415,
+        1794
+      ],
+      "width": 107,
+      "height": 178
+    },
+    {
+      "booth_no": "9T127",
+      "exhibitor": "新氧器",
+      "area": "12*9=108",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T127",
+        "新氧器",
+        "12*9=108"
+      ],
+      "booth_no_score": 0.9985564708709717,
+      "bbox": [
+        116,
+        1587,
+        458,
+        2041
+      ],
+      "center": [
+        287,
+        1814
+      ],
+      "width": 342,
+      "height": 454
+    },
+    {
+      "booth_no": "9T128",
+      "exhibitor": "华冠12*15180",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T128",
+        "华冠",
+        "12*15180"
+      ],
+      "booth_no_score": 0.9984647274017334,
+      "bbox": [
+        563,
+        1587,
+        1124,
+        2041
+      ],
+      "center": [
+        843,
+        1814
+      ],
+      "width": 561,
+      "height": 454
+    },
+    {
+      "booth_no": "9T129",
+      "exhibitor": "浩能12*15180",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T129",
+        "浩能",
+        "12*15180"
+      ],
+      "booth_no_score": 0.998931086063385,
+      "bbox": [
+        1124,
+        1587,
+        1687,
+        2041
+      ],
+      "center": [
+        1405,
+        1814
+      ],
+      "width": 563,
+      "height": 454
+    },
+    {
+      "booth_no": "9T131",
+      "exhibitor": "灵鸽",
+      "area": "12*14=168",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T131",
+        "灵鸽",
+        "12*14=168"
+      ],
+      "booth_no_score": 0.9990996241569519,
+      "bbox": [
+        1903,
+        1587,
+        2428,
+        2041
+      ],
+      "center": [
+        2165,
+        1814
+      ],
+      "width": 525,
+      "height": 454
+    },
+    {
+      "booth_no": "9T133",
+      "exhibitor": "格林晟",
+      "area": "12*9=108",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T133",
+        "格林晟",
+        "12*9=108"
+      ],
+      "booth_no_score": 0.9994439959526062,
+      "bbox": [
+        2428,
+        1587,
+        2767,
+        2041
+      ],
+      "center": [
+        2597,
+        1814
+      ],
+      "width": 339,
+      "height": 454
+    },
+    {
+      "booth_no": "9T135",
+      "exhibitor": "达力",
+      "area": "12*10=120",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T135",
+        "达力",
+        "12*10=120"
+      ],
+      "booth_no_score": 0.999337124824524,
+      "bbox": [
+        2872,
+        1587,
+        3251,
+        2041
+      ],
+      "center": [
+        3061,
+        1814
+      ],
+      "width": 379,
+      "height": 454
+    },
+    {
+      "booth_no": null,
+      "exhibitor": "ROPEX",
+      "area": "9*3",
+      "name_part_count": 1,
+      "raw_texts": [
+        "ROPEX",
+        "9*3"
+      ],
+      "booth_no_score": null,
+      "bbox": [
+        3362,
+        1887,
+        3469,
+        2035
+      ],
+      "center": [
+        3415,
+        1961
+      ],
+      "width": 107,
+      "height": 148
+    },
+    {
+      "booth_no": "9T113",
+      "exhibitor": "大德激光",
+      "area": "10*14=140",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T113",
+        "大德激光",
+        "10*14=140"
+      ],
+      "booth_no_score": 0.9991678714752197,
+      "bbox": [
+        1903,
+        2257,
+        2428,
+        2633
+      ],
+      "center": [
+        2165,
+        2445
+      ],
+      "width": 525,
+      "height": 376
+    },
+    {
+      "booth_no": "9T115",
+      "exhibitor": "亿太诺",
+      "area": "10*13=130",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T115",
+        "亿太诺",
+        "10*13=130"
+      ],
+      "booth_no_score": 0.9994297623634338,
+      "bbox": [
+        2428,
+        2257,
+        2916,
+        2633
+      ],
+      "center": [
+        2672,
+        2445
+      ],
+      "width": 488,
+      "height": 376
+    },
+    {
+      "booth_no": "9T109",
+      "exhibitor": "三木(深圳)",
+      "area": "15^10=150",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T109",
+        "三木",
+        "(深圳)",
+        "15^10=150"
+      ],
+      "booth_no_score": 0.9985167145729065,
+      "bbox": [
+        116,
+        2258,
+        491,
+        2823
+      ],
+      "center": [
+        303,
+        2540
+      ],
+      "width": 375,
+      "height": 565
+    },
+    {
+      "booth_no": "9T110",
+      "exhibitor": "图恩视觉",
+      "area": "15*9=135",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T110",
+        "图恩视觉",
+        "15*9=135"
+      ],
+      "booth_no_score": 0.9993881106376648,
+      "bbox": [
+        491,
+        2258,
+        830,
+        2823
+      ],
+      "center": [
+        660,
+        2540
+      ],
+      "width": 339,
+      "height": 565
+    },
+    {
+      "booth_no": "9T112",
+      "exhibitor": "尚水智能",
+      "area": "15*20=300",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T112",
+        "尚水智能",
+        "15*20=300"
+      ],
+      "booth_no_score": 0.9990957856178284,
+      "bbox": [
+        935,
+        2257,
+        1687,
+        2823
+      ],
+      "center": [
+        1311,
+        2540
+      ],
+      "width": 752,
+      "height": 566
+    },
+    {
+      "booth_no": "9T117",
+      "exhibitor": "思客琦15*12180",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T117",
+        "思客琦",
+        "15*12180"
+      ],
+      "booth_no_score": 0.9993063926696777,
+      "bbox": [
+        3021,
+        2258,
+        3475,
+        2823
+      ],
+      "center": [
+        3248,
+        2540
+      ],
+      "width": 454,
+      "height": 565
+    },
+    {
+      "booth_no": "9T118",
+      "exhibitor": "世赫5*14 70",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T118",
+        "世赫",
+        "5*14 70"
+      ],
+      "booth_no_score": 0.9988897323608399,
+      "bbox": [
+        1903,
+        2633,
+        2428,
+        2823
+      ],
+      "center": [
+        2165,
+        2728
+      ],
+      "width": 525,
+      "height": 190
+    },
+    {
+      "booth_no": "9T116",
+      "exhibitor": "鑫信智能",
+      "area": "5*13=65",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T116",
+        "鑫信智能",
+        "5*13=65"
+      ],
+      "booth_no_score": 0.9948335766792298,
+      "bbox": [
+        2428,
+        2633,
+        2916,
+        2823
+      ],
+      "center": [
+        2672,
+        2728
+      ],
+      "width": 488,
+      "height": 190
+    },
+    {
+      "booth_no": "9T099",
+      "exhibitor": "福达",
+      "area": "5*6=10",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T099",
+        "福达",
+        "5*6=10"
+      ],
+      "booth_no_score": 0.9978932023048401,
+      "bbox": [
+        3021,
+        2928,
+        3247,
+        3117
+      ],
+      "center": [
+        3134,
+        3022
+      ],
+      "width": 226,
+      "height": 189
+    },
+    {
+      "booth_no": "9T100",
+      "exhibitor": "松陵",
+      "area": "5*6=30",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T100",
+        "松陵",
+        "5*6=30"
+      ],
+      "booth_no_score": 0.9981302261352539,
+      "bbox": [
+        3247,
+        2928,
+        3475,
+        3117
+      ],
+      "center": [
+        3361,
+        3022
+      ],
+      "width": 228,
+      "height": 189
+    },
+    {
+      "booth_no": "9T091",
+      "exhibitor": "博路威",
+      "area": "15*7=105",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T091",
+        "博路威",
+        "15*7=105"
+      ],
+      "booth_no_score": 0.993682587146759,
+      "bbox": [
+        116,
+        2928,
+        383,
+        3494
+      ],
+      "center": [
+        249,
+        3211
+      ],
+      "width": 267,
+      "height": 566
+    },
+    {
+      "booth_no": "9T092",
+      "exhibitor": "华视集团",
+      "area": "15*9=135",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T092",
+        "华视集团",
+        "15*9=135"
+      ],
+      "booth_no_score": 0.9987191915512085,
+      "bbox": [
+        488,
+        2928,
+        830,
+        3494
+      ],
+      "center": [
+        659,
+        3211
+      ],
+      "width": 342,
+      "height": 566
+    },
+    {
+      "booth_no": "9T093",
+      "exhibitor": "奥鸿智能",
+      "area": "15^20=300",
+      "name_part_count": 1,
+      "raw_texts": [
+        "奥鸿智能",
+        "15^20=300",
+        "9T093",
+        "！",
+        "15*20=300"
+      ],
+      "booth_no_score": 0.9989101648330688,
+      "bbox": [
+        935,
+        2928,
+        1687,
+        3494
+      ],
+      "center": [
+        1311,
+        3211
+      ],
+      "width": 752,
+      "height": 566
+    },
+    {
+      "booth_no": "9T096",
+      "exhibitor": "海目星",
+      "area": "15′27=405",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T096",
+        "海目星",
+        "15′27=405"
+      ],
+      "booth_no_score": 0.9977096676826477,
+      "bbox": [
+        1903,
+        2928,
+        2916,
+        3494
+      ],
+      "center": [
+        2409,
+        3211
+      ],
+      "width": 1013,
+      "height": 566
+    },
+    {
+      "booth_no": "9T082",
+      "exhibitor": "鑫佳诚",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T082",
+        "鑫佳诚"
+      ],
+      "booth_no_score": 0.9979302406311035,
+      "bbox": [
+        3021,
+        3117,
+        3292,
+        3494
+      ],
+      "center": [
+        3156,
+        3305
+      ],
+      "width": 271,
+      "height": 377
+    },
+    {
+      "booth_no": "9T083",
+      "exhibitor": "骄成10°7.2=7210*4.848",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T083",
+        "骄成",
+        "10°7.2=7210*4.848"
+      ],
+      "booth_no_score": 0.9977708578109741,
+      "bbox": [
+        3292,
+        3117,
+        3475,
+        3494
+      ],
+      "center": [
+        3383,
+        3305
+      ],
+      "width": 183,
+      "height": 377
+    },
+    {
+      "booth_no": "9T073",
+      "exhibitor": "智佳能7.5^14=105",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T073",
+        "智佳能",
+        "7.5^14=105"
+      ],
+      "booth_no_score": 0.9965679168701171,
+      "bbox": [
+        116,
+        3710,
+        644,
+        3992
+      ],
+      "center": [
+        380,
+        3851
+      ],
+      "width": 528,
+      "height": 282
+    },
+    {
+      "booth_no": "9T078",
+      "exhibitor": "金银河智能装备8*34272",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T078",
+        "金银河智能装备",
+        "8*34272"
+      ],
+      "booth_no_score": 0.9975871801376343,
+      "bbox": [
+        1903,
+        3710,
+        3173,
+        4011
+      ],
+      "center": [
+        2538,
+        3860
+      ],
+      "width": 1270,
+      "height": 301
+    },
+    {
+      "booth_no": "9T078-2",
+      "exhibitor": "光亚",
+      "area": "15*8=120",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T078-2",
+        "光亚",
+        "15*8=120"
+      ],
+      "booth_no_score": 0.9969397102083478,
+      "bbox": [
+        3173,
+        3710,
+        3475,
+        4276
+      ],
+      "center": [
+        3324,
+        3993
+      ],
+      "width": 302,
+      "height": 566
+    },
+    {
+      "booth_no": "9T075",
+      "exhibitor": "先导智能LEAD",
+      "area": "20*25=500",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T075",
+        "先导智能",
+        "LEAD",
+        "20*25=500"
+      ],
+      "booth_no_score": 0.9973579049110413,
+      "bbox": [
+        749,
+        3710,
+        1687,
+        4462
+      ],
+      "center": [
+        1218,
+        4086
+      ],
+      "width": 938,
+      "height": 752
+    },
+    {
+      "booth_no": "9T072",
+      "exhibitor": "中鼎智能科技7.5*14105",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T072",
+        "中鼎智能科技",
+        "7.5*14105"
+      ],
+      "booth_no_score": 0.9991353511810303,
+      "bbox": [
+        116,
+        3992,
+        644,
+        4276
+      ],
+      "center": [
+        380,
+        4134
+      ],
+      "width": 528,
+      "height": 284
+    },
+    {
+      "booth_no": "9T078-1",
+      "exhibitor": "诚捷智能",
+      "area": "7*34=238",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T078-1",
+        "诚捷智能",
+        "7*34=238"
+      ],
+      "booth_no_score": 0.9986178960118975,
+      "bbox": [
+        1903,
+        4011,
+        3173,
+        4276
+      ],
+      "center": [
+        2538,
+        4143
+      ],
+      "width": 1270,
+      "height": 265
+    },
+    {
+      "booth_no": "9T056-1",
+      "exhibitor": "福艾德",
+      "area": "7^14=98",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T056-1",
+        "福艾德",
+        "7^14=98"
+      ],
+      "booth_no_score": 0.9993783576147897,
+      "bbox": [
+        116,
+        4380,
+        644,
+        4644
+      ],
+      "center": [
+        380,
+        4512
+      ],
+      "width": 528,
+      "height": 264
+    },
+    {
+      "booth_no": "9T060",
+      "exhibitor": "纳科诺尔15*13.5202.5",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T060",
+        "纳科诺尔",
+        "15*13.5202.5"
+      ],
+      "booth_no_score": 0.9985758423805237,
+      "bbox": [
+        1903,
+        4380,
+        2409,
+        4946
+      ],
+      "center": [
+        2156,
+        4663
+      ],
+      "width": 506,
+      "height": 566
+    },
+    {
+      "booth_no": "9T061",
+      "exhibitor": "红运机械15*13.5202.5",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T061",
+        "红运机械",
+        "15*13.5202.5"
+      ],
+      "booth_no_score": 0.9978222608566284,
+      "bbox": [
+        2409,
+        4380,
+        2916,
+        4946
+      ],
+      "center": [
+        2662,
+        4663
+      ],
+      "width": 507,
+      "height": 566
+    },
+    {
+      "booth_no": "9T063",
+      "exhibitor": "EVOC15*12180",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T063",
+        "EVOC",
+        "15*12180"
+      ],
+      "booth_no_score": 0.9992254257202149,
+      "bbox": [
+        3021,
+        4381,
+        3475,
+        4946
+      ],
+      "center": [
+        3248,
+        4663
+      ],
+      "width": 454,
+      "height": 565
+    },
+    {
+      "booth_no": "9T056",
+      "exhibitor": "申菱8*14112",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T056",
+        "申菱",
+        "8*14112"
+      ],
+      "booth_no_score": 0.9984809875488281,
+      "bbox": [
+        116,
+        4644,
+        644,
+        4946
+      ],
+      "center": [
+        380,
+        4795
+      ],
+      "width": 528,
+      "height": 302
+    },
+    {
+      "booth_no": "9T053",
+      "exhibitor": "软控10*25250",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T053",
+        "软控",
+        "10*25250"
+      ],
+      "booth_no_score": 0.997937822341919,
+      "bbox": [
+        749,
+        4567,
+        1687,
+        4946
+      ],
+      "center": [
+        1218,
+        4756
+      ],
+      "width": 938,
+      "height": 379
+    },
+    {
+      "booth_no": "9T028",
+      "exhibitor": "优尼恩",
+      "area": "6*6=36",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T028",
+        "优尼恩",
+        "6*6=36"
+      ],
+      "booth_no_score": 0.9984026074409484,
+      "bbox": [
+        116,
+        5163,
+        346,
+        5393
+      ],
+      "center": [
+        231,
+        5278
+      ],
+      "width": 230,
+      "height": 230
+    },
+    {
+      "booth_no": "9T026",
+      "exhibitor": "智微智能",
+      "area": "9^6=54",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T026",
+        "智微",
+        "智能",
+        "9^6=54"
+      ],
+      "booth_no_score": 0.9976540803909302,
+      "bbox": [
+        451,
+        5163,
+        677,
+        5501
+      ],
+      "center": [
+        564,
+        5332
+      ],
+      "width": 226,
+      "height": 338
+    },
+    {
+      "booth_no": "9T029",
+      "exhibitor": "钛玛科",
+      "area": "9^6=54",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T029",
+        "钛玛科",
+        "9^6=54"
+      ],
+      "booth_no_score": 0.9975222468376159,
+      "bbox": [
+        677,
+        5163,
+        905,
+        5501
+      ],
+      "center": [
+        791,
+        5332
+      ],
+      "width": 228,
+      "height": 338
+    },
+    {
+      "booth_no": "9T031",
+      "exhibitor": "康普",
+      "area": "8*18=144",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T031",
+        "康普",
+        "8*18=144"
+      ],
+      "booth_no_score": 0.9818084597587585,
+      "bbox": [
+        1010,
+        5163,
+        1687,
+        5464
+      ],
+      "center": [
+        1348,
+        5313
+      ],
+      "width": 677,
+      "height": 301
+    },
+    {
+      "booth_no": "9T032",
+      "exhibitor": "曼恩斯特15*23345",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T032",
+        "曼恩斯特",
+        "15*23345"
+      ],
+      "booth_no_score": 0.9984433770179748,
+      "bbox": [
+        1903,
+        5163,
+        2767,
+        5728
+      ],
+      "center": [
+        2335,
+        5445
+      ],
+      "width": 864,
+      "height": 565
+    },
+    {
+      "booth_no": "9T035",
+      "exhibitor": "宏H15*16240",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T035",
+        "宏H",
+        "15*16240"
+      ],
+      "booth_no_score": 0.9973627090454101,
+      "bbox": [
+        2872,
+        5163,
+        3475,
+        5728
+      ],
+      "center": [
+        3173,
+        5445
+      ],
+      "width": 603,
+      "height": 565
+    },
+    {
+      "booth_no": "9T031-1",
+      "exhibitor": "杰维7*18126",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T031-1",
+        "杰维",
+        "7*18126"
+      ],
+      "booth_no_score": 0.9988891141755241,
+      "bbox": [
+        1010,
+        5464,
+        1687,
+        5728
+      ],
+      "center": [
+        1348,
+        5596
+      ],
+      "width": 677,
+      "height": 264
+    },
+    {
+      "booth_no": "9T027",
+      "exhibitor": "德森特",
+      "area": "6′6=36",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T027",
+        "德森特",
+        "6′6=36"
+      ],
+      "booth_no_score": 0.9979660868644714,
+      "bbox": [
+        116,
+        5498,
+        346,
+        5728
+      ],
+      "center": [
+        231,
+        5613
+      ],
+      "width": 230,
+      "height": 230
+    },
+    {
+      "booth_no": "9T030",
+      "exhibitor": "博亚66=36",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T030",
+        "博亚",
+        "66=36"
+      ],
+      "booth_no_score": 0.9984482765197754,
+      "bbox": [
+        451,
+        5501,
+        677,
+        5728
+      ],
+      "center": [
+        564,
+        5614
+      ],
+      "width": 226,
+      "height": 227
+    },
+    {
+      "booth_no": "9T025",
+      "exhibitor": "博科66=36",
+      "area": null,
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T025",
+        "博科",
+        "66=36"
+      ],
+      "booth_no_score": 0.9990914702415467,
+      "bbox": [
+        677,
+        5501,
+        905,
+        5728
+      ],
+      "center": [
+        791,
+        5614
+      ],
+      "width": 228,
+      "height": 227
+    },
+    {
+      "booth_no": "9T009",
+      "exhibitor": "精实机电",
+      "area": "15*20=300",
+      "name_part_count": 1,
+      "raw_texts": [
+        "精实机电",
+        "15*20=300",
+        "9T009",
+        "月"
+      ],
+      "booth_no_score": 0.9982223987579346,
+      "bbox": [
+        116,
+        5833,
+        868,
+        6399
+      ],
+      "center": [
+        492,
+        6116
+      ],
+      "width": 752,
+      "height": 566
+    },
+    {
+      "booth_no": "9T011",
+      "exhibitor": "蝶凯",
+      "area": "15^6=90",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T011",
+        "蝶凯",
+        "15^6=90"
+      ],
+      "booth_no_score": 0.9991248726844788,
+      "bbox": [
+        972,
+        5833,
+        1199,
+        6399
+      ],
+      "center": [
+        1085,
+        6116
+      ],
+      "width": 227,
+      "height": 566
+    },
+    {
+      "booth_no": "9T013",
+      "exhibitor": "星云电子Nebula",
+      "area": "15^13=195",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T013",
+        "星云电子",
+        "Nebula",
+        "15^13=195"
+      ],
+      "booth_no_score": 0.9985947489738465,
+      "bbox": [
+        1199,
+        5833,
+        1687,
+        6399
+      ],
+      "center": [
+        1443,
+        6116
+      ],
+      "width": 488,
+      "height": 566
+    },
+    {
+      "booth_no": "9T015",
+      "exhibitor": "优动能",
+      "area": "15^16=240",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T015",
+        "优动能",
+        "15^16=240"
+      ],
+      "booth_no_score": 0.999271035194397,
+      "bbox": [
+        1903,
+        5833,
+        2502,
+        6399
+      ],
+      "center": [
+        2202,
+        6116
+      ],
+      "width": 599,
+      "height": 566
+    },
+    {
+      "booth_no": "9T016",
+      "exhibitor": "时代高科",
+      "area": "15*17=255",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9T016",
+        "时代高科",
+        "15*17=255"
+      ],
+      "booth_no_score": 0.9983450055122376,
+      "bbox": [
+        2502,
+        5833,
+        3140,
+        6399
+      ],
+      "center": [
+        2821,
+        6116
+      ],
+      "width": 638,
+      "height": 566
+    },
+    {
+      "booth_no": "9T019",
+      "exhibitor": "中村精机",
+      "area": "15^6=90",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9T019",
+        "中村",
+        "精机",
+        "15^6=90"
+      ],
+      "booth_no_score": 0.9977839589118958,
+      "bbox": [
+        3244,
+        5833,
+        3475,
+        6399
+      ],
+      "center": [
+        3359,
+        6116
+      ],
+      "width": 231,
+      "height": 566
+    },
+    {
+      "booth_no": "9W006",
+      "exhibitor": "SCOM6恒进精密",
+      "area": "3*6",
+      "name_part_count": 2,
+      "raw_texts": [
+        "SCOM6",
+        "恒进精密",
+        "3*6",
+        "9W006"
+      ],
+      "booth_no_score": 0.9997184157371521,
+      "bbox": [
+        1047,
+        6541,
+        1277,
+        6659
+      ],
+      "center": [
+        1162,
+        6600
+      ],
+      "width": 230,
+      "height": 118
+    },
+    {
+      "booth_no": "9W002",
+      "exhibitor": "MoceanInnovations",
+      "area": "6*636",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9W002",
+        "Mocean",
+        "Innovations",
+        "6*636"
+      ],
+      "booth_no_score": 0.9871028900146485,
+      "bbox": [
+        1456,
+        6541,
+        1687,
+        6767
+      ],
+      "center": [
+        1571,
+        6654
+      ],
+      "width": 231,
+      "height": 226
+    },
+    {
+      "booth_no": "9W005",
+      "exhibitor": "宇电温控",
+      "area": "6*636",
+      "name_part_count": 2,
+      "raw_texts": [
+        "9W005",
+        "宇电",
+        "温控",
+        "6*636"
+      ],
+      "booth_no_score": 0.9765193819999695,
+      "bbox": [
+        1904,
+        6541,
+        2134,
+        6767
+      ],
+      "center": [
+        2019,
+        6654
+      ],
+      "width": 230,
+      "height": 226
+    },
+    {
+      "booth_no": "9W007",
+      "exhibitor": "顺冠",
+      "area": null,
+      "name_part_count": 1,
+      "raw_texts": [
+        "9W007",
+        "顺冠"
+      ],
+      "booth_no_score": 0.9595429420471191,
+      "bbox": [
+        2313,
+        6541,
+        2544,
+        6659
+      ],
+      "center": [
+        2428,
+        6600
+      ],
+      "width": 231,
+      "height": 118
+    },
+    {
+      "booth_no": "9W001",
+      "exhibitor": "锐健",
+      "area": "6*6=36",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9W001",
+        "锐健",
+        "6*6=36"
+      ],
+      "booth_no_score": 0.9965081095695496,
+      "bbox": [
+        1456,
+        6767,
+        1687,
+        6995
+      ],
+      "center": [
+        1571,
+        6881
+      ],
+      "width": 231,
+      "height": 228
+    },
+    {
+      "booth_no": "9W003",
+      "exhibitor": "鸿通晟",
+      "area": "6*6=36",
+      "name_part_count": 1,
+      "raw_texts": [
+        "9W003",
+        "鸿通晟",
+        "6*6=36"
+      ],
+      "booth_no_score": 0.9973737955093384,
+      "bbox": [
+        1904,
+        6767,
+        2134,
+        6995
+      ],
+      "center": [
+        2019,
+        6881
+      ],
+      "width": 230,
+      "height": 228
+    }
+  ],
+  "unassigned_ocr_texts": []
+}
