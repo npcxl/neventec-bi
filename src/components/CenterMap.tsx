@@ -266,10 +266,20 @@ function normalizeBooth(item: SafetyCoordItem): DemoBooth | null {
   const center = item.center;
   const width = Number(item.width ?? (bbox ? bbox[2] - bbox[0] : NaN));
   const height = Number(item.height ?? (bbox ? bbox[3] - bbox[1] : NaN));
-  const hasShape =
-    (Array.isArray(corners) && corners.length > 0) ||
-    (bbox && center && Number.isFinite(width) && Number.isFinite(height));
-  if (!hasShape) return null;
+
+  // Filter invalid coordinates: corners < 3 and no valid bbox/center
+  const hasValidCorners = Array.isArray(corners) && corners.length >= 3;
+  const hasValidBbox = bbox && center && Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
+  if (!hasValidCorners && !hasValidBbox) return null;
+
+  // Filter NaN/Infinity in corners
+  if (hasValidCorners && !hasValidBbox) {
+    const allFinite = corners.every((c) =>
+      Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1])
+    );
+    if (!allFinite) return null;
+  }
+
   return {
     booth_no: item.booth_no ?? null,
     exhibitor: String(item.exhibitor ?? ""),
@@ -277,8 +287,8 @@ function normalizeBooth(item: SafetyCoordItem): DemoBooth | null {
     raw_texts: item.raw_texts,
     bbox: bbox ?? [0, 0, 0, 0],
     center: center ?? [0, 0],
-    width: Number.isFinite(width) ? width : 0,
-    height: Number.isFinite(height) ? height : 0,
+    width: Number.isFinite(width) && width > 0 ? width : 0,
+    height: Number.isFinite(height) && height > 0 ? height : 0,
     corners,
   };
 }
@@ -393,7 +403,8 @@ const DemoChart = memo(function DemoChart({
     chartInstance.current = chart;
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
-    let rafId: number | null = null;
+    let dataZoomRafId: number | null = null;
+    let resizeRafId: number | null = null;
     let pendingDataZoom: (() => void) | null = null;
     const prevDataIndexRef = { current: -1 };
     const prevZoomLevelRef = { current: 1 };
@@ -415,6 +426,14 @@ const DemoChart = memo(function DemoChart({
       activeIndexRef.current = nextIndex;
     };
 
+    // --- mouseout: only downplay current highlighted item ---
+    const handleMouseOut = () => {
+      if (prevDataIndexRef.current >= 0 && !disposed && !chart.isDisposed()) {
+        chart.dispatchAction({ type: "downplay", seriesIndex: 0, dataIndex: prevDataIndexRef.current });
+        prevDataIndexRef.current = -1;
+      }
+    };
+
     if (!pointsRef.current.length) {
       chart.clear();
       chart.setOption({ backgroundColor: "transparent" }, true);
@@ -423,7 +442,9 @@ const DemoChart = memo(function DemoChart({
         resizeObserver?.disconnect();
         chart.off("click");
         chart.off("mouseover");
-        if (rafId !== null) cancelAnimationFrame(rafId);
+        chart.off("mouseout");
+        if (dataZoomRafId !== null) cancelAnimationFrame(dataZoomRafId);
+        if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
       };
     }
 
@@ -683,7 +704,7 @@ const DemoChart = memo(function DemoChart({
         const clickedIndex = params.dataIndex;
         const clickedBooth = currentPoints[clickedIndex];
         if (!clickedBooth) return;
-        onSelect({
+        onSelectRef.current({
           code: clickedBooth.code,
           name: clickedBooth.name,
           area: clickedBooth.area,
@@ -692,22 +713,17 @@ const DemoChart = memo(function DemoChart({
           w: clickedBooth.value[2],
           h: clickedBooth.value[3],
         });
-        onBoothChange?.(clickedBooth.code, clickedBooth.name);
+        onBoothChangeRef.current?.(clickedBooth.code, clickedBooth.name);
       }
     };
 
     // --- Optimized datazoom: rAF-merged, no getOption/refreshImmediately ---
     const TEXT_LEVEL_THRESHOLD = MIN_ZOOM_VISIBLE_RATIO;
     const handleDataZoom = (params: any) => {
-      // Use event params to get zoom level without getOption()
-      const batch = params?.batch;
-      let newLevel = zoomLevelRef.current;
-      if (Array.isArray(batch) && batch.length > 0) {
-        const zoom = batch[0];
-        if (typeof zoom?.start === "number" && typeof zoom?.end === "number") {
-          newLevel = Math.max(0.01, (zoom.end - zoom.start) / 100);
-        }
-      }
+      // Compatible: batch[0] or direct params
+      const zoom = params?.batch?.[0] ?? params;
+      if (typeof zoom?.start !== "number" || typeof zoom?.end !== "number") return;
+      const newLevel = Math.max(0.01, (zoom.end - zoom.start) / 100);
       zoomLevelRef.current = newLevel;
 
       // Only update series when crossing text visibility threshold
@@ -715,18 +731,16 @@ const DemoChart = memo(function DemoChart({
       const isShowingText = newLevel >= TEXT_LEVEL_THRESHOLD;
       if (wasShowingText !== isShowingText) {
         prevZoomLevelRef.current = newLevel;
-        // Merge via rAF: only process latest in each frame
         pendingDataZoom = () => {
           if (disposed || chart.isDisposed()) return;
           chart.setOption({ series: [{ data: pointsRef.current }] }, false, true);
         };
-        if (rafId === null) {
-          rafId = requestAnimationFrame(() => {
-            rafId = null;
-            if (pendingDataZoom) {
-              pendingDataZoom();
-              pendingDataZoom = null;
-            }
+        if (dataZoomRafId === null) {
+          dataZoomRafId = requestAnimationFrame(() => {
+            dataZoomRafId = null;
+            const fn = pendingDataZoom;
+            pendingDataZoom = null;
+            fn?.();
           });
         }
       }
@@ -743,12 +757,14 @@ const DemoChart = memo(function DemoChart({
 
     chart.off("click");
     chart.off("mouseover");
+    chart.off("mouseout");
     chart.off("datazoom");
     chart.on("click", handleChartClick);
     chart.on("mouseover", handleMouseOver);
+    chart.on("mouseout", handleMouseOut);
     chart.on("datazoom", handleDataZoom);
 
-    // --- Optimized ResizeObserver: rAF-merged, skip no-change ---
+    // --- Optimized ResizeObserver: separate rAF, skip no-change ---
     prevResizeDimsRef.width = chartRef.current.clientWidth || 0;
     prevResizeDimsRef.height = chartRef.current.clientHeight || 0;
     resizeObserver = new ResizeObserver(() => {
@@ -758,9 +774,9 @@ const DemoChart = memo(function DemoChart({
       if (w === prevResizeDimsRef.width && h === prevResizeDimsRef.height) return;
       prevResizeDimsRef.width = w;
       prevResizeDimsRef.height = h;
-      if (rafId === null) {
-        rafId = requestAnimationFrame(() => {
-          rafId = null;
+      if (resizeRafId === null) {
+        resizeRafId = requestAnimationFrame(() => {
+          resizeRafId = null;
           if (!disposed && !chart.isDisposed()) chart.resize();
         });
       }
@@ -769,13 +785,18 @@ const DemoChart = memo(function DemoChart({
 
     return () => {
       disposed = true;
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
+      if (dataZoomRafId !== null) {
+        cancelAnimationFrame(dataZoomRafId);
+        dataZoomRafId = null;
+      }
+      if (resizeRafId !== null) {
+        cancelAnimationFrame(resizeRafId);
+        resizeRafId = null;
       }
       resizeObserver?.disconnect();
       chart.off("click", handleChartClick);
       chart.off("mouseover", handleMouseOver);
+      chart.off("mouseout", handleMouseOut);
       chart.off("datazoom", handleDataZoom);
       if (!chart.isDisposed()) chart.dispose();
     };
