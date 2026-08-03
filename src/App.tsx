@@ -469,35 +469,10 @@ export default function App() {
 
   const loadOverview = async (signal?: AbortSignal) => {
     if (!DEFAULT_EXHIBITION_ID) return;
-    const [
-      galleryRes,
-      boothRes,
-      constructOverviewRes,
-      constructProcessRes,
-      constructMaterialRes,
-      boothProgressRes,
-      boothProgressPictureRes,
-      exhibitionProcessRes,
-      safetyCollectRes,
-      safetyPageRes,
-      violationTypeRes,
-      violationRecordRes,
-      violationSituationRes,
-      orderCollectRes,
-    ] = await Promise.all([
+    // Only load common data + current module data on first screen
+    const [galleryRes, boothRes, orderCollectRes] = await Promise.all([
       screenApi.getGalleryInfo(DEFAULT_EXHIBITION_ID, signal),
       screenApi.getSceneBoothPageInfo(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getConstructOverview(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getConstructProcess(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getBoothProcess(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getBoothProgressPicture(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getSafetyCollect(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getSafetyPageInfo(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getViolationType(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getViolationRecord(DEFAULT_EXHIBITION_ID, signal),
-      screenApi.getViolationSituation(DEFAULT_EXHIBITION_ID, signal),
       screenApi.getOrderCollect(DEFAULT_EXHIBITION_ID, signal),
     ]);
     const data = (galleryRes?.data ?? galleryRes ?? {}) as
@@ -520,59 +495,8 @@ export default function App() {
       hallName: item.hallName?.trim() ? item.hallName : "未知",
     }));
 
-    const safetyData = (safetyPageRes?.data ?? safetyPageRes ?? []) as Array<{
-      boothNo?: string;
-      company?: string;
-      recordContent?: string;
-      riskAssessment?: string;
-      rectifyCheckStatus?: string;
-      safetyStatus?: string;
-      targetCheckTime?: string;
-      hallId?: string;
-      hallName?: string;
-    }>;
-    const normalizedSafetyRows = safetyData.map((item) => ({
-      ...item,
-      hallId: item.hallId?.trim() ? item.hallId : UNKNOWN_HALL_ID,
-      hallName: item.hallName?.trim() ? item.hallName : "未知",
-    }));
-
     setGalleryRows(normalizedRows);
     setBoothRows(normalizedBooths);
-    setConstructOverviewData(
-      constructOverviewRes?.data ?? constructOverviewRes ?? null,
-    );
-    setConstructProcessData(
-      constructProcessRes?.data ?? constructProcessRes ?? null,
-    );
-    setConstructMaterialData(
-      constructMaterialRes?.data ?? constructMaterialRes ?? null,
-    );
-    setBoothProgressData(
-      boothProgressRes?.data ??
-        boothProgressRes ??
-        constructProcessRes?.data ??
-        constructProcessRes ??
-        null,
-    );
-    const nextConstructPictures = Array.isArray(
-      boothProgressPictureRes?.data ?? boothProgressPictureRes,
-    )
-      ? (boothProgressPictureRes?.data ?? boothProgressPictureRes)
-      : [];
-    setBoothProgressPictures(nextConstructPictures);
-    setExhibitionProcessData(
-      exhibitionProcessRes?.data ?? exhibitionProcessRes ?? null,
-    );
-    setSafetyRows(normalizedSafetyRows);
-    setSafetyCollect(safetyCollectRes?.data ?? safetyCollectRes ?? null);
-    setViolationTypeData(violationTypeRes?.data ?? violationTypeRes ?? null);
-    const nextViolationRecordData =
-      violationRecordRes?.data ?? violationRecordRes ?? null;
-    setViolationRecordData(nextViolationRecordData);
-    setViolationSituationData(
-      violationSituationRes?.data ?? violationSituationRes ?? null,
-    );
     setOrderCollectData(orderCollectRes?.data ?? orderCollectRes ?? null);
     setExpoName(
       normalizedRows.find((item) => item.expoName?.trim())?.expoName?.trim() ||
@@ -585,8 +509,13 @@ export default function App() {
         hallName: item.hallName || "未知",
       })),
     });
-    setHallMode("ExhibitionOverview");
-    setSelectedHallId("all");
+    // Only set defaults if not already restored from prefs
+    if (hallMode === "ExhibitionOverview" && selectedHallId === "all") {
+      // Check if restored hallId still exists in loaded halls
+      if (!normalizedRows.some((h) => h.hallId === selectedHallId && selectedHallId !== "all")) {
+        setSelectedHallId("all");
+      }
+    }
     setSelectedBoothId("");
   };
 
@@ -653,6 +582,8 @@ export default function App() {
   }, [isHall3DView]);
 
   useEffect(() => {
+    // Don't run module requests during initial loading - data comes from loadOverview
+    if (isInitialLoading) return;
     let cancelled = false;
     const controller = new AbortController();
     const now = Date.now();
@@ -695,19 +626,16 @@ export default function App() {
     };
 
     if (isThrottled && cachedEntry) {
-      console.log(
-        "[App] 命中 60s 切换缓存，先回填后静默刷新",
-        throttleKey,
-        cachedEntry?.data.summary,
-      );
-
+      console.log("[App] 命中 60s 切换缓存，直接复用", throttleKey);
       refreshFromCache(cachedEntry);
       setIsModuleLoading(false);
       setIsSwitchLoading(false);
-    } else {
-      setIsModuleLoading(shouldShowLoading);
-      setIsSwitchLoading(shouldShowLoading);
+      lastActiveModuleRef.current = { hallMode, selectedHallId };
+      return;
     }
+
+    setIsModuleLoading(shouldShowLoading);
+    setIsSwitchLoading(shouldShowLoading);
     lastActiveModuleRef.current = { hallMode, selectedHallId };
 
     const run = async () => {
@@ -840,18 +768,9 @@ export default function App() {
                     DEFAULT_EXHIBITION_ID,
                     controller.signal,
                   ),
-                  screenApi.getBoothProgressPicture(
-                    DEFAULT_EXHIBITION_ID,
-                    controller.signal,
-                  ),
                 ]
               : [
                   screenApi.getExhibitionProcessByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    controller.signal,
-                  ),
-                  screenApi.getBoothProgressPictureByHallId(
                     DEFAULT_EXHIBITION_ID,
                     selectedHallId,
                     controller.signal,
@@ -1034,13 +953,22 @@ export default function App() {
           setViolationTypeData(nextViolationTypeData);
           setViolationRecordData(nextViolationRecordData);
           setViolationSituationData(nextViolationSituationData);
-          saveCache({
-            safetyRows: normalizedSafetyRows,
-            safetyCollect: nextSafetyCollect,
-            violationTypeData: nextViolationTypeData,
-            violationRecordData: nextViolationRecordData,
-            violationSituationData: nextViolationSituationData,
-          });
+          saveCache(
+            {
+              safetyRows: normalizedSafetyRows,
+              safetyCollect: nextSafetyCollect,
+              violationTypeData: nextViolationTypeData,
+              violationRecordData: nextViolationRecordData,
+              violationSituationData: nextViolationSituationData,
+            },
+            {
+              safetyRows: normalizedSafetyRows,
+              safetyCollect: nextSafetyCollect,
+              violationTypeData: nextViolationTypeData,
+              violationRecordData: nextViolationRecordData,
+              violationSituationData: nextViolationSituationData,
+            },
+          );
         }
       } finally {
         moduleFetchInFlightRef.current = false;
@@ -1344,24 +1272,7 @@ export default function App() {
             setBoothProgressData(safeData<any>(res, null));
           },
         },
-        {
-          key: "boothProgressPicture",
-          run: async (signal: AbortSignal) => {
-            const res =
-              selectedHallId === "all"
-                ? await screenApi.getBoothProgressPicture(
-                    DEFAULT_EXHIBITION_ID,
-                    signal,
-                  )
-                : await screenApi.getBoothProgressPictureByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    signal,
-                  );
-            const pictures = safeData<any[]>(res, []);
-            setBoothProgressPictures(Array.isArray(pictures) ? pictures : []);
-          },
-        },
+        // boothProgressPicture is fetched by ConstructCarousel effect only
         {
           key: "exhibitionProcess",
           run: async (signal: AbortSignal) => {
