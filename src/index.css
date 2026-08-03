@@ -62,38 +62,7 @@ body {
   /* 确保初始状态不可见，等待动画执行 */
 }
 
-/* 流光边框核心动画容器 */
-.flowing-border {
-  position: relative;
-  overflow: hidden;
-}
 
-.flowing-border::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(transparent 0%,
-      transparent 35%,
-      #00e5ff 50%,
-      transparent 50%,
-      transparent 85%,
-      #0066ff 100%);
-  animation: borderRotate 4s linear infinite;
-  z-index: 0;
-}
-
-@keyframes borderRotate {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
 
 
 @keyframes demo-br2-scroll {

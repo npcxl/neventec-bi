@@ -16,7 +16,7 @@ import ConstructCarousel from "./components/Construct/ConstructCarousel";
 import SafetyCarousel from "./components/Safety/ConstructCarousel";
 import { useSequentialApiPolling } from "./hooks/useSequentialApiPolling";
 
-const STORAGE_KEY_PREFIX = "db-demo:app-state:v2";
+const STORAGE_KEY_PREFIX = "db-demo:app-prefs:v3";
 type HallSummary = {
   boothNum?: number;
   expoName?: string;
@@ -53,50 +53,12 @@ type SafetyRow = {
   hallName?: string;
 };
 
-type AppPersistedState = {
+// Lightweight UI preferences only
+type AppPersistedPrefs = {
   exhibitionId: string;
-  initData: {
-    exhibitionId: string;
-    halls: Array<{ hallId: string; hallName: string }>;
-  };
   selectedHallId: string;
   hallMode: ModuleKey;
   expoName: string;
-  galleryRows: HallSummary[];
-  boothRows: BoothRow[];
-  constructOverviewData: unknown;
-  constructProcessData: unknown;
-  constructMaterialData: unknown;
-  boothProgressData: unknown;
-  boothProgressPictures: unknown[];
-  exhibitionProcessData: unknown;
-  safetyRows: SafetyRow[];
-  safetyCollect: unknown;
-  violationTypeData: unknown;
-  violationRecordData: unknown;
-  violationSituationData: unknown;
-  orderCollectData: unknown;
-};
-
-type CachedModuleData = Partial<
-  Pick<
-    AppPersistedState,
-    | "boothRows"
-    | "constructOverviewData"
-    | "constructProcessData"
-    | "constructMaterialData"
-    | "boothProgressData"
-    | "boothProgressPictures"
-    | "exhibitionProcessData"
-    | "safetyRows"
-    | "safetyCollect"
-    | "violationTypeData"
-    | "violationRecordData"
-    | "violationSituationData"
-    | "orderCollectData"
-  >
-> & {
-  summary: Record<string, unknown>;
 };
 
 //从url中获取exhibitionId
@@ -146,179 +108,27 @@ function getStorageKey(exhibitionId: string) {
   return `${STORAGE_KEY_PREFIX}:${exhibitionId || "unknown"}`;
 }
 
-function applyCachedModuleData(
-  cachedData: CachedModuleData,
-  setters: {
-    setBoothRows: (value: BoothRow[]) => void;
-    setConstructOverviewData: (value: unknown) => void;
-    setConstructProcessData: (value: unknown) => void;
-    setConstructMaterialData: (value: unknown) => void;
-    setBoothProgressData: (value: unknown) => void;
-    setBoothProgressPictures: (value: unknown[]) => void;
-    setExhibitionProcessData: (value: unknown) => void;
-    setSafetyRows: (value: SafetyRow[]) => void;
-    setSafetyCollect: (value: unknown) => void;
-    setViolationTypeData: (value: unknown) => void;
-    setViolationRecordData: (value: unknown) => void;
-    setViolationSituationData: (value: unknown) => void;
-    setOrderCollectData: (value: unknown) => void;
-  },
-) {
-  if (cachedData.boothRows) setters.setBoothRows(cachedData.boothRows);
-  if (cachedData.constructOverviewData !== undefined)
-    setters.setConstructOverviewData(cachedData.constructOverviewData);
-  if (cachedData.constructProcessData !== undefined)
-    setters.setConstructProcessData(cachedData.constructProcessData);
-  if (cachedData.constructMaterialData !== undefined)
-    setters.setConstructMaterialData(cachedData.constructMaterialData);
-  if (cachedData.boothProgressData !== undefined)
-    setters.setBoothProgressData(cachedData.boothProgressData);
-  if (cachedData.boothProgressPictures)
-    setters.setBoothProgressPictures(cachedData.boothProgressPictures);
-  if (cachedData.exhibitionProcessData !== undefined)
-    setters.setExhibitionProcessData(cachedData.exhibitionProcessData);
-  if (cachedData.safetyRows) setters.setSafetyRows(cachedData.safetyRows);
-  if (cachedData.safetyCollect !== undefined)
-    setters.setSafetyCollect(cachedData.safetyCollect);
-  if (cachedData.violationTypeData !== undefined)
-    setters.setViolationTypeData(cachedData.violationTypeData);
-  if (cachedData.violationRecordData !== undefined)
-    setters.setViolationRecordData(cachedData.violationRecordData);
-  if (cachedData.violationSituationData !== undefined)
-    setters.setViolationSituationData(cachedData.violationSituationData);
-  if (cachedData.orderCollectData !== undefined)
-    setters.setOrderCollectData(cachedData.orderCollectData);
-}
-
-function getCacheState(
-  cachedEntry:
-    | {
-        at: number;
-        data: CachedModuleData;
-      }
-    | undefined,
-) {
-  const now = Date.now();
-  const isValid = Boolean(cachedEntry && now - cachedEntry.at < 60_000);
-  return { isValid, cachedEntry };
-}
-
-function readPersistedState(exhibitionId: string): AppPersistedState | null {
+function readPersistedPrefs(exhibitionId: string): AppPersistedPrefs | null {
   try {
     const raw = window.localStorage.getItem(getStorageKey(exhibitionId));
     if (!raw) return null;
-    return JSON.parse(raw) as AppPersistedState;
-  } catch (error) {
-    console.warn("[App] failed to read persisted state", error);
+    return JSON.parse(raw) as AppPersistedPrefs;
+  } catch {
     return null;
   }
 }
 
-function writePersistedState(state: AppPersistedState) {
+function writePersistedPrefs(prefs: AppPersistedPrefs) {
   try {
-    window.localStorage.setItem(
-      getStorageKey(state.exhibitionId),
-      JSON.stringify(state),
-    );
-  } catch (error) {
-    console.warn("[App] failed to persist state", error);
+    const prevRaw = window.localStorage.getItem(getStorageKey(prefs.exhibitionId));
+    const prev = prevRaw ? (JSON.parse(prevRaw) as AppPersistedPrefs) : null;
+    if (prev && prev.selectedHallId === prefs.selectedHallId && prev.hallMode === prefs.hallMode && prev.expoName === prefs.expoName) {
+      return; // no change, skip write
+    }
+    window.localStorage.setItem(getStorageKey(prefs.exhibitionId), JSON.stringify(prefs));
+  } catch {
+    // ignore
   }
-}
-
-function createPersistedState(
-  partial: Partial<AppPersistedState> & {
-    exhibitionId: string;
-    initData: AppPersistedState["initData"];
-    selectedHallId: string;
-    hallMode: ModuleKey;
-    expoName: string;
-  },
-): AppPersistedState {
-  return {
-    exhibitionId: partial.exhibitionId,
-    initData: partial.initData,
-    selectedHallId: partial.selectedHallId,
-    hallMode: partial.hallMode,
-    expoName: partial.expoName,
-    galleryRows: (partial.galleryRows ?? []).slice(0, 8).map((item) => ({
-      boothNum: item.boothNum,
-      expoName: item.expoName,
-      expoid: item.expoid,
-      hallId: item.hallId,
-      hallName: item.hallName,
-      specialArea: item.specialArea,
-      specialAreaNum: item.specialAreaNum,
-      standArea: item.standArea,
-      standardAreaNum: item.standardAreaNum,
-    })),
-    boothRows: (partial.boothRows ?? []).slice(0, 8).map((item) => ({
-      boothNo: item.boothNo,
-      boothId: item.boothId,
-      exhibitor: item.exhibitor,
-      report: item.report,
-      paid: item.paid,
-      declare: item.declare,
-      expoid: item.expoid,
-      expoName: item.expoName,
-      hallId: item.hallId,
-      hallName: item.hallName,
-    })),
-    constructOverviewData: simplifyPersistedValue(
-      partial.constructOverviewData,
-    ),
-    constructProcessData: simplifyPersistedValue(partial.constructProcessData),
-    constructMaterialData: simplifyPersistedValue(
-      partial.constructMaterialData,
-    ),
-    boothProgressData: simplifyPersistedValue(partial.boothProgressData),
-    boothProgressPictures: simplifyBoothPictures(partial.boothProgressPictures),
-    exhibitionProcessData: simplifyPersistedValue(
-      partial.exhibitionProcessData,
-    ),
-    safetyRows: (partial.safetyRows ?? []).slice(0, 20).map((item) => ({
-      boothNo: item.boothNo,
-      company: item.company,
-      recordContent: item.recordContent,
-      riskAssessment: item.riskAssessment,
-      rectifyCheckStatus: item.rectifyCheckStatus,
-      safetyStatus: item.safetyStatus,
-      targetCheckTime: item.targetCheckTime,
-      hallId: item.hallId,
-      hallName: item.hallName,
-    })),
-    safetyCollect: simplifyPersistedValue(partial.safetyCollect),
-    violationTypeData: simplifyPersistedValue(partial.violationTypeData),
-    violationRecordData: simplifyPersistedValue(partial.violationRecordData),
-    violationSituationData: simplifyPersistedValue(
-      partial.violationSituationData,
-    ),
-    orderCollectData: simplifyPersistedValue(partial.orderCollectData),
-  };
-}
-
-function simplifyBoothPictures(pictures: unknown[] = []) {
-  return pictures
-    .slice(0, 3)
-    .map((item: any) => ({
-      address: item?.address ?? item?.imgUrl ?? item?.url ?? "",
-      dataStr:
-        item?.dataStr ?? item?.date ?? item?.createTime ?? item?.time ?? "",
-      boothId: item?.boothId ?? "",
-    }))
-    .filter((item) => item.address);
-}
-
-function simplifyPersistedValue(value: unknown) {
-  if (value == null) return null;
-  if (Array.isArray(value)) return value.slice(0, 3);
-  if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>).slice(
-      0,
-      8,
-    );
-    return Object.fromEntries(entries);
-  }
-  return value;
 }
 
 function normalizeCarouselPictures(source: unknown[] = []) {
@@ -417,17 +227,20 @@ const MenuButtonGroup = memo(function MenuButtonGroup({
   );
 });
 
-const CurrentTimeButton = memo(function CurrentTimeButton({
-  currentTime,
-  onRefresh,
-}: {
-  currentTime: Date;
-  onRefresh: () => void;
-}) {
+const CurrentTimeButton = memo(function CurrentTimeButton() {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return (
     <div className="absolute right-2 top-[40px]">
       <div className="text-[clamp(12px,0.9vw,14px)] text-[#dbeeff]">
-        <Button2 mode="refresh-current-time" onModeChange={onRefresh}>
+        <Button2 mode="refresh-current-time" onModeChange={() => setCurrentTime(new Date())}>
           当前时间：{" "}
           <span className="font-medium text-white">
             {formatCurrentTime(currentTime)}
@@ -458,7 +271,7 @@ const ExhibitionMapPanel = memo(function ExhibitionMapPanel({
     halls: Array<{ hallId: string; hallName: string }>;
   };
   boothRows: BoothRow[];
-  safetyRows: AppPersistedState["safetyRows"];
+  safetyRows: SafetyRow[];
   constructProcessData: any;
   galleryRows: HallSummary[];
 }) {
@@ -503,7 +316,6 @@ export default function App() {
       : "overview",
   );
   const initialLoadingTimerRef = useRef<number | null>(null);
-  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [hallMode, setHallMode] = useState<ModuleKey>("ExhibitionOverview");
   const [selectedHallId, setSelectedHallId] = useState<string>("all");
   const [initData, setInitData] = useState<{
@@ -558,10 +370,10 @@ export default function App() {
       string,
       {
         at: number;
-        data: CachedModuleData;
+        data: { summary: Record<string, unknown>; [key: string]: unknown };
       }
     >
-  >({}); // 60s 模块缓存（仅摘要）
+  >({}); // 60s 模块缓存
   const moduleFetchInFlightRef = useRef(false); // 防止轮询和切换同时抢请求
   const lastActiveModuleRef = useRef<{
     hallMode: ModuleKey;
@@ -589,39 +401,11 @@ export default function App() {
   });
 
   useEffect(() => {
-    const persisted = readPersistedState(DEFAULT_EXHIBITION_ID);
-    if (!persisted) return;
-
-    if (persisted.galleryRows.length) setGalleryRows(persisted.galleryRows);
-    if (persisted.boothRows.length) setBoothRows(persisted.boothRows);
-    if (persisted.constructOverviewData !== null)
-      setConstructOverviewData(persisted.constructOverviewData);
-    if (persisted.constructProcessData !== null)
-      setConstructProcessData(persisted.constructProcessData);
-    if (persisted.constructMaterialData !== null)
-      setConstructMaterialData(persisted.constructMaterialData);
-    if (persisted.boothProgressData !== null)
-      setBoothProgressData(persisted.boothProgressData);
-    if (persisted.boothProgressPictures.length)
-      setBoothProgressPictures(persisted.boothProgressPictures);
-    if (persisted.exhibitionProcessData !== null)
-      setExhibitionProcessData(persisted.exhibitionProcessData);
-    if (persisted.safetyRows.length) setSafetyRows(persisted.safetyRows);
-    if (persisted.safetyCollect !== null)
-      setSafetyCollect(persisted.safetyCollect);
-    if (persisted.violationTypeData !== null)
-      setViolationTypeData(persisted.violationTypeData);
-    if (persisted.violationRecordData !== null) {
-      setViolationRecordData(persisted.violationRecordData);
-    }
-    if (persisted.violationSituationData !== null)
-      setViolationSituationData(persisted.violationSituationData);
-    if ((persisted as any).orderCollectData !== null)
-      setOrderCollectData((persisted as any).orderCollectData);
-    if (persisted.initData) setInitData(persisted.initData);
-    setHallMode(persisted.hallMode);
-    setSelectedHallId(persisted.selectedHallId);
-    setExpoName(persisted.expoName);
+    const prefs = readPersistedPrefs(DEFAULT_EXHIBITION_ID);
+    if (!prefs) return;
+    setHallMode(prefs.hallMode);
+    setSelectedHallId(prefs.selectedHallId);
+    if (prefs.expoName) setExpoName(prefs.expoName);
   }, [DEFAULT_EXHIBITION_ID]);
 
   useEffect(() => {
@@ -666,60 +450,22 @@ export default function App() {
     violationTypeData,
   ]);
 
+  // Lightweight UI prefs persistence (1s debounce)
   useEffect(() => {
     if (isInitialLoading) return;
     if (!DEFAULT_EXHIBITION_ID) return;
 
     const timer = window.setTimeout(() => {
-      const persisted = createPersistedState({
+      writePersistedPrefs({
         exhibitionId: DEFAULT_EXHIBITION_ID,
-        initData,
         selectedHallId,
         hallMode,
         expoName,
-        galleryRows,
-        boothRows,
-        constructOverviewData,
-        constructProcessData,
-        constructMaterialData,
-        boothProgressData,
-        boothProgressPictures,
-        exhibitionProcessData,
-        safetyRows,
-        safetyCollect,
-        violationTypeData,
-        violationRecordData,
-        violationSituationData,
-        orderCollectData,
       });
-      writePersistedState(persisted);
-    }, 250);
+    }, 1000);
 
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [
-    boothProgressData,
-    boothProgressPictures,
-    boothRows,
-    constructMaterialData,
-    constructOverviewData,
-    constructProcessData,
-    expoName,
-    galleryRows,
-    hallMode,
-    initData,
-    isInitialLoading,
-    selectedHallId,
-    safetyCollect,
-    safetyRows,
-    exhibitionProcessData,
-    violationRecordData,
-    violationSituationData,
-    violationTypeData,
-    orderCollectData,
-    DEFAULT_EXHIBITION_ID,
-  ]);
+    return () => window.clearTimeout(timer);
+  }, [DEFAULT_EXHIBITION_ID, selectedHallId, hallMode, expoName, isInitialLoading]);
 
   const loadOverview = async (signal?: AbortSignal) => {
     if (!DEFAULT_EXHIBITION_ID) return;
@@ -845,16 +591,6 @@ export default function App() {
   };
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
@@ -927,38 +663,26 @@ export default function App() {
 
     const refreshFromCache = (entry: typeof cachedEntry | undefined) => {
       if (!entry) return false;
-      if (entry.data.boothRows !== undefined)
-        setBoothRows(entry.data.boothRows);
-      if (entry.data.constructOverviewData !== undefined)
-        setConstructOverviewData(entry.data.constructOverviewData);
-      if (entry.data.constructProcessData !== undefined)
-        setConstructProcessData(entry.data.constructProcessData);
-      if (entry.data.constructMaterialData !== undefined)
-        setConstructMaterialData(entry.data.constructMaterialData);
-      if (entry.data.boothProgressData !== undefined)
-        setBoothProgressData(entry.data.boothProgressData);
-      if (entry.data.boothProgressPictures !== undefined)
-        setBoothProgressPictures(entry.data.boothProgressPictures);
-      if (entry.data.exhibitionProcessData !== undefined)
-        setExhibitionProcessData(entry.data.exhibitionProcessData);
-      if (entry.data.safetyRows !== undefined)
-        setSafetyRows(entry.data.safetyRows);
-      if (entry.data.safetyCollect !== undefined)
-        setSafetyCollect(entry.data.safetyCollect);
-      if (entry.data.violationTypeData !== undefined)
-        setViolationTypeData(entry.data.violationTypeData);
-      if (entry.data.violationRecordData !== undefined)
-        setViolationRecordData(entry.data.violationRecordData);
-      if (entry.data.violationSituationData !== undefined)
-        setViolationSituationData(entry.data.violationSituationData);
-      if (entry.data.orderCollectData !== undefined)
-        setOrderCollectData(entry.data.orderCollectData);
+      const d = entry.data as any;
+      if (d.boothRows !== undefined) setBoothRows(d.boothRows);
+      if (d.constructOverviewData !== undefined) setConstructOverviewData(d.constructOverviewData);
+      if (d.constructProcessData !== undefined) setConstructProcessData(d.constructProcessData);
+      if (d.constructMaterialData !== undefined) setConstructMaterialData(d.constructMaterialData);
+      if (d.boothProgressData !== undefined) setBoothProgressData(d.boothProgressData);
+      if (d.boothProgressPictures !== undefined) setBoothProgressPictures(d.boothProgressPictures);
+      if (d.exhibitionProcessData !== undefined) setExhibitionProcessData(d.exhibitionProcessData);
+      if (d.safetyRows !== undefined) setSafetyRows(d.safetyRows);
+      if (d.safetyCollect !== undefined) setSafetyCollect(d.safetyCollect);
+      if (d.violationTypeData !== undefined) setViolationTypeData(d.violationTypeData);
+      if (d.violationRecordData !== undefined) setViolationRecordData(d.violationRecordData);
+      if (d.violationSituationData !== undefined) setViolationSituationData(d.violationSituationData);
+      if (d.orderCollectData !== undefined) setOrderCollectData(d.orderCollectData);
       return true;
     };
 
     const saveCache = (
       summary: Record<string, unknown>,
-      data?: CachedModuleData,
+      data?: any,
       at = Date.now(),
     ) => {
       moduleFetchCacheRef.current[throttleKey] = {
@@ -1036,7 +760,7 @@ export default function App() {
           });
 
           if (cancelled || !result) return;
-          const [boothRes, orderCollectRes] = result;
+          const [boothRes, orderCollectRes] = result as any[];
 
           const boothData = (boothRes?.data ?? boothRes ?? []) as BoothRow[];
           const normalizedBooths = boothData.map((item) => ({
@@ -1046,7 +770,7 @@ export default function App() {
           }));
           const nextBoothRows = normalizedBooths;
           const nextOrderCollectData =
-            orderCollectRes?.data ?? orderCollectRes ?? null;
+            (orderCollectRes as any)?.data ?? orderCollectRes ?? null;
           setBoothRows(nextBoothRows);
           setOrderCollectData(nextOrderCollectData);
           saveCache(
@@ -1147,11 +871,11 @@ export default function App() {
           });
 
           if (cancelled || !criticalResult) return;
-          const [overviewRes, processRes] = criticalResult;
+          const [overviewRes, processRes] = criticalResult as any[];
           const nextConstructOverviewData =
-            overviewRes?.data ?? overviewRes ?? null;
+            (overviewRes as any)?.data ?? overviewRes ?? null;
           const nextConstructProcessData =
-            processRes?.data ?? processRes ?? null;
+            (processRes as any)?.data ?? processRes ?? null;
           setConstructOverviewData(nextConstructOverviewData);
           setConstructProcessData(nextConstructProcessData);
           setBoothProgressData(nextConstructOverviewData);
@@ -1823,111 +1547,26 @@ export default function App() {
     violationTypeData,
   ]);
 
+  // Cache cleanup only (no localStorage write)
   useEffect(() => {
     if (isInitialLoading) return;
-
     const timer = window.setInterval(() => {
-      const snapshot = latestStateRef.current;
       const now = Date.now();
-      for (const [key, entry] of Object.entries(moduleFetchCacheRef.current)) {
-        if (
-          now - entry.at > MODULE_CACHE_TTL_MS &&
-          key !== `${snapshot.hallMode}:${snapshot.selectedHallId}`
-        ) {
-          delete moduleFetchCacheRef.current[key];
-        }
-      }
-
-      const activeKey = `${snapshot.hallMode}:${snapshot.selectedHallId}`;
-      const activeEntry = moduleFetchCacheRef.current[activeKey];
-      if (activeEntry) {
-        activeEntry.data = {
-          summary: activeEntry.data.summary ?? {},
-        };
-      }
-
-      const persisted = createPersistedState(snapshot);
-      writePersistedState(persisted);
-    }, MEMORY_RELEASE_INTERVAL_MS);
-
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, [isInitialLoading]);
-
-  useEffect(() => {
-    const releaseMemory = () => {
-      const now = Date.now();
-      for (const [key, entry] of Object.entries(moduleFetchCacheRef.current)) {
-        if (now - entry.at > MODULE_CACHE_TTL_MS) {
-          delete moduleFetchCacheRef.current[key];
-        }
-      }
-
       const current = lastActiveModuleRef.current;
+      for (const [key, entry] of Object.entries(moduleFetchCacheRef.current)) {
+        if (now - entry.at > MODULE_CACHE_TTL_MS && key !== `${current.hallMode}:${current.selectedHallId}`) {
+          delete moduleFetchCacheRef.current[key];
+        }
+      }
+      // Trim active entry data to summary only
       const activeKey = `${current.hallMode}:${current.selectedHallId}`;
       const activeEntry = moduleFetchCacheRef.current[activeKey];
-      if (!activeEntry) return;
-
-      const summary = activeEntry.data.summary ?? {};
-      activeEntry.data = { summary };
-
-      if (typeof window.requestIdleCallback === "function") {
-        window.requestIdleCallback(() => {
-          try {
-            const persisted = createPersistedState({
-              exhibitionId: DEFAULT_EXHIBITION_ID,
-              initData,
-              selectedHallId,
-              hallMode,
-              expoName,
-              galleryRows,
-              boothRows,
-              constructOverviewData,
-              constructProcessData,
-              constructMaterialData,
-              boothProgressData,
-              boothProgressPictures,
-              exhibitionProcessData,
-              safetyRows,
-              safetyCollect,
-              violationTypeData,
-              violationRecordData,
-              violationSituationData,
-              orderCollectData,
-            });
-            writePersistedState(persisted);
-          } catch (error) {
-            console.warn("[App] failed to refresh persisted summary", error);
-          }
-        });
+      if (activeEntry) {
+        activeEntry.data = { summary: activeEntry.data.summary ?? {} };
       }
-    };
-
-    releaseMemory();
-    const timer = window.setInterval(releaseMemory, MEMORY_RELEASE_INTERVAL_MS);
+    }, MEMORY_RELEASE_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [
-    DEFAULT_EXHIBITION_ID,
-    boothProgressData,
-    boothProgressPictures,
-    boothRows,
-    constructMaterialData,
-    constructOverviewData,
-    constructProcessData,
-    expoName,
-    galleryRows,
-    hallMode,
-    initData,
-    orderCollectData,
-    safetyCollect,
-    safetyRows,
-    selectedHallId,
-    exhibitionProcessData,
-    violationRecordData,
-    violationSituationData,
-    violationTypeData,
-  ]);
+  }, [isInitialLoading]);
   const getApproxValueSize = (value: unknown) => {
     try {
       if (value == null) return 0;
@@ -2110,10 +1749,7 @@ export default function App() {
                 items={menuButtons}
                 onMenuClick={handleMenuClick}
               />
-              <CurrentTimeButton
-                currentTime={currentTime}
-                onRefresh={() => setCurrentTime(new Date())}
-              />
+              <CurrentTimeButton />
               <main
                 className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,48%)_minmax(320px,26%)] lg:grid-cols-[minmax(340px,26%)_minmax(0,48%)_minmax(340px,26%)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,48%)_minmax(360px,26%)]`}
               >
