@@ -1617,16 +1617,19 @@ export default function App() {
       className={`relative h-dvh w-screen overflow-hidden text-slate-100 ${fontScaleClass}`}
       style={{ backgroundColor: "#020A25" }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[url('/img/背景边框.png')] bg-[length:100%_100%] bg-no-repeat z-0" />
       {isInitialLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(4,13,24,0.86)] backdrop-blur-sm">
           <Loader />
         </div>
       )}
-      <Flex
-        vertical
-        className={`relative mx-auto h-full w-full min-w-0 overflow-hidden pb-[clamp(12px,1.2vw,24px)] 2xl:max-w-[1920px]`}
-      >
+      {/* 内容区 - 包在边框内部 */}
+      <div className="relative h-full w-full overflow-hidden px-[clamp(12px,1.5vw,24px)] pt-0 pb-[30px]">
+        {/* 边框背景图 */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-20 bg-[url('/img/背景边框.png')] bg-[length:100%_100%] bg-center bg-no-repeat" />
+        <Flex
+          vertical
+          className={`relative z-10 mx-auto h-full w-full min-w-0 overflow-hidden pb-[clamp(12px,1.2vw,24px)] 2xl:max-w-[1920px]`}
+        >
         <div className="pointer-events-none absolute left-0 top-[clamp(56px,4.8vw,72px)] z-0 hidden h-[calc(100%-128px)] w-auto overflow-hidden select-none xl:block 2xl:left-[-18px]">
           <Image
             src="/img/zuo@2x.png"
@@ -1794,6 +1797,7 @@ export default function App() {
           )}
         </Flex>
       </Flex>
+      </div>
     </div>
   );
 }
