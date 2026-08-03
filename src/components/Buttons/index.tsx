@@ -2,7 +2,7 @@ import React from 'react';
 import './index.css';
 
 type ButtonProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   mode: string;
   active?: boolean;
   onModeChange?: (mode: string) => void;
@@ -13,22 +13,20 @@ const Button = ({ children, mode, active = false, onModeChange }: ButtonProps) =
     onModeChange?.(mode);
   };
 
-  return (
-<button
- onClick={onClick}
- className={`map-mode-button shrink-0 ${active ? 'is-active' : ''} Xbutton`}
->
-    {children}
-    <div id="clip">
-        <div id="leftTop" className="corner"></div>
-        <div id="rightBottom" className="corner"></div>
-        <div id="rightTop" className="corner"></div>
-        <div id="leftBottom" className="corner"></div>
-    </div>
-    <span id="rightArrow" className="arrow"></span>
-    <span id="leftArrow" className="arrow"></span>
-</button>
+  const isAll = mode === "all";
+  const defaultImg = isAll ? "/img/全部展馆.png" : "/img/按钮-展馆-默认.png";
+  const activeImg = isAll ? "/img/全部展馆-选中.png" : "/img/按钮-展馆-选中.png";
 
+  return (
+    <button
+      onClick={onClick}
+      className={`hall-tab-btn ${active ? 'is-active' : ''}`}
+      style={{
+        backgroundImage: `url('${active ? activeImg : defaultImg}')`,
+      }}
+    >
+      {!isAll && <span>{children}</span>}
+    </button>
   );
 };
 

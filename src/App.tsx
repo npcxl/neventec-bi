@@ -830,7 +830,7 @@ export default function App() {
     setOrderCollectData(orderCollectRes?.data ?? orderCollectRes ?? null);
     setExpoName(
       normalizedRows.find((item) => item.expoName?.trim())?.expoName?.trim() ||
-        "展会概况总览",
+        "第I0届中国南亚博览会暨第30届中国昆明进出口商品交易会",
     );
     setInitData({
       exhibitionId,

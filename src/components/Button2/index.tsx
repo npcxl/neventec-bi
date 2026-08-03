@@ -15,7 +15,7 @@ const Button2 = ({ children, mode, active = false, onModeChange }: Button2Props)
   return (
     <button
       type="button"
-      className={`Button-base ${active ? 'is-active' : ''}`}
+      className={`btn-menu ${active ? 'is-active' : ''}`}
       onClick={handleClick}
       aria-pressed={active}
     >

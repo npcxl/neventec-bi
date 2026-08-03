@@ -508,7 +508,7 @@ const DemoChart = memo(function DemoChart({
         tooltip: {
           trigger: "item",
           backgroundColor: "rgba(7,18,34,0.96)",
-          borderColor: "rgba(145,200,255,0.55)",
+          borderColor: "transparent",
           textStyle: { color: "#eaf6ff" },
           formatter: (p: any) => {
             const d = p?.data;
@@ -600,17 +600,6 @@ const DemoChart = memo(function DemoChart({
                   shape: { points: polygonPoints },
                   style: {
                     fill: color,
-                    stroke: "rgba(170,222,255,0.9)",
-                    lineWidth: 1.1,
-                  },
-                });
-                children.push({
-                  type: "polygon",
-                  shape: { points: polygonPoints },
-                  style: {
-                    fill: "transparent",
-                    stroke: "rgba(255,255,255,0.08)",
-                    lineWidth: 1,
                   },
                 });
               } else {
@@ -620,22 +609,6 @@ const DemoChart = memo(function DemoChart({
                     shape: { x: x0, y: y0, width, height },
                     style: {
                       fill: color,
-                      stroke: "rgba(170,222,255,0.9)",
-                      lineWidth: 1.1,
-                    },
-                  },
-                  {
-                    type: "rect",
-                    shape: {
-                      x: x0 + 1,
-                      y: y0 + 1,
-                      width: Math.max(0, width - 2),
-                      height: Math.max(0, height - 2),
-                    },
-                    style: {
-                      fill: "transparent",
-                      stroke: "rgba(255,255,255,0.08)",
-                      lineWidth: 1,
                     },
                   },
                 );
@@ -669,8 +642,6 @@ const DemoChart = memo(function DemoChart({
                   },
                   style: {
                     fill: "rgba(8, 22, 44, 0.72)",
-                    stroke: "rgba(255,255,255,0.16)",
-                    lineWidth: 1,
                     r: 4,
                   },
                 });
@@ -1165,17 +1136,18 @@ export default function CenterMap({
     <section
       className={
         compact
-          ? "flowing-border relative flex w-full min-h-[22rem] flex-1 min-w-0 rounded-3xl p-[2px] shadow-[0_0_20px_rgba(0,229,255,0.15)]"
-          : "flowing-border relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 rounded-3xl p-[2px] shadow-[0_0_20px_rgba(0,229,255,0.15)]"
+          ? "relative flex w-full min-h-[22rem] flex-1 min-w-0 rounded-3xl"
+          : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 rounded-3xl"
       }
     >
-      <div className="relative z-10 flex h-full w-full min-w-0 flex-col rounded-[22px] bg-[#081120] p-3">
-        <div className="relative flex h-full min-h-0 flex-1 min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(10,25,47,0.72)]">
-          <div className="relative z-20 mb-3 flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-sm text-[#cfe5ff]">
-            <div className="min-w-0">
+      <div className="relative z-10 flex h-full w-full min-w-0 flex-col rounded-[22px] bg-[#081120] ">
+        <div className="relative flex h-full min-h-0 flex-1 min-w-0 flex-col overflow-hidden rounded-[20px] bg-[rgba(10,25,47,0.72)]">
+          <div className="relative z-20 mb-3 flex flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
+            <div className="relative min-w-0 w-full">
               <div
                 ref={tabsScrollRef}
-                className="mt-2 flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-1 map-tab-scrollbar"
+                className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-1"
+                style={{ scrollbarWidth: 'none' }}
               >
                 <div
                   ref={(node) => {
@@ -1186,9 +1158,7 @@ export default function CenterMap({
                     mode="all"
                     active={mode === "all"}
                     onModeChange={onModeChange}
-                  >
-                    数据总览
-                  </XButton>
+                  />
                 </div>
                 {halls.map((hall) => (
                   <div
@@ -1207,7 +1177,28 @@ export default function CenterMap({
                   </div>
                 ))}
               </div>
+              <img
+                src="/img/左侧滚动显示.svg"
+                alt=""
+                className="absolute left-0 top-1/2 -translate-y-1/2 h-6 pointer-events-none z-10"
+                ref={(node) => {
+                  if (node && tabsScrollRef.current) {
+                    const container = tabsScrollRef.current;
+                    const update = () => {
+                      node.style.opacity = container.scrollLeft > 5 ? '1' : '0';
+                    };
+                    update();
+                    container.addEventListener('scroll', update);
+                    return () => container.removeEventListener('scroll', update);
+                  }
+                }}
+              />
             </div>
+            <img
+              src="/img/展馆按钮底部线条.png"
+              alt=""
+              className="w-full h-auto mt-1"
+            />
           </div>
 
           <div className="map-card-frame relative flex-1 overflow-hidden">
@@ -1256,14 +1247,11 @@ export default function CenterMap({
             styles={{
               mask: {
                 backgroundColor: "rgba(0, 0, 0, 0.65)",
-                backdropFilter: "blur(3px)",
               },
               container: {
                 padding: 0,
-                background: "linear-gradient(160deg, #0f213a 0%, #0a1526 100%)",
-                border: "1px solid rgba(0, 229, 255, 0.22)",
-                boxShadow:
-                  "0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 229, 255, 0.05)",
+                background: "#0f213a",
+                border: "none",
                 borderRadius: "8px",
                 overflow: "hidden",
                 width: "760px",
@@ -1311,7 +1299,7 @@ export default function CenterMap({
                       <span
                         style={{
                           background: "rgba(0, 229, 255, 0.1)",
-                          border: "1px solid rgba(0, 229, 255, 0.2)",
+                          border: "none",
                           padding: "1px 6px",
                           borderRadius: "3px",
                           color: "#cffafe",
@@ -1347,8 +1335,6 @@ export default function CenterMap({
                     padding: "10px 12px",
                     borderRadius: "8px",
                     background: "rgba(10, 21, 38, 0.96)",
-                    backdropFilter: "blur(6px)",
-                    border: "1px solid rgba(255,255,255,0.04)",
                   }}
                 >
                   <div
@@ -1541,7 +1527,7 @@ export default function CenterMap({
                             key={`${order.goodsName || "order"}-${index}`}
                             style={{
                               borderRadius: "8px",
-                              border: "1px solid rgba(255,255,255,0.06)",
+                              border: "none",
                               background: "rgba(255,255,255,0.03)",
                               padding: "9px 10px",
                             }}
@@ -1607,7 +1593,7 @@ export default function CenterMap({
                         <div
                           style={{
                             borderRadius: "8px",
-                            border: "1px dashed rgba(255,255,255,0.12)",
+                            border: "none",
                             padding: "10px",
                             textAlign: "center",
                             color: "#a7c0de",
@@ -1792,9 +1778,7 @@ export default function CenterMap({
                     style={{
                       padding: "10px 12px",
                       borderRadius: "8px",
-                      border: "1px solid rgba(56, 189, 248, 0.35)",
                       background: "rgba(8, 22, 44, 0.55)",
-                      boxShadow: "inset 0 0 18px rgba(56, 189, 248, 0.08)",
                     }}
                   >
                     <div
@@ -1842,7 +1826,7 @@ export default function CenterMap({
                             key={`${info.boothId || info.boothNo || "safety"}-${info.createDate || index}`}
                             style={{
                               borderRadius: "8px",
-                              border: "1px solid rgba(255,255,255,0.06)",
+                              border: "none",
                               background: "rgba(255,255,255,0.03)",
                               padding: "9px 10px",
                             }}
@@ -1865,7 +1849,7 @@ export default function CenterMap({
                                       height: "96px",
                                       objectFit: "cover",
                                       borderRadius: "6px",
-                                      border: "1px solid rgba(78,163,255,0.35)",
+                                      border: "none",
                                     }}
                                   />
                                 ) : (
@@ -1968,7 +1952,7 @@ export default function CenterMap({
                         <div
                           style={{
                             borderRadius: "8px",
-                            border: "1px dashed rgba(255,255,255,0.12)",
+                            border: "none",
                             padding: "10px",
                             textAlign: "center",
                             color: "#a7c0de",
@@ -1992,7 +1976,7 @@ export default function CenterMap({
                     marginTop: "12px",
                     display: "flex",
                     justifyContent: "flex-end",
-                    borderTop: "1px solid rgba(0, 229, 255, 0.1)",
+                    borderTop: "none",
                     paddingTop: "10px",
                     flexShrink: 0,
                   }}
@@ -2006,9 +1990,7 @@ export default function CenterMap({
                       borderRadius: "4px",
                       fontSize: "12px",
                       color: "#eef2ff",
-                      border: "1px solid rgba(0, 229, 255, 0.4)",
                       background: "rgba(0, 229, 255, 0.1)",
-                      boxShadow: "inset 0 0 10px rgba(0, 229, 255, 0.05)",
                     }}
                     className="transition-all hover:bg-cyan-500/30"
                   >

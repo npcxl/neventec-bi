@@ -65,8 +65,9 @@ type SafetyRecord = {
 function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-[clamp(40px,3.5vw,52px)] px-[clamp(10px,0.8vw,14px)]">
-      <div className="flex h-full w-full items-center gap-2 bg-[url('/img/biaoti@2x.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(12px,1vw,18px)] text-[clamp(12px,0.82vw,15px)] font-medium text-[#d8efff]">
-        <span className="pl-[clamp(18px,1.4vw,22px)]">{title}</span>
+      <div className="flex h-full w-full items-center gap-2 bg-[url('/img/Union.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-[clamp(12px,0.82vw,15px)] font-medium text-[#d8efff]">
+        <img src="/img/Frame 7.svg" alt="" className="h-[clamp(14px,1.2vw,18px)] w-[clamp(14px,1.2vw,18px)] shrink-0" />
+        <span>{title}</span>
       </div>
     </div>
   );
