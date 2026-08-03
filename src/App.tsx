@@ -316,7 +316,8 @@ export default function App() {
       : "overview",
   );
   const initialLoadingTimerRef = useRef<number | null>(null);
-  const initialOverviewLoadedRef = useRef(false);
+  // Skip first module request for ExhibitionOverview+all (data already loaded by loadOverview)
+  const skipInitialOverviewRequestRef = useRef(true);
   const initialPrefs = useMemo(() => readPersistedPrefs(DEFAULT_EXHIBITION_ID), [DEFAULT_EXHIBITION_ID]);
   const [hallMode, setHallMode] = useState<ModuleKey>(initialPrefs?.hallMode ?? "ExhibitionOverview");
   const [selectedHallId, setSelectedHallId] = useState<string>(initialPrefs?.selectedHallId ?? "all");
@@ -367,6 +368,9 @@ export default function App() {
     usedJSHeapSize?: number;
     domNodes?: number;
   } | null>(null);
+  // Carousel image cache (60s TTL, memory only)
+  const carouselCacheRef = useRef<Record<string, { at: number; pictures: any[] }>>({});
+  const CAROUSEL_CACHE_TTL = 60_000;
   const moduleFetchCacheRef = useRef<
     Record<
       string,
@@ -533,15 +537,6 @@ export default function App() {
         if (initialLoadingTimerRef.current !== null) {
           window.clearTimeout(initialLoadingTimerRef.current);
         }
-        initialOverviewLoadedRef.current = true;
-        // Pre-warm cache for default ExhibitionOverview to avoid repeat request
-        const cacheKey = `ExhibitionOverview:${selectedHallId}`;
-        if (!moduleFetchCacheRef.current[cacheKey]) {
-          moduleFetchCacheRef.current[cacheKey] = {
-            at: Date.now(),
-            data: { summary: {}, boothRows: boothRows, orderCollectData: orderCollectData },
-          };
-        }
         setIsInitialLoading(false);
       });
 
@@ -586,8 +581,18 @@ export default function App() {
   }, [isHall3DView]);
 
   useEffect(() => {
-    // Don't run module requests during initial loading - data comes from loadOverview
     if (isInitialLoading) return;
+
+    // Skip first ExhibitionOverview+all request (data already loaded by loadOverview)
+    if (skipInitialOverviewRequestRef.current && hallMode === "ExhibitionOverview" && selectedHallId === "all") {
+      skipInitialOverviewRequestRef.current = false;
+      return;
+    }
+    // If restored prefs are ExhibitionOverview+hall, skip only when it matches the skip flag
+    if (skipInitialOverviewRequestRef.current) {
+      skipInitialOverviewRequestRef.current = false;
+    }
+
     let cancelled = false;
     const controller = new AbortController();
     const now = Date.now();
@@ -984,24 +989,28 @@ export default function App() {
         setConstructCarouselLoading(false);
         return;
       }
+      const cacheKey = `construct:${selectedHallId}`;
+      const cached = carouselCacheRef.current[cacheKey];
+      if (cached && Date.now() - cached.at < CAROUSEL_CACHE_TTL) {
+        setBoothProgressPictures(cached.pictures);
+        setConstructCarouselLoading(false);
+        return;
+      }
       setConstructCarouselLoading(true);
       try {
         const response =
           selectedHallId === "all"
-            ? await screenApi.getBoothProgressPicture(
-                DEFAULT_EXHIBITION_ID,
-                controller.signal,
-              )
-            : await screenApi.getBoothProgressPictureByHallId(
-                DEFAULT_EXHIBITION_ID,
-                selectedHallId,
-                controller.signal,
-              );
+            ? await screenApi.getBoothProgressPicture(DEFAULT_EXHIBITION_ID, controller.signal)
+            : await screenApi.getBoothProgressPictureByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal);
         if (cancelled) return;
         const nextPictures = Array.isArray(response?.data ?? response)
           ? (response?.data ?? response)
           : [];
-        setBoothProgressPictures(nextPictures);
+        // Only update if non-empty (don't overwrite with empty array on error)
+        if (nextPictures.length > 0 || !cached) {
+          setBoothProgressPictures(nextPictures);
+          carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+        }
       } catch (error) {
         if (!isAbortError(error)) {
           console.error("[App][ConstructCarousel] failed", error);
@@ -1024,23 +1033,27 @@ export default function App() {
       if (hallMode !== "SafetyOverview") {
         return;
       }
+      const cacheKey = `safety:${selectedHallId}`;
+      const cached = carouselCacheRef.current[cacheKey];
+      if (cached && Date.now() - cached.at < CAROUSEL_CACHE_TTL) {
+        setSafetyCarouselPictures(cached.pictures);
+        setSafetyCarouselLoading(false);
+        return;
+      }
       setSafetyCarouselLoading(true);
       try {
         const response =
           selectedHallId === "all"
-            ? await screenApi.getViolationPictureByHallId(
-                DEFAULT_EXHIBITION_ID,
-                controller.signal,
-              )
-            : await screenApi.getViolationPictureByHallIdAndBoothNo(
-                DEFAULT_EXHIBITION_ID,
-                selectedHallId,
-                controller.signal,
-              );
+            ? await screenApi.getViolationPictureByHallId(DEFAULT_EXHIBITION_ID, controller.signal)
+            : await screenApi.getViolationPictureByHallIdAndBoothNo(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal);
         if (cancelled) return;
         const nextPictures = Array.isArray(response?.data ?? response)
           ? (response?.data ?? response)
           : [];
+        if (nextPictures.length > 0 || !cached) {
+          setSafetyCarouselPictures(nextPictures);
+          carouselCacheRef.current[cacheKey] = { at: Date.now(), pictures: nextPictures };
+        }
         setSafetyCarouselPictures(nextPictures);
       } catch (error) {
         if (!isAbortError(error)) {
