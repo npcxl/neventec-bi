@@ -55,18 +55,21 @@ type ConstructRightSidebarProps = {
    ============================================ */
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  // 数字枚举（对齐 useConstructProgress.ts）
-  '10': { label: '暂未入场', color: '#8fb4d8' },
+  // 数字枚举
   '11': { label: '搭建正常', color: '#2563EB' },
   '12': { label: '搭建缓慢', color: '#FA8C16' },
   '13': { label: '严重滞后', color: '#F5222D' },
   '14': { label: '搭建完成', color: '#63F222' },
-  '15': { label: '有搭建材料', color: '#8fb4d8' },
-  // 兼容中文名称
+  // 英文枚举
+  'NORMAL_PROGRESS': { label: '搭建正常', color: '#2563EB' },
+  'SLOW_PROGRESS': { label: '搭建缓慢', color: '#FA8C16' },
+  'DELAY_PROGRESS': { label: '严重滞后', color: '#F5222D' },
+  'COMPLETED_PROGRESS': { label: '搭建完成', color: '#63F222' },
+  // 中文枚举
   '搭建正常': { label: '搭建正常', color: '#2563EB' },
-  '搭建完成': { label: '搭建完成', color: '#63F222' },
   '搭建缓慢': { label: '搭建缓慢', color: '#FA8C16' },
   '严重滞后': { label: '严重滞后', color: '#F5222D' },
+  '搭建完成': { label: '搭建完成', color: '#63F222' },
 };
 
 const STATUS_ORDER = ['搭建正常', '搭建完成', '搭建缓慢', '严重滞后'] as const;
@@ -144,71 +147,67 @@ function draw25DRing(
   const innerRx = outerRx * 0.75;
   const innerRy = outerRy * 0.75;
 
-  const total = entries.reduce((sum, e) => sum + e.count, 0);
-  // 按真实比例计算角度
-  const totalAngle = Math.PI * 2;
-  const gapAngle = 0.03; // 1-2px 视觉间隔
-  const totalGap = entries.filter((e) => e.count > 0).length * gapAngle;
-  const availableAngle = total > 0 ? totalAngle - totalGap : 0;
+  // 四等分：每类固定 25%
+  const quarterAngle = (Math.PI * 2) / 4;
+  const gapAngle = 0.03;
+  const sliceAngle = quarterAngle - gapAngle;
 
-  // 减薄侧壁（深度仅作为立体效果）
+  // 侧壁高度由数量控制
   const minDepth = 3;
-  const maxDepth = 7;
+  const maxDepth = 16;
   const maxCount = Math.max(...entries.map((e) => e.count), 1);
   const depths = entries.map((e) =>
-    maxCount > 0 ? minDepth + (e.count / maxCount) * (maxDepth - minDepth) : 0,
+    e.count > 0 ? minDepth + (e.count / maxCount) * (maxDepth - minDepth) : 0,
   );
+  const actualMaxDepth = Math.max(...depths);
 
   // 减弱底部阴影
   ctx.fillStyle = 'rgba(20, 92, 210, 0.12)';
   ctx.beginPath();
-  ctx.ellipse(cx, cy + maxDepth + 2, outerRx + 2, outerRy + 1.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + actualMaxDepth + 2, outerRx + 2, outerRy + 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  let currentAngle = -Math.PI / 2;
 
   for (let i = 0; i < 4; i++) {
     const entry = entries[i];
-    if (entry.count === 0 || total === 0) continue;
-    const sliceAngle = (entry.count / total) * availableAngle;
-    if (sliceAngle <= 0.001) continue;
-    const startAngle = currentAngle + gapAngle / 2;
+    const startAngle = -Math.PI / 2 + i * quarterAngle + gapAngle / 2;
     const endAngle = startAngle + sliceAngle;
-    currentAngle = endAngle + gapAngle / 2;
     const topColor = entry.color;
-    const sideColor = darken(topColor, 0.35);
     const depth = depths[i];
+    const hasData = entry.count > 0;
 
-    // 外侧面
-    ctx.fillStyle = sideColor;
-    ctx.beginPath();
-    for (let a = startAngle; a <= endAngle; a += 0.02) {
-      const x = cx + Math.cos(a) * outerRx;
-      const y = cy + Math.sin(a) * outerRy;
-      a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    for (let a = endAngle; a >= startAngle; a -= 0.02) {
-      ctx.lineTo(cx + Math.cos(a) * outerRx, cy + Math.sin(a) * outerRy + depth);
-    }
-    ctx.closePath();
-    ctx.fill();
+    if (hasData) {
+      // 外侧面
+      const sideColor = darken(topColor, 0.35);
+      ctx.fillStyle = sideColor;
+      ctx.beginPath();
+      for (let a = startAngle; a <= endAngle; a += 0.02) {
+        const x = cx + Math.cos(a) * outerRx;
+        const y = cy + Math.sin(a) * outerRy;
+        a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      for (let a = endAngle; a >= startAngle; a -= 0.02) {
+        ctx.lineTo(cx + Math.cos(a) * outerRx, cy + Math.sin(a) * outerRy + depth);
+      }
+      ctx.closePath();
+      ctx.fill();
 
-    // 内侧面
-    ctx.fillStyle = darken(topColor, 0.45);
-    ctx.beginPath();
-    for (let a = startAngle; a <= endAngle; a += 0.02) {
-      const x = cx + Math.cos(a) * innerRx;
-      const y = cy + Math.sin(a) * innerRy;
-      a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      // 内侧面
+      ctx.fillStyle = darken(topColor, 0.45);
+      ctx.beginPath();
+      for (let a = startAngle; a <= endAngle; a += 0.02) {
+        const x = cx + Math.cos(a) * innerRx;
+        const y = cy + Math.sin(a) * innerRy;
+        a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      for (let a = endAngle; a >= startAngle; a -= 0.02) {
+        ctx.lineTo(cx + Math.cos(a) * innerRx, cy + Math.sin(a) * innerRy + depth);
+      }
+      ctx.closePath();
+      ctx.fill();
     }
-    for (let a = endAngle; a >= startAngle; a -= 0.02) {
-      ctx.lineTo(cx + Math.cos(a) * innerRx, cy + Math.sin(a) * innerRy + depth);
-    }
-    ctx.closePath();
-    ctx.fill();
 
-    // 顶面
-    ctx.fillStyle = topColor;
+    // 顶面（有数据时正常颜色，无数据时低透明度）
+    ctx.fillStyle = hasData ? topColor : topColor + '33';
     ctx.beginPath();
     for (let a = startAngle; a <= endAngle; a += 0.02) {
       const x = cx + Math.cos(a) * outerRx;
@@ -297,27 +296,24 @@ function ConstructOverviewChart({ data }: { data?: any }) {
    右侧状态列表
    ============================================ */
 
-function StatusLegend({ entries, total }: { entries: StatusEntry[]; total: number }) {
+function StatusLegend({ entries }: { entries: StatusEntry[] }) {
   return (
     <div className="flex flex-col gap-2.5 px-3 py-2">
-      {entries.map((entry) => {
-        const pct = total > 0 ? Math.round((entry.count / total) * 100) : 0;
-        return (
-          <div
-            key={entry.label}
-            className="grid items-center text-sm leading-[22px]"
-            style={{ gridTemplateColumns: '8px minmax(0,1fr) 40px 44px', columnGap: 8 }}
-          >
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="truncate text-white/80">{entry.label}</span>
-            <span className="text-right tabular-nums text-white">{entry.count}</span>
-            <span className="text-right tabular-nums text-white/50">{pct}%</span>
-          </div>
-        );
-      })}
+      {entries.map((entry) => (
+        <div
+          key={entry.label}
+          className="grid items-center text-sm leading-[22px]"
+          style={{ gridTemplateColumns: '8px minmax(0,1fr) 40px 44px', columnGap: 8 }}
+        >
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: entry.color }}
+          />
+          <span className="truncate text-white/80">{entry.label}</span>
+          <span className="text-right tabular-nums text-white">{entry.count}</span>
+          <span className="text-right tabular-nums text-white/50">25%</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -340,7 +336,6 @@ export function ConstructRightSidebar({
       : MOCK_CONSTRUCT_PICTURES;
 
   const entries = useMemo(() => extractStatusData(boothProgressData), [boothProgressData]);
-  const total = entries.reduce((sum, e) => sum + e.count, 0);
 
   const overviewSection = (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
@@ -354,7 +349,7 @@ export function ConstructRightSidebar({
         </div>
         {/* 右侧状态列表 */}
         <div className="flex shrink-0 items-center" style={{ width: 140 }}>
-          <StatusLegend entries={entries} total={total} />
+          <StatusLegend entries={entries} />
         </div>
       </div>
     </section>
