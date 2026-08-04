@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { Image } from "antd";
-import { useWindowedCarousel } from "../../hooks/useWindowedCarousel";
+import { useWindowedCarousel, CARD_WIDTH } from "../../hooks/useWindowedCarousel";
 
 export type ConstructCarouselPicture = {
   address: string;
@@ -43,7 +43,7 @@ function ConstructCarousel({
     [pictures],
   );
 
-  const { trackRef, containerRef, visibleItems, pausedRef } = useWindowedCarousel(
+  const { trackRef, containerRef, visibleItems, visibleCount, hoverPausedRef } = useWindowedCarousel(
     normalizedPictures,
     normalizedPictures.length,
   );
@@ -65,8 +65,8 @@ function ConstructCarousel({
   return (
     <div
       className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]"
-      onMouseEnter={() => { pausedRef.current = true; }}
-      onMouseLeave={() => { pausedRef.current = false; }}
+      onMouseEnter={() => { hoverPausedRef.current = true; }}
+      onMouseLeave={() => { hoverPausedRef.current = false; }}
     >
       <div className="flex h-full min-h-0 flex-col gap-2 p-3">
         <div className="text-sm font-medium text-[#dbeeff]">{title}</div>
@@ -75,15 +75,16 @@ function ConstructCarousel({
             {visibleItems.map(({ item, realIndex }) => (
               <div
                 key={`${item.address}-${realIndex}`}
-                className="flex h-full w-[300px] flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
+                className="flex h-full flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
+                style={{ width: CARD_WIDTH }}
               >
                 <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black/10">
                   <Image
                     src={item.address}
                     alt={item.dataStr || `图片-${realIndex + 1}`}
                     preview={{ src: item.address }}
-                    loading={realIndex < 3 ? "eager" : "lazy"}
-                    className="h-[150px] w-full object-cover"
+                  loading={realIndex < visibleCount + 2 ? "eager" : "lazy"}
+                  className="h-[150px] w-full object-cover"
                   />
                 </div>
                 <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] px-3 py-3">

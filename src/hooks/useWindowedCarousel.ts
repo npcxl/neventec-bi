@@ -1,25 +1,26 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-const CARD_WIDTH = 320;
-const CARD_GAP = 12;
-const STEP = CARD_WIDTH + CARD_GAP; // 332px per card
+export const CARD_WIDTH = 300;
+export const CARD_GAP = 12;
+export const STEP = CARD_WIDTH + CARD_GAP; // 312px per card
 const SCROLL_SPEED = 0.8; // px per frame at 60fps
 
 /**
  * Windowed seamless carousel hook.
  * - Only renders visible cards + 2 buffer cards in DOM.
- * - Uses rAF to update DOM transform directly (no per-frame setState).
- * - Handles hover pause, visibility pause, reduced-motion, and cleanup.
+ * - Uses rAF to update DOM transform (no per-frame setState).
+ * - Handles hover/visibility/reduced-motion pause independently.
  */
 export function useWindowedCarousel<T>(items: T[], totalCount: number) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const offsetRef = useRef(0);
+  const localOffsetRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
-  const pausedRef = useRef(false);
   const windowStartRef = useRef(0);
-  const prefersReducedRef = useRef(false);
+  const hoverPausedRef = useRef(false);
+  const visibilityPausedRef = useRef(false);
+  const reducedMotionRef = useRef(false);
 
   const [windowStart, setWindowStart] = useState(0);
   const [visibleCount, setVisibleCount] = useState(0);
@@ -33,20 +34,27 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     setVisibleCount((prev) => (prev === count ? prev : count));
   }, []);
 
+  // ResizeObserver - re-bind when container appears
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
     measureVisibleCount();
     const ro = new ResizeObserver(() => measureVisibleCount());
-    const el = containerRef.current;
-    if (el) ro.observe(el);
+    ro.observe(el);
     return () => ro.disconnect();
-  }, [measureVisibleCount]);
+  }, [measureVisibleCount, totalCount]);
 
   // Reduced motion
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    prefersReducedRef.current = mq.matches;
+    reducedMotionRef.current = mq.matches;
     const handler = (e: MediaQueryListEvent) => {
-      prefersReducedRef.current = e.matches;
+      const prev = reducedMotionRef.current;
+      reducedMotionRef.current = e.matches;
+      // Reset lastTime when transitioning from reduced to non-reduced
+      if (prev && !e.matches) {
+        lastTimeRef.current = null;
+      }
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
@@ -55,17 +63,23 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
   // Visibility
   useEffect(() => {
     const handler = () => {
-      pausedRef.current = document.hidden;
+      visibilityPausedRef.current = document.hidden;
+      if (!document.hidden) {
+        lastTimeRef.current = null;
+      }
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
   }, []);
 
+  // Check if should be paused (all 3 reasons independently)
+  const isPaused = () => hoverPausedRef.current || visibilityPausedRef.current || reducedMotionRef.current;
+
   // rAF scroll loop
   useEffect(() => {
-    if (!totalCount || visibleCount === 0 || totalCount <= visibleCount || prefersReducedRef.current) {
-      // Not enough items to scroll: reset
-      offsetRef.current = 0;
+    if (!totalCount || visibleCount === 0 || totalCount <= visibleCount || reducedMotionRef.current) {
+      // Not enough items or reduced motion: reset
+      localOffsetRef.current = 0;
       windowStartRef.current = 0;
       setWindowStart(0);
       const track = trackRef.current;
@@ -81,31 +95,31 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
       const dt = timestamp - lastTimeRef.current;
       lastTimeRef.current = timestamp;
 
-      if (!pausedRef.current && !prefersReducedRef.current) {
-        offsetRef.current += SCROLL_SPEED * (dt / 16.67);
+      if (!isPaused()) {
+        localOffsetRef.current += SCROLL_SPEED * (dt / 16.67);
 
-        const totalTrackWidth = totalCount * STEP;
-        if (offsetRef.current >= totalTrackWidth) {
-          offsetRef.current -= totalTrackWidth;
+        // Handle crossing one or more card boundaries
+        let crossed = 0;
+        while (localOffsetRef.current >= STEP) {
+          localOffsetRef.current -= STEP;
+          crossed++;
+        }
+        if (crossed > 0) {
+          windowStartRef.current = (windowStartRef.current + crossed) % totalCount;
+          setWindowStart(windowStartRef.current);
         }
 
-        // Update DOM transform
+        // Update DOM transform: always within [-STEP, 0) range relative to current window
         const track = trackRef.current;
         if (track) {
-          track.style.transform = `translate3d(${-offsetRef.current}px, 0, 0)`;
-        }
-
-        // Update windowStart when crossing a card boundary
-        const newWindowStart = Math.floor(offsetRef.current / STEP) % totalCount;
-        if (newWindowStart !== windowStartRef.current) {
-          windowStartRef.current = newWindowStart;
-          setWindowStart(newWindowStart);
+          track.style.transform = `translate3d(${-localOffsetRef.current}px, 0, 0)`;
         }
       }
 
       rafRef.current = requestAnimationFrame(tick);
     };
 
+    lastTimeRef.current = null;
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
@@ -117,7 +131,7 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     };
   }, [totalCount, visibleCount]);
 
-  // Build visible window: startIndex + visibleCount + 2 buffer
+  // Build visible window: startIndex + visibleCount + 2 buffer on each side
   const bufferCount = 2;
   const totalSlots = visibleCount + bufferCount * 2;
   const visibleItems: { item: T; realIndex: number }[] = [];
@@ -133,7 +147,8 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     trackRef,
     containerRef,
     visibleItems,
-    pausedRef,
+    visibleCount,
+    hoverPausedRef,
     needsScroll: totalCount > visibleCount,
   };
 }
