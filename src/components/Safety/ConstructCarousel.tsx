@@ -33,6 +33,7 @@ function ConstructCarousel({ pictures, loading = false }: Props) {
   const { trackRef, containerRef, visibleItems, hoverPausedRef } = useWindowedCarousel(
     normalizedPictures,
     normalizedPictures.length,
+    { horizontalPadding: 24 },
   );
 
   if (loading) {

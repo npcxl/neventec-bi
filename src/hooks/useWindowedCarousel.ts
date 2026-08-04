@@ -6,9 +6,9 @@ export const STEP = CARD_WIDTH + CARD_GAP; // 312px per card
 const SCROLL_SPEED = 0.8; // px per frame at 60fps
 const MAX_DOM_CARDS = 12;
 
-function calcContentWidth(total: number) {
+function calcContentWidth(total: number, horizontalPadding: number) {
   if (total <= 0) return 0;
-  return total * CARD_WIDTH + Math.max(0, total - 1) * CARD_GAP;
+  return total * CARD_WIDTH + Math.max(0, total - 1) * CARD_GAP + horizontalPadding;
 }
 
 type VisibleItem<T> = {
@@ -19,7 +19,14 @@ type VisibleItem<T> = {
   isEager: boolean;
 };
 
-export function useWindowedCarousel<T>(items: T[], totalCount: number) {
+export type CarouselOptions = {
+  /** Horizontal padding (left + right) on the track, e.g. px-3 = 24px */
+  horizontalPadding?: number;
+};
+
+export function useWindowedCarousel<T>(items: T[], totalCount: number, options?: CarouselOptions) {
+  const horizontalPadding = options?.horizontalPadding ?? 0;
+
   const trackRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
@@ -36,8 +43,8 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
 
   // viewportCount: cards needed to fill container
   const viewportCount = containerWidth > 0 ? Math.ceil(containerWidth / STEP) : 0;
-  // content width to determine scroll
-  const contentWidth = calcContentWidth(totalCount);
+  // content width includes horizontal track padding so overflow detection is accurate
+  const contentWidth = calcContentWidth(totalCount, horizontalPadding);
   const needsScroll = contentWidth > containerWidth;
 
   // renderCount: must include viewportCount + 1 for seamless loop (one extra card so
