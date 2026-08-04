@@ -442,17 +442,17 @@ export function ConstructRightSidebar({ boothProgressData, constructProcessData,
   const isLandscape = variant === "landscape";
 
   return isLandscape ? (
-    <div className="grid min-h-[360px] min-w-0 grid-cols-3 gap-3">
-      <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
+    <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-3 gap-3 overflow-hidden">
+      <div className="min-h-0 min-w-0 flex h-full flex-col overflow-hidden">
         <MaterialSection data={constructMaterialData} hallId={hallId} loading={loading || materialLoading} />
       </div>
-      <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="min-h-0 min-w-0 flex h-full flex-col overflow-hidden">
         <BoothProgressSection data={boothProgressData} hallId={hallId} loading={loading || boothProgressLoading} />
       </div>
-      <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
+      <div className="min-h-0 min-w-0 flex h-full flex-col overflow-hidden">
         <ProcessSection data={exhibitionProcessData} hallId={hallId} loading={loading || processLoading} />
       </div>
-    </div>
+    </aside>
   ) : (
     <aside className="flex h-full min-h-0 flex-col gap-3">
       <MaterialSection data={constructMaterialData} hallId={hallId} loading={loading || materialLoading} />

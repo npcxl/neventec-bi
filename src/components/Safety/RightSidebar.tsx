@@ -363,7 +363,7 @@ export function SafetyRightSidebar({
 
   const riskSection = (
     <section
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}
       onMouseEnter={() => setIsRiskPaused(true)}
       onMouseLeave={() => setIsRiskPaused(false)}
     >
@@ -384,7 +384,7 @@ export function SafetyRightSidebar({
   );
 
   const typeSection = (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
       <PanelTitle title="违规类型统计" />
       <div className="min-h-0 flex-1 p-2.5">
         {loading ? (
@@ -401,11 +401,8 @@ export function SafetyRightSidebar({
     </section>
   );
 
-  return (
-    <aside className={isLandscape
-      ? "relative flex min-h-[360px] min-w-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]"
-      : "relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]"
-    }>
+  return isLandscape ? (
+    <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-2 gap-3 overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
       {loading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
           <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
@@ -418,22 +415,26 @@ export function SafetyRightSidebar({
           </div>
         </div>
       )}
-      {isLandscape ? (
-        <div className="grid min-h-full min-w-0 grid-cols-2 gap-3">
-          <div className="min-h-0 min-w-0 overflow-hidden">
-            {riskSection}
-          </div>
-          <div className="min-h-0 min-w-0 overflow-hidden">
-            {typeSection}
+      {riskSection}
+      {typeSection}
+    </aside>
+  ) : (
+    <aside className="relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
+          <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-3 text-sm text-[#dbeeff]">
+              <span className="inline-flex">
+                <Spin size="large" tip="正在加载安全信息..." />
+              </span>
+              <span>正在加载安全信息...</span>
+            </div>
           </div>
         </div>
-      ) : (
-        <>
-          {riskSection}
-          <div className="mt-2" />
-          {typeSection}
-        </>
       )}
+      {riskSection}
+      <div className="mt-2" />
+      {typeSection}
     </aside>
   );
 }

@@ -80,7 +80,7 @@ export function ExhibitionRightSidebar({
   const orderItems = useMemo(() => normalizeOrderCollect(orderCollect), [orderCollect]);
   const displayRows = payMode === "paid" ? paidRows : unpaidRows;
 
-  const landscapeSectionClass = "flex min-h-0 min-w-0 flex-col overflow-hidden";
+  const landscapeSectionClass = "flex h-full min-h-0 min-w-0 flex-col overflow-hidden";
 
   // Shared sections extracted so they render once regardless of layout
   const expenseSection = (
@@ -253,9 +253,9 @@ export function ExhibitionRightSidebar({
   );
 
   return isLandscape ? (
-    /* LANDSCAPE: aside IS the 3-column grid. Sections are direct children.
-       min-height so App.tsx bottom row's overflow-y-auto actually scrolls. */
-    <aside className="grid min-h-[420px] w-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
+    /* LANDSCAPE: aside IS the 3-column grid, sections are direct children.
+       h-full inherits from App.tsx bottom row's minmax(0,1fr). */
+    <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3 overflow-hidden">
       {expenseSection}
       {unreportedSection}
       {ordersSection}
