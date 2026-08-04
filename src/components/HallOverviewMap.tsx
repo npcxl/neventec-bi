@@ -123,7 +123,7 @@ const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onH
   }, [activeHallId, onHallSelect, pendingHallId]);
 
   return (
-    <div ref={scrollContainerRef} className="map-overview-scrollbar flex h-auto max-h-full w-full items-start justify-start overflow-y-auto px-5 py-4">
+    <div ref={scrollContainerRef} className="map-overview-scrollbar flex h-full min-h-0 w-full items-start justify-start overflow-y-auto px-5 py-4">
       <div className="grid w-full self-start gap-5 pb-4" style={{ ...hallGridStyle, ...hallGridWrapperStyle, marginRight: 'auto', height: 'fit-content' }}>
         {hallNodes.length ? hallNodes.map((hall) => (
           <button

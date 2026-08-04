@@ -1690,7 +1690,7 @@ export default function App() {
                         exhibitionId={initData.exhibitionId}
                       />
                       <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1705,6 +1705,7 @@ export default function App() {
                                 : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
                             }
                             galleryRows={galleryRows}
+                            fillAvailableHeight
                           />
                         </div>
                         <div className="h-full min-h-0 min-w-0 overflow-hidden">
@@ -1724,7 +1725,7 @@ export default function App() {
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
                       <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1744,6 +1745,7 @@ export default function App() {
                             }))}
                             galleryRows={galleryRows}
                             compact={hallMode === "ConstructOverview"}
+                            fillAvailableHeight
                           />
                         </div>
                         <div className="h-full min-h-0 min-w-0 overflow-hidden">
@@ -1757,7 +1759,7 @@ export default function App() {
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
                       <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1768,6 +1770,7 @@ export default function App() {
                             safetyRows={safetyRows}
                             galleryRows={galleryRows}
                             compact={hallMode === "SafetyOverview"}
+                            fillAvailableHeight
                           />
                         </div>
                         <div className="h-full min-h-0 min-w-0 overflow-hidden">

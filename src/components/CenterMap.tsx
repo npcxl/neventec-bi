@@ -775,6 +775,7 @@ const DemoChart = memo(function DemoChart({
       if (disposed || chart.isDisposed()) return;
       const w = chartRef.current?.clientWidth || 0;
       const h = chartRef.current?.clientHeight || 0;
+      if (w <= 0 || h <= 0) return; // guard: skip when container has no size
       if (w === prevResizeDimsRef.width && h === prevResizeDimsRef.height) return;
       prevResizeDimsRef.width = w;
       prevResizeDimsRef.height = h;
@@ -840,6 +841,7 @@ export default function CenterMap({
   constructProcessRows = [],
   galleryRows = [],
   compact = false,
+  fillAvailableHeight = false,
 }: {
   mode?: HallMode;
   moduleMode?: "ExhibitionOverview" | "ConstructOverview" | "SafetyOverview";
@@ -864,6 +866,7 @@ export default function CenterMap({
   }>;
   galleryRows?: GalleryRow[];
   compact?: boolean;
+  fillAvailableHeight?: boolean;
 }) {
   const [selected, setSelected] = useState<{
     code: string;
@@ -1205,14 +1208,16 @@ export default function CenterMap({
   return (
     <section
       className={
-        compact
-          ? "relative flex w-full min-h-[22rem] flex-1 min-w-0 rounded-3xl"
-          : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 rounded-3xl"
+        fillAvailableHeight
+          ? "relative flex h-full min-h-0 w-full min-w-0 overflow-hidden rounded-3xl"
+          : compact
+            ? "relative flex w-full min-h-[22rem] flex-1 min-w-0 rounded-3xl"
+            : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 rounded-3xl"
       }
     >
-      <div className="relative z-10 flex h-full w-full min-w-0 flex-col rounded-[22px] bg-[#081120] ">
-        <div className="relative flex h-full min-h-0 flex-1 min-w-0 flex-col overflow-hidden rounded-[20px] bg-[rgba(10,25,47,0.72)]">
-          <div className="relative z-20 mb-3 flex flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
+      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-[22px] bg-[#081120]">
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[20px] bg-[rgba(10,25,47,0.72)]">
+          <div className="relative z-20 mb-3 flex shrink-0 flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
             <div className="relative min-w-0 w-full">
               <div
                 ref={tabsScrollRef}
@@ -1271,10 +1276,10 @@ export default function CenterMap({
             />
           </div>
 
-          <div className="map-card-frame relative flex-1 overflow-hidden">
+          <div className="map-card-frame relative min-h-0 flex-1 overflow-hidden">
             <div className="map-card-bg" />
             <div className="map-card-blob" />
-            <div className="absolute inset-0 z-10 min-h-0 min-w-0">
+            <div className="absolute inset-0 z-10 min-h-0 min-w-0 overflow-hidden">
               {mode === "all" ? (
                 <HallOverviewMap
                   halls={hallOverview}
