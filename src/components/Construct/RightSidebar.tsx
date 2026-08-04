@@ -50,13 +50,27 @@ type ConstructRightSidebarProps = {
   loading?: boolean;
 };
 
-const OVERVIEW_LABELS = ['搭建正常', '搭建完成', '搭建缓慢', '严重滞后'] as const;
-const OVERVIEW_COLORS: Record<string, string> = {
-  '搭建正常': '#2563EB',
-  '搭建完成': '#63F222',
-  '搭建缓慢': '#FA8C16',
-  '严重滞后': '#F5222D',
+/* ============================================
+   状态映射与颜色
+   ============================================ */
+
+const STATUS_MAP: Record<string, { label: string; color: string }> = {
+  '10': { label: '搭建正常', color: '#2563EB' },
+  '11': { label: '搭建完成', color: '#63F222' },
+  '12': { label: '搭建缓慢', color: '#FA8C16' },
+  '13': { label: '严重滞后', color: '#F5222D' },
+  // 兼容中文/英文名称
+  '搭建正常': { label: '搭建正常', color: '#2563EB' },
+  '搭建完成': { label: '搭建完成', color: '#63F222' },
+  '搭建缓慢': { label: '搭建缓慢', color: '#FA8C16' },
+  '严重滞后': { label: '严重滞后', color: '#F5222D' },
+  'NORMAL_PROGRESS': { label: '搭建正常', color: '#2563EB' },
+  'COMPLETED_PROGRESS': { label: '搭建完成', color: '#63F222' },
+  'SLOW_PROGRESS': { label: '搭建缓慢', color: '#FA8C16' },
+  'DELAY_PROGRESS': { label: '严重滞后', color: '#F5222D' },
 };
+
+const STATUS_ORDER = ['搭建正常', '搭建完成', '搭建缓慢', '严重滞后'] as const;
 
 function darken(hex: string, factor: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -69,11 +83,53 @@ function darken(hex: string, factor: number): string {
   return `#${rr}${gg}${bb}`;
 }
 
+/* ============================================
+   数据提取：按 STATUS_ORDER 汇总
+   ============================================ */
+
+type StatusEntry = { label: string; color: string; count: number };
+
+function extractStatusData(rawData: any): StatusEntry[] {
+  // 解析数据源
+  const rows: Array<{ enumName?: string | number; name?: string; num?: number }> =
+    Array.isArray(rawData)
+      ? rawData
+      : (rawData?.data ?? rawData?.list ?? rawData?.rows ?? rawData?.result ?? []);
+
+  // 按 STATUS_ORDER 顺序汇总
+  const map = new Map<string, number>();
+  STATUS_ORDER.forEach((label) => map.set(label, 0));
+
+  for (const row of rows) {
+    // 优先 enumName（数字/字符串枚举），其次 name（中文标签）
+    const key = String(row.enumName ?? row.name ?? '').trim();
+    const info = STATUS_MAP[key];
+    if (info) {
+      map.set(info.label, (map.get(info.label) ?? 0) + Number(row.num ?? 0));
+    } else if (key) {
+      // 未识别状态：开发环境提示
+      if (import.meta.env.DEV) {
+        console.warn('[ConstructOverview] 未识别的状态值:', key, row);
+      }
+    }
+  }
+
+  return STATUS_ORDER.map((label) => ({
+    label,
+    color: STATUS_MAP[label]!.color,
+    count: map.get(label) ?? 0,
+  }));
+}
+
+/* ============================================
+   2.5D 圆环 Canvas 绘制（更细更精致）
+   ============================================ */
+
 function draw25DRing(
   ctx: CanvasRenderingContext2D,
   w: number,
   h: number,
-  values: number[],
+  entries: StatusEntry[],
 ) {
   const dpr = window.devicePixelRatio || 1;
   ctx.canvas.width = w * dpr;
@@ -83,162 +139,123 @@ function draw25DRing(
 
   const cx = w / 2;
   const cy = h * 0.42;
-  const outerRx = Math.min(w * 0.34, h * 0.36);
+  const outerRx = Math.min(w * 0.38, h * 0.40);
   const outerRy = outerRx * 0.56;
-  const innerRx = outerRx * 0.48;
-  const innerRy = outerRy * 0.48;
+  // 更细的圆环：内径增大到 75%
+  const innerRx = outerRx * 0.75;
+  const innerRy = outerRy * 0.75;
 
-  const maxVal = Math.max(...values, 1);
-  const minDepth = 6;
-  const maxDepth = 16;
-  const depths = values.map((v) =>
-    maxVal > 0 ? minDepth + (v / maxVal) * (maxDepth - minDepth) : minDepth,
+  const maxCount = Math.max(...entries.map((e) => e.count), 1);
+  // 减薄侧壁
+  const minDepth = 3;
+  const maxDepth = 8;
+  const depths = entries.map((e) =>
+    maxCount > 0 ? minDepth + (e.count / maxCount) * (maxDepth - minDepth) : minDepth,
   );
 
-  const gapAngle = 0.04;
+  const gapAngle = 0.03;
   const sliceAngle = (Math.PI * 2) / 4 - gapAngle;
 
-  // Base shadow
-  ctx.fillStyle = 'rgba(20, 92, 210, 0.25)';
+  // 减弱底部阴影
+  ctx.fillStyle = 'rgba(20, 92, 210, 0.12)';
   ctx.beginPath();
-  ctx.ellipse(cx, cy + maxDepth + 4, outerRx + 4, outerRy + 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy + maxDepth + 2, outerRx + 2, outerRy + 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
   for (let i = 0; i < 4; i++) {
+    const entry = entries[i];
+    if (entry.count === 0) continue;
     const startAngle = -Math.PI / 2 + i * (Math.PI * 2) / 4 + gapAngle / 2;
     const endAngle = startAngle + sliceAngle;
-    const topColor = OVERVIEW_COLORS[OVERVIEW_LABELS[i]];
-    const sideColor = darken(topColor, 0.3);
+    const topColor = entry.color;
+    const sideColor = darken(topColor, 0.35);
     const depth = depths[i];
 
-    // Outer side wall
+    // 外侧面
     ctx.fillStyle = sideColor;
     ctx.beginPath();
-    for (let a = startAngle; a <= endAngle; a += 0.015) {
+    for (let a = startAngle; a <= endAngle; a += 0.02) {
       const x = cx + Math.cos(a) * outerRx;
       const y = cy + Math.sin(a) * outerRy;
       a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-    for (let a = endAngle; a >= startAngle; a -= 0.015) {
-      const x = cx + Math.cos(a) * outerRx;
-      const y = cy + Math.sin(a) * outerRy + depth;
-      ctx.lineTo(x, y);
+    for (let a = endAngle; a >= startAngle; a -= 0.02) {
+      ctx.lineTo(cx + Math.cos(a) * outerRx, cy + Math.sin(a) * outerRy + depth);
     }
     ctx.closePath();
     ctx.fill();
 
-    // Inner side wall
-    ctx.fillStyle = darken(topColor, 0.4);
+    // 内侧面
+    ctx.fillStyle = darken(topColor, 0.45);
     ctx.beginPath();
-    for (let a = startAngle; a <= endAngle; a += 0.015) {
+    for (let a = startAngle; a <= endAngle; a += 0.02) {
       const x = cx + Math.cos(a) * innerRx;
       const y = cy + Math.sin(a) * innerRy;
       a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-    for (let a = endAngle; a >= startAngle; a -= 0.015) {
-      const x = cx + Math.cos(a) * innerRx;
-      const y = cy + Math.sin(a) * innerRy + depth;
-      ctx.lineTo(x, y);
+    for (let a = endAngle; a >= startAngle; a -= 0.02) {
+      ctx.lineTo(cx + Math.cos(a) * innerRx, cy + Math.sin(a) * innerRy + depth);
     }
     ctx.closePath();
     ctx.fill();
 
-    // Top face
+    // 顶面
     ctx.fillStyle = topColor;
     ctx.beginPath();
-    for (let a = startAngle; a <= endAngle; a += 0.015) {
+    for (let a = startAngle; a <= endAngle; a += 0.02) {
       const x = cx + Math.cos(a) * outerRx;
       const y = cy + Math.sin(a) * outerRy;
       a === startAngle ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-    for (let a = endAngle; a >= startAngle; a -= 0.015) {
-      const x = cx + Math.cos(a) * innerRx;
-      const y = cy + Math.sin(a) * innerRy;
-      ctx.lineTo(x, y);
+    for (let a = endAngle; a >= startAngle; a -= 0.02) {
+      ctx.lineTo(cx + Math.cos(a) * innerRx, cy + Math.sin(a) * innerRy);
     }
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = 0.6;
+    // 细描边
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 0.5;
     ctx.stroke();
   }
 
-  // Inner hole edge
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 0.6;
+  // 内孔边缘
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
   ctx.beginPath();
   ctx.ellipse(cx, cy, innerRx, innerRy, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Guide lines and labels
-  const labelPositions = [
-    { ax: 1, ay: -1 },
-    { ax: 1, ay: 1 },
-    { ax: -1, ay: 1 },
-    { ax: -1, ay: -1 },
-  ];
+  // 减弱光晕
+  ctx.strokeStyle = 'rgba(37, 99, 235, 0.10)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, outerRx + 1, outerRy + 1, 0, 0, Math.PI * 2);
+  ctx.stroke();
 
+  // 中心总数
+  const total = entries.reduce((sum, e) => sum + e.count, 0);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `bold ${Math.max(14, outerRx * 0.28)}px "Source Han Sans CN", sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillText(String(total), cx, cy - 4);
 
-  for (let i = 0; i < 4; i++) {
-    const midAngle = -Math.PI / 2 + i * (Math.PI * 2) / 4;
-    const label = OVERVIEW_LABELS[i];
-    const color = OVERVIEW_COLORS[label];
-    const pos = labelPositions[i];
-
-    const sx = cx + Math.cos(midAngle) * outerRx;
-    const sy = cy + Math.sin(midAngle) * outerRy;
-    const guideLen = outerRx * 0.28;
-    const ex = cx + Math.cos(midAngle) * (outerRx + guideLen);
-    const ey = cy + Math.sin(midAngle) * (outerRy + guideLen * 0.56);
-
-    ctx.strokeStyle = color + '99';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(ex, ey);
-    ctx.stroke();
-
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    const nx = ex + pos.ax * outerRx * 0.1;
-    const ny = ey + pos.ay * outerRy * 0.1;
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.max(11, outerRx * 0.15)}px "Source Han Sans CN", sans-serif`;
-    ctx.fillText(String(values[i]), nx, ny);
-
-    ctx.fillStyle = color;
-    ctx.font = `${Math.max(9, outerRx * 0.11)}px "Source Han Sans CN", sans-serif`;
-    ctx.fillText(label, nx, ny + outerRy * 0.18);
-  }
-
-  // Glow ring
-  ctx.strokeStyle = 'rgba(37, 99, 235, 0.15)';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, outerRx + 2, outerRy + 1.5, 0, 0, Math.PI * 2);
-  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = `${Math.max(9, outerRx * 0.14)}px "Source Han Sans CN", sans-serif`;
+  ctx.fillText('展位总数', cx, cy + Math.max(12, outerRx * 0.16));
 }
+
+/* ============================================
+   圆环图组件（Canvas 只画圆环，右侧用 DOM）
+   ============================================ */
 
 function ConstructOverviewChart({ data }: { data?: any }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
 
-  const values = useMemo(() => {
-    const rows: Array<{ name?: string; num?: number }> = Array.isArray(data)
-      ? data
-      : (data?.data ?? data?.list ?? data?.rows ?? []);
-    return OVERVIEW_LABELS.map((label) => {
-      const row = rows.find((item) => item.name === label);
-      return Number(row?.num ?? 0);
-    });
-  }, [data]);
+  const entries = useMemo(() => extractStatusData(data), [data]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -251,27 +268,55 @@ function ConstructOverviewChart({ data }: { data?: any }) {
       if (w <= 0 || h <= 0) return;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      draw25DRing(ctx, w, h, values);
+      draw25DRing(ctx, w, h, entries);
     };
 
     draw();
-
     const ro = new ResizeObserver(draw);
     ro.observe(container);
     roRef.current = ro;
-
-    return () => {
-      ro.disconnect();
-      roRef.current = null;
-    };
-  }, [values]);
+    return () => { ro.disconnect(); roRef.current = null; };
+  }, [entries]);
 
   return (
     <div ref={containerRef} className="relative h-full w-full min-h-0 min-w-0">
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
     </div>
   );
 }
+
+/* ============================================
+   右侧状态列表
+   ============================================ */
+
+function StatusLegend({ entries, total }: { entries: StatusEntry[]; total: number }) {
+  return (
+    <div className="flex flex-col gap-2.5 px-3 py-2">
+      {entries.map((entry) => {
+        const pct = total > 0 ? Math.round((entry.count / total) * 100) : 0;
+        return (
+          <div
+            key={entry.label}
+            className="grid items-center text-sm leading-[22px]"
+            style={{ gridTemplateColumns: '8px minmax(0,1fr) 40px 44px', columnGap: 8 }}
+          >
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="truncate text-white/80">{entry.label}</span>
+            <span className="text-right tabular-nums text-white">{entry.count}</span>
+            <span className="text-right tabular-nums text-white/50">{pct}%</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ============================================
+   ConstructRightSidebar 主组件
+   ============================================ */
 
 export function ConstructRightSidebar({
   boothProgressData,
@@ -286,13 +331,23 @@ export function ConstructRightSidebar({
       ? constructCarouselPictures
       : MOCK_CONSTRUCT_PICTURES;
 
+  const entries = useMemo(() => extractStatusData(boothProgressData), [boothProgressData]);
+  const total = entries.reduce((sum, e) => sum + e.count, 0);
+
   const overviewSection = (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
       <div className="shrink-0">
         <PanelTitle title="搭建总览" />
       </div>
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        <ConstructOverviewChart data={boothProgressData} />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* 左侧圆环 */}
+        <div className="relative min-h-0 flex-1 overflow-hidden">
+          <ConstructOverviewChart data={boothProgressData} />
+        </div>
+        {/* 右侧状态列表 */}
+        <div className="flex shrink-0 items-center" style={{ width: 140 }}>
+          <StatusLegend entries={entries} total={total} />
+        </div>
       </div>
     </section>
   );

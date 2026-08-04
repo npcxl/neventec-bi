@@ -1101,6 +1101,7 @@ export default function App() {
     constructProcessData,
     exhibitionProcessData,
     hallId: selectedHallId,
+    exhibitionId: DEFAULT_EXHIBITION_ID,
     loading: isModuleLoading && hallMode === "ConstructOverview",
     overviewLoading: isSwitchLoading && hallMode === "ConstructOverview",
     processLoading: false,
@@ -1727,7 +1728,7 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
                         <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}

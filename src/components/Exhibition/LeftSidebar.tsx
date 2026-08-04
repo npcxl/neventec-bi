@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { Spin } from "antd";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
+import { screenApi } from "../../api";
+import { BoothModal } from "../modal/BoothModal";
 
 function PanelTitle({ title }: { title: string }) {
   return (
@@ -11,10 +14,24 @@ function PanelTitle({ title }: { title: string }) {
   );
 }
 
+type BoothRow = {
+  boothId?: string;
+  boothNo?: string;
+  exhibitor?: string;
+  report?: string;
+  paid?: string;
+  declare?: string;
+  hallId?: string;
+  hallName?: string;
+};
+
+type BoothDetailData = Record<string, any>;
+
 export function ExhibitionLeftSidebar({
   galleryRows = [],
   boothRows = [],
   hallId = "all",
+  exhibitionId = "",
   loading = false,
 }: {
   galleryRows?: Array<{
@@ -25,19 +42,15 @@ export function ExhibitionLeftSidebar({
     standardAreaNum?: number;
     hallId?: string;
   }>;
-  boothRows?: Array<{
-    boothId?: string;
-    boothNo?: string;
-    exhibitor?: string;
-    report?: string;
-    paid?: string;
-    declare?: string;
-    hallId?: string;
-    hallName?: string;
-  }>;
+  boothRows?: BoothRow[];
   hallId?: string;
+  exhibitionId?: string;
   loading?: boolean;
 }) {
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [boothDetail, setBoothDetail] = useState<BoothDetailData | null>(null);
+
   const shouldFilterByHall = Boolean(hallId && hallId !== "all");
   const visibleRows = shouldFilterByHall
     ? galleryRows.filter((row) => (row.hallId || "") === hallId)
@@ -64,6 +77,23 @@ export function ExhibitionLeftSidebar({
     if ((status || "").includes("未")) return "text-[#F5222D]";
     if ((status || "").includes("已")) return "text-[#63F222]";
     return "text-[#93aed0]";
+  };
+
+  const handleBoothClick = async (row: BoothRow) => {
+    const boothNo = row.boothNo || row.boothId;
+    if (!boothNo || !exhibitionId) return;
+    setDetailLoading(true);
+    setDetailOpen(true);
+    try {
+      const res = await screenApi.getBoothScreenDetail(exhibitionId, boothNo);
+      const data = (res as any)?.data ?? res;
+      const item = Array.isArray(data) ? data[0] : data;
+      setBoothDetail(item ?? null);
+    } catch {
+      setBoothDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   return (
@@ -141,7 +171,7 @@ export function ExhibitionLeftSidebar({
               height="100%"
               speed={0.35}
               overscan={8}
-              pauseOnHover={false}
+              pauseOnHover={true}
               className="h-full rounded-lg"
               renderItem={(row, index) => {
                 const reportStatus = (row.report || "").includes("已") ? "已报到" : "未报到";
@@ -150,7 +180,8 @@ export function ExhibitionLeftSidebar({
 
                 return (
                   <div
-                    className={`grid h-full min-w-0 grid-cols-[55px_minmax(0,1fr)_60px_60px_60px] items-center gap-2 px-3 text-xs ${index % 2 === 1 ? "bg-white/[0.03]" : ""
+                    onClick={() => handleBoothClick(row)}
+                    className={`grid h-full min-w-0 cursor-pointer grid-cols-[55px_minmax(0,1fr)_60px_60px_60px] items-center gap-2 px-3 text-xs transition-colors hover:bg-white/[0.08] ${index % 2 === 1 ? "bg-white/[0.03]" : ""
                       }`}
                   >
                     <span className="min-w-0 truncate whitespace-nowrap text-white">
@@ -184,6 +215,25 @@ export function ExhibitionLeftSidebar({
           </div>
         </div>
       </section>
+
+      {/* Booth Detail Modal */}
+      <BoothModal
+        visible={detailOpen}
+        onClose={() => { setDetailOpen(false); setBoothDetail(null); }}
+        data={{
+          expoName: boothDetail?.expoName,
+          hallName: boothDetail?.hallName,
+          boothNo: boothDetail?.boothNo,
+          exhibitor: boothDetail?.exhibitor,
+          contactname: boothDetail?.contactname,
+          phone: boothDetail?.phone,
+          contactWay: boothDetail?.contactWay,
+          constructionCompany: boothDetail?.constructionCompany,
+          remarks: boothDetail?.remarks,
+          fullPaidFee: boothDetail?.fullPaidFee,
+          orderInfos: boothDetail?.orderInfos,
+        }}
+      />
     </aside>
   );
 }

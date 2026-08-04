@@ -353,6 +353,8 @@ video {
 
 /* Progress bar with diagonal stripe track */
 .progress-track {
+  height: 16px;
+  border-radius: 9999px;
   background-color: rgba(37, 99, 235, 0.10);
   background-image: repeating-linear-gradient(
     -45deg,
@@ -369,54 +371,36 @@ video {
   transition: width 500ms ease;
 }
 
-/* Progress detail row — default transparent, hover + selected states */
+/* Progress detail row */
 .progress-detail-row {
-  position: relative;
-  color: rgba(224, 238, 255, 0.88);
   background: transparent;
-  border-bottom: 1px solid rgba(111, 170, 255, 0.08);
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: background-color 160ms ease;
 }
 
 .progress-detail-row:hover {
-  color: #ffffff;
-  background: rgba(37, 99, 235, 0.10);
-  border-bottom-color: rgba(83, 158, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.progress-detail-row:hover::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 7px;
-  bottom: 7px;
-  width: 2px;
-  border-radius: 1px;
-  background: rgba(83, 158, 255, 0.75);
+/* 弹窗滚动条 — 深色科技风 */
+.modal-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: rgba(14, 23, 54, 0.4);
+  border-radius: 3px;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.5);
+  border-radius: 3px;
+}
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
 }
 
-.progress-detail-row.is-selected {
-  color: #ffffff;
-  background: rgba(37, 99, 235, 0.18);
-  border-bottom-color: rgba(83, 158, 255, 0.32);
-}
 
-.progress-detail-row.is-selected::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 5px;
-  bottom: 5px;
-  width: 3px;
-  border-radius: 1px;
-  background: #3B82F6;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.45);
-}
 
-.progress-detail-row.is-selected:hover {
-  background: rgba(37, 99, 235, 0.22);
-}
+
 
 
 

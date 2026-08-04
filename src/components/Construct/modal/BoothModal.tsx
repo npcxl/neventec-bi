@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Image } from "antd";
-import "./BoothModal.css";
+import "./index.css";
 
 /* ============================================
    图片项（对齐 API 返回的 constructProgressImages 等）
@@ -117,8 +117,76 @@ function collectImages(data: ConstructDetailData): string[] {
   if (Array.isArray(data.imageList)) {
     data.imageList.forEach((u) => { if (u) urls.push(u); });
   }
-  // 去重
   return [...new Set(urls)];
+}
+
+/* ============================================
+   字段定义（便于统一渲染）
+   ============================================ */
+type FieldDef = {
+  label: string;
+  value: string;
+  nowrap?: boolean;
+  title?: string;
+  valueStyle?: React.CSSProperties;
+};
+
+function buildFields(data: ConstructDetailData, pLabel: string, pColor: string): FieldDef[] {
+  return [
+    { label: "展位号", value: data.boothNumber || "-" },
+    { label: "参展商", value: data.exhibitor || "-" },
+    { label: "施工单位", value: data.constructionCompany || "-" },
+    { label: "展位面积", value: data.area != null ? `${data.area}㎡` : "-" },
+    { label: "展位类型", value: label(EXCOMPANY_TYPE, data.excompanytype) },
+    { label: "关键工序", value: label(COMPLEX_ENG, data.complexEngineering) },
+    { label: "吊点", value: label(LIFT_POINT, data.liftingPoint) },
+    { label: "主体材质", value: label(MATERIAL, data.mainStructureMaterial) },
+    { label: "搭建进度", value: pLabel, valueStyle: { color: pColor } },
+    { label: "记录时间", value: data.recordDate || "-", nowrap: true, title: data.recordDate || "-" },
+    { label: "记录人", value: data.recordBy || "-" },
+    { label: "巡检次数", value: data.recordTimes != null ? `${data.recordTimes} 次` : "-" },
+  ];
+}
+
+/* ============================================
+   字段行组件
+   ============================================ */
+function FieldRow({ field }: { field: FieldDef }) {
+  return (
+    <div className="grid min-w-0 grid-cols-[72px_14px_minmax(0,1fr)] items-start leading-[22px] text-sm">
+      <span className="whitespace-nowrap text-white/60">{field.label}</span>
+      <span className="whitespace-nowrap text-center text-white/60">：</span>
+      {field.nowrap ? (
+        <span
+          className="min-w-0 truncate text-white"
+          title={field.title}
+          style={field.valueStyle}
+        >
+          {field.value}
+        </span>
+      ) : (
+        <span
+          className="min-w-0 max-w-full break-words text-white [overflow-wrap:anywhere]"
+          style={field.valueStyle}
+        >
+          {field.value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* ============================================
+   分区标题组件
+   ============================================ */
+function SectionHeading({ title, right }: { title: string; right?: React.ReactNode }) {
+  return (
+    <div className="flex h-14 items-center min-w-0 px-5 pb-3 pt-4">
+      <i className="construct-heading-mark" aria-hidden="true" />
+      <h3 className="m-0 shrink-0 text-lg font-medium leading-7 text-white">{title}</h3>
+      {right}
+    </div>
+  );
 }
 
 /* ============================================
@@ -154,152 +222,87 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
   const pColor = progressColor(data.progressStatus);
   const images = collectImages(data);
   const lines = data.lines ?? [];
+  const fields = buildFields(data, pLabel, pColor);
 
   return (
-    <div className="booth-modal-layer" ref={overlayRef} onClick={handleOverlayClick}>
-      <section className="booth-modal" role="dialog" aria-modal="true" aria-labelledby="booth-modal-title">
-
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(35,35,35,0.6)]"
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+    >
+      <section
+        className="relative flex max-h-[85vh] w-[860px] flex-col overflow-hidden rounded border-y-2 border-[#1e40af] bg-[rgba(14,23,54,0.8)] shadow-[0_0_24px_rgba(37,99,235,0.24)] backdrop-blur-[20px]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booth-modal-title"
+      >
         {/* Header */}
-        <header className="booth-modal__header">
-          <h2 className="booth-modal__title" id="booth-modal-title">搭建信息详情</h2>
-          <div className="booth-modal__summary">
-            <span className="booth-modal__event">
-              { ""}
-            </span>
-            <span className="booth-modal__paid" style={{ color: pColor }}>
-              {pLabel}
-            </span>
+        <header className="relative w-full px-5 pb-4 pt-[18px]">
+          <h2 className="mb-2 h-7 text-xl font-medium leading-7 text-white" id="booth-modal-title">
+            搭建信息详情
+          </h2>
+          <div className="flex h-[22px] items-center justify-between text-sm font-medium leading-[22px]">
+            <span className="pr-4 text-white/60">{""}</span>
+            <span className="px-4" style={{ color: pColor }}>{pLabel}</span>
           </div>
-          <div className="booth-modal__divider" />
+          <div className="construct-divider" />
         </header>
 
         {/* Scrollable Content */}
-        <div className="booth-modal__scroll-area">
+        <div className="construct-scroll-area min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
 
           {/* 展位信息 */}
-          <section className="booth-modal__section booth-modal__section--booth" aria-labelledby="booth-info-title">
-            <div className="booth-modal__section-heading">
-              <i className="booth-modal__heading-mark" aria-hidden="true" />
-              <h3 className="booth-modal__heading-text" id="booth-info-title">展位信息</h3>
-            </div>
-            <div className="booth-modal__booth-content">
-              <div className="booth-modal__details">
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">展位号</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">{data.boothNumber || "-"}</span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">参展商</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">{data.exhibitor || "-"}</span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">施工单位</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">{data.constructionCompany || "-"}</span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">展位面积</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {data.area != null ? `${data.area}㎡` : "-"}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">展位类型</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {label(EXCOMPANY_TYPE, data.excompanytype)}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">关键工序</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {label(COMPLEX_ENG, data.complexEngineering)}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">吊点</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {label(LIFT_POINT, data.liftingPoint)}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">主体材质</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {label(MATERIAL, data.mainStructureMaterial)}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">搭建进度</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value" style={{ color: pColor }}>
-                    {pLabel}
-                  </span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">记录时间</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">{data.recordDate || "-"}</span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">记录人</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">{data.recordBy || "-"}</span>
-                </div>
-                <div className="booth-modal__detail">
-                  <span className="booth-modal__label">巡检次数</span>
-                  <span className="booth-modal__colon">：</span>
-                  <span className="booth-modal__value">
-                    {data.recordTimes != null ? `${data.recordTimes} 次` : "-"}
-                  </span>
-                </div>
+          <section aria-labelledby="booth-info-title">
+            <SectionHeading title="展位信息" />
+            <div className="relative w-full px-9 pb-4">
+              <div className="grid min-w-0 grid-cols-2 items-start gap-x-8 gap-y-2.5 pb-4">
+                {fields.map((field, idx) => (
+                  <FieldRow key={idx} field={field} />
+                ))}
               </div>
-              <div className="booth-modal__divider" />
+              <div className="construct-divider" />
             </div>
           </section>
 
           {/* 搭建进度时间线 */}
-          <section className="booth-modal__section booth-modal__section--order" aria-labelledby="timeline-title">
-            <div className="booth-modal__section-heading booth-modal__order-heading">
-              <div className="booth-modal__heading-group">
-                <i className="booth-modal__heading-mark" aria-hidden="true" />
-                <h3 className="booth-modal__heading-text" id="timeline-title">搭建进度时间线</h3>
-              </div>
-              <span className="booth-modal__count">
-                共 <strong>{lines.length}</strong> 条
-              </span>
-            </div>
-            <div className="booth-modal__table-body">
+          <section aria-labelledby="timeline-title">
+            <SectionHeading
+              title="搭建进度时间线"
+              right={
+                <span className="ml-auto text-sm leading-[22px] text-white/60">
+                  共 <strong className="font-normal text-white">{lines.length}</strong> 条
+                </span>
+              }
+            />
+            <div className="construct-timeline-body">
               {lines.length > 0 ? (
                 lines.map((line, idx) => (
-                  <div className="booth-modal__row" key={line.id ?? idx}>
-                    <span className="booth-modal__timeline-dot" />
+                  <div className="construct-timeline-row" key={line.id ?? idx}>
+                    <span className="construct-timeline-dot" />
                     <span>{line.content || "-"}</span>
                   </div>
                 ))
               ) : (
-                <div className="booth-modal__empty">暂无进度记录</div>
+                <div className="flex h-20 items-center justify-center text-sm text-white/40">
+                  暂无进度记录
+                </div>
               )}
             </div>
           </section>
 
           {/* 现场图片 */}
           {images.length > 0 && (
-            <section className="booth-modal__section booth-modal__section--images" aria-labelledby="images-title">
-              <div className="booth-modal__section-heading">
-                <i className="booth-modal__heading-mark" aria-hidden="true" />
-                <h3 className="booth-modal__heading-text" id="images-title">现场图片</h3>
-                <span className="booth-modal__count" style={{ marginLeft: 12 }}>
-                  共 <strong>{images.length}</strong> 张
-                </span>
-              </div>
-              <div className="booth-modal__image-scroll">
-                <div className="booth-modal__image-list">
+            <section aria-labelledby="images-title">
+              <SectionHeading
+                title="现场图片"
+                right={
+                  <span className="ml-3 text-sm leading-[22px] text-white/60">
+                    共 <strong className="font-normal text-white">{images.length}</strong> 张
+                  </span>
+                }
+              />
+              <div className="construct-image-scroll">
+                <div className="inline-flex gap-2 pb-1">
                   {images.map((url, idx) => (
                     <Image
                       key={`${url}-${idx}`}
@@ -307,12 +310,7 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                       alt={`搭建图片${idx + 1}`}
                       width={168}
                       height={96}
-                      style={{
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(96,165,250,0.28)",
-                        flexShrink: 0,
-                      }}
+                      className="shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
                     />
                   ))}
                 </div>
@@ -323,8 +321,12 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
         </div>
 
         {/* Footer — sticky */}
-        <footer className="booth-modal__footer">
-          <button className="booth-modal__close" type="button" onClick={onClose}>
+        <footer className="flex shrink-0 justify-end border-t border-[rgba(37,99,235,0.15)] bg-[rgba(14,23,54,0.95)] px-5 py-3">
+          <button
+            className="construct-close-btn"
+            type="button"
+            onClick={onClose}
+          >
             关闭
           </button>
         </footer>

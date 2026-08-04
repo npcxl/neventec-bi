@@ -7,8 +7,8 @@ import HallOverviewMap from "./HallOverviewMap";
 import ConstructCarousel, {
   type ConstructCarouselPicture,
 } from "./Safety/ConstructCarousel";
-import { BoothModal } from "./Construct/modal/BoothModal";
-import type { ConstructDetailData } from "./Construct/modal/BoothModal";
+import { BoothModal as ConstructBoothModal } from "./Construct/modal/BoothModal";
+import { BoothModal } from "./modal/BoothModal";
 import { useBoothColorStrategy } from "../hooks/useBoothColorStrategy";
 import { useHallOverviewMap } from "../hooks/useHallOverviewMap";
 import { useHallSorter } from "../hooks/useHallSorter";
@@ -1312,10 +1312,27 @@ export default function CenterMap({
           </div>
 
           {moduleMode === "ConstructOverview" ? (
-            <BoothModal
+            <ConstructBoothModal
               visible={detailOpen}
               onClose={() => setDetailOpen(false)}
               data={constructDetail ?? {}}
+            />
+          ) : moduleMode === "ExhibitionOverview" ? (
+            <BoothModal
+              visible={detailOpen}
+              onClose={() => setDetailOpen(false)}
+              data={{
+                expoName: boothDetail?.expoName,
+                hallName: boothDetail?.hallName,
+                exhibitor: boothDetail?.exhibitor,
+                contactname: boothDetail?.contactname,
+                phone: boothDetail?.phone,
+                contactWay: boothDetail?.contactWay,
+                constructionCompany: boothDetail?.constructionCompany,
+                remarks: boothDetail?.remarks,
+                fullPaidFee: boothDetail?.fullPaidFee,
+                orderInfos: orderInfos as any,
+              }}
             />
           ) : (
             <Modal
@@ -1495,201 +1512,11 @@ export default function CenterMap({
                             </span>
                           </div>
                         </>
-                      ) : moduleMode === "ExhibitionOverview" ? (
-                        <>
-                          <DetailItem
-                            label="参展商"
-                            value={boothDetail?.exhibitor || "-"}
-                          />
-                          <DetailItem
-                            label="展位号"
-                            value={selected?.code || "-"}
-                          />
-                          <DetailItem
-                            label="展馆"
-                            value={boothDetail?.hallName || "-"}
-                          />
-                          <DetailItem
-                            label="联系电话"
-                            value={
-                              boothDetail?.contactWay || boothDetail?.phone || "-"
-                            }
-                          />
-                          <DetailItem
-                            label="联系人"
-                            value={boothDetail?.contactname || "-"}
-                          />
-                          <DetailItem
-                            label="施工单位"
-                            value={boothDetail?.constructionCompany || "-"}
-                          />
-                          <DetailItem
-                            label="备注"
-                            value={boothDetail?.remarks || "-"}
-                            full
-                          />
-                          <div className="col-span-2 flex flex-wrap gap-1.5">
-                            <span className="inline-flex items-center rounded-sm bg-[#60a5fa]/12 px-2 py-0.5 text-[11px] text-[#bfdbfe]">
-                              {boothDetail?.fullPaidFee
-                                ? "已全额支付"
-                                : "未全额支付"}
-                            </span>
-                            <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
-                              {boothDetail?.expoName || "展会概况"}
-                            </span>
-                          </div>
-                        </>
                       ) : null}
                     </div>
                   </div>
 
-                  {moduleMode === "ExhibitionOverview" ? (
-                    <div
-                      style={{
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(96, 165, 250, 0.28)",
-                        background: "rgba(8, 22, 44, 0.55)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "10px",
-                          marginBottom: "8px",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: "#cffafe",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            minWidth: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: "10px",
-                              width: "3px",
-                              borderRadius: "2px",
-                              backgroundColor: "#60a5fa",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span>订单信息</span>
-                        </div>
-                        <span
-                          style={{
-                            border: "1px solid rgba(96,165,250,0.3)",
-                            background: "rgba(96,165,250,0.1)",
-                            color: "#bfdbfe",
-                            borderRadius: "999px",
-                            padding: "2px 8px",
-                            fontSize: "11px",
-                            fontWeight: 500,
-                          }}
-                        >
-                          共 {orderInfos.length} 项
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                        }}
-                      >
-                        {orderInfos.length ? (
-                          orderInfos.map((order, index) => (
-                            <div
-                              key={`${order.goodsName || "order"}-${index}`}
-                              style={{
-                                borderRadius: "8px",
-                                border: "none",
-                                background: "rgba(255,255,255,0.03)",
-                                padding: "9px 10px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  gap: "10px",
-                                  marginBottom: "6px",
-                                  fontSize: "12px",
-                                  color: "#e0f2fe",
-                                }}
-                              >
-                                <span>{order.goodsName || "-"}</span>
-                                <span>x{order.buyNum ?? 1}</span>
-                              </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexWrap: "wrap",
-                                  gap: "4px",
-                                  fontSize: "10px",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    border: "1px solid rgba(250,204,21,0.28)",
-                                    background: "rgba(250,204,21,0.1)",
-                                    color: "#fde68a",
-                                    borderRadius: "4px",
-                                    padding: "1px 5px",
-                                  }}
-                                >
-                                  {order.specifications || "-"}
-                                </span>
-                                <span
-                                  style={{
-                                    border: "1px solid rgba(52,211,153,0.28)",
-                                    background: "rgba(52,211,153,0.1)",
-                                    color: "#7cf0c6",
-                                    borderRadius: "4px",
-                                    padding: "1px 5px",
-                                  }}
-                                >
-                                  {order.invoiceApply ? "已开票" : "未开票"}
-                                </span>
-                                <span
-                                  style={{
-                                    border: "1px solid rgba(96,165,250,0.28)",
-                                    background: "rgba(96,165,250,0.1)",
-                                    color: "#bfdbfe",
-                                    borderRadius: "4px",
-                                    padding: "1px 5px",
-                                  }}
-                                >
-                                  {order.refundAmount ? "已退款" : "未退款"}
-                                </span>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div
-                            style={{
-                              borderRadius: "8px",
-                              border: "none",
-                              padding: "10px",
-                              textAlign: "center",
-                              color: "#a7c0de",
-                              fontSize: "12px",
-                            }}
-                          >
-                            暂无订单信息
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : moduleMode === "SafetyOverview" ? (
+                  {moduleMode === "SafetyOverview" ? (
                     <div
                       style={{
                         padding: "10px 12px",
@@ -1883,9 +1710,7 @@ export default function CenterMap({
                   ) : null}
                 </div>
 
-                {(moduleMode === "ExhibitionOverview" ||
-                  (moduleMode === "SafetyOverview" &&
-                    safetyInfoList.length > 0)) && (
+                {safetyInfoList.length > 0 && (
                   <div
                     style={{
                       marginTop: "12px",
