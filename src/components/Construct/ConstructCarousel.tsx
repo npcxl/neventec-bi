@@ -43,7 +43,7 @@ function ConstructCarousel({
     [pictures],
   );
 
-  const { trackRef, containerRef, visibleItems, visibleCount, hoverPausedRef } = useWindowedCarousel(
+  const { trackRef, containerRef, visibleItems, hoverPausedRef } = useWindowedCarousel(
     normalizedPictures,
     normalizedPictures.length,
   );
@@ -72,7 +72,7 @@ function ConstructCarousel({
         <div className="text-sm font-medium text-[#dbeeff]">{title}</div>
         <div ref={containerRef} className="flex h-full min-h-0 overflow-hidden">
           <div ref={trackRef} className="flex h-full gap-3" style={{ willChange: "transform" }}>
-            {visibleItems.map(({ item, realIndex }) => (
+            {visibleItems.map(({ item, realIndex, isEager }) => (
               <div
                 key={`${item.address}-${realIndex}`}
                 className="flex h-full flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
@@ -83,8 +83,8 @@ function ConstructCarousel({
                     src={item.address}
                     alt={item.dataStr || `图片-${realIndex + 1}`}
                     preview={{ src: item.address }}
-                  loading={realIndex < visibleCount + 2 ? "eager" : "lazy"}
-                  className="h-[150px] w-full object-cover"
+                    loading={isEager ? "eager" : "lazy"}
+                    className="h-[150px] w-full object-cover"
                   />
                 </div>
                 <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] px-3 py-3">

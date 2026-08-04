@@ -4,16 +4,26 @@ export const CARD_WIDTH = 300;
 export const CARD_GAP = 12;
 export const STEP = CARD_WIDTH + CARD_GAP; // 312px per card
 const SCROLL_SPEED = 0.8; // px per frame at 60fps
+const BUFFER_COUNT = 2; // buffer cards on each side
+const MAX_DOM_CARDS = 12;
 
-/**
- * Windowed seamless carousel hook.
- * - Only renders visible cards + 2 buffer cards in DOM.
- * - Uses rAF to update DOM transform (no per-frame setState).
- * - Handles hover/visibility/reduced-motion pause independently.
- */
+function calcContentWidth(total: number) {
+  if (total <= 0) return 0;
+  return total * CARD_WIDTH + Math.max(0, total - 1) * CARD_GAP;
+}
+
+type VisibleItem<T> = {
+  item: T;
+  realIndex: number;
+  /** 0 = first visible, viewportCount-1 = last visible, >= viewportCount = buffer */
+  slotIndex: number;
+  isEager: boolean;
+};
+
 export function useWindowedCarousel<T>(items: T[], totalCount: number) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
   const rafRef = useRef<number | null>(null);
   const localOffsetRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
@@ -23,26 +33,45 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
   const reducedMotionRef = useRef(false);
 
   const [windowStart, setWindowStart] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  // Measure container width to determine visible cards
-  const measureVisibleCount = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const w = el.clientWidth || el.getBoundingClientRect().width || 0;
-    const count = Math.max(1, Math.ceil(w / STEP) + 1);
-    setVisibleCount((prev) => (prev === count ? prev : count));
+  // viewportCount: cards needed to fill container
+  const viewportCount = containerWidth > 0 ? Math.ceil(containerWidth / STEP) : 0;
+  // renderCount: viewport + buffers, capped at MAX_DOM_CARDS and totalCount
+  const renderCount = Math.min(MAX_DOM_CARDS, totalCount, viewportCount + BUFFER_COUNT * 2);
+  // content width to determine scroll
+  const contentWidth = calcContentWidth(totalCount);
+  const needsScroll = contentWidth > containerWidth;
+
+  // --- Callback ref for container: triggers measurement immediately ---
+  const setContainerRef = useCallback((node: HTMLDivElement | null) => {
+    // Disconnect old observer
+    if (roRef.current) {
+      roRef.current.disconnect();
+      roRef.current = null;
+    }
+    containerRef.current = node;
+    if (!node) return;
+
+    const measure = () => {
+      const w = node.clientWidth || node.getBoundingClientRect().width || 0;
+      setContainerWidth((prev) => (prev === w ? prev : w));
+    };
+    measure();
+
+    roRef.current = new ResizeObserver(measure);
+    roRef.current.observe(node);
   }, []);
 
-  // ResizeObserver - re-bind when container appears
+  // Cleanup observer on unmount
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    measureVisibleCount();
-    const ro = new ResizeObserver(() => measureVisibleCount());
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [measureVisibleCount, totalCount]);
+    return () => {
+      if (roRef.current) {
+        roRef.current.disconnect();
+        roRef.current = null;
+      }
+    };
+  }, []);
 
   // Reduced motion
   useEffect(() => {
@@ -51,7 +80,6 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     const handler = (e: MediaQueryListEvent) => {
       const prev = reducedMotionRef.current;
       reducedMotionRef.current = e.matches;
-      // Reset lastTime when transitioning from reduced to non-reduced
       if (prev && !e.matches) {
         lastTimeRef.current = null;
       }
@@ -72,13 +100,12 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     return () => document.removeEventListener("visibilitychange", handler);
   }, []);
 
-  // Check if should be paused (all 3 reasons independently)
+  // Check if should be paused
   const isPaused = () => hoverPausedRef.current || visibilityPausedRef.current || reducedMotionRef.current;
 
   // rAF scroll loop
   useEffect(() => {
-    if (!totalCount || visibleCount === 0 || totalCount <= visibleCount || reducedMotionRef.current) {
-      // Not enough items or reduced motion: reset
+    if (!totalCount || containerWidth === 0 || !needsScroll || reducedMotionRef.current) {
       localOffsetRef.current = 0;
       windowStartRef.current = 0;
       setWindowStart(0);
@@ -109,7 +136,6 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
           setWindowStart(windowStartRef.current);
         }
 
-        // Update DOM transform: always within [-STEP, 0) range relative to current window
         const track = trackRef.current;
         if (track) {
           track.style.transform = `translate3d(${-localOffsetRef.current}px, 0, 0)`;
@@ -129,26 +155,30 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
         rafRef.current = null;
       }
     };
-  }, [totalCount, visibleCount]);
+  }, [totalCount, containerWidth, needsScroll]);
 
-  // Build visible window: startIndex + visibleCount + 2 buffer on each side
-  const bufferCount = 2;
-  const totalSlots = visibleCount + bufferCount * 2;
-  const visibleItems: { item: T; realIndex: number }[] = [];
-
-  for (let i = 0; i < Math.min(totalSlots, totalCount); i++) {
+  // Build visible window with slotIndex and isEager
+  const visibleItems: VisibleItem<T>[] = [];
+  for (let i = 0; i < renderCount; i++) {
     const idx = (windowStart + i) % totalCount;
     if (idx >= 0 && idx < items.length) {
-      visibleItems.push({ item: items[idx], realIndex: idx });
+      // slotIndex: 0 = first visible card, viewportCount-1 = last visible
+      // isEager: current viewport cards + next 1 buffer card
+      visibleItems.push({
+        item: items[idx],
+        realIndex: idx,
+        slotIndex: i,
+        isEager: i < viewportCount + 1,
+      });
     }
   }
 
   return {
     trackRef,
-    containerRef,
+    containerRef: setContainerRef,
     visibleItems,
-    visibleCount,
+    viewportCount,
     hoverPausedRef,
-    needsScroll: totalCount > visibleCount,
+    needsScroll,
   };
 }
