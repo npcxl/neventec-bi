@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConstructProgress } from "../../hooks/useConstructProgress";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
+import { BoothModal } from "./modal/BoothModal";
+import type { ConstructDetailData } from "./modal/BoothModal";
+import { screenApi } from "../../api";
 
 function PanelTitle({ title }: { title: string }) {
   return (
@@ -15,20 +18,20 @@ function PanelTitle({ title }: { title: string }) {
 const VISIBLE_COUNT = 5;
 const SCROLL_INTERVAL = 5000;
 const ANIMATION_DURATION = 500;
-const ROW_HEIGHT = 38; // py-1.5 (6px) + content ~26px + 6px gap = 38px
+const ROW_HEIGHT = 30; // py-1 (4px) + bar 16px + py-1 (4px) + gap
 
 function ProgressRow({ item }: { item: { name: string; completion: number; commence: number } }) {
   const total = item.completion + item.commence;
   const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
   return (
     <div
-      className="grid flex-shrink-0 items-center gap-[10px] px-4 py-1.5"
+      className="grid flex-shrink-0 items-center gap-[10px] px-4 py-1"
       style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px', height: ROW_HEIGHT }}
     >
       <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
-      <div className="progress-track h-2 overflow-hidden rounded-sm">
+      <div className="progress-track h-[16px] overflow-hidden rounded-full">
         <div
-          className="progress-fill h-full rounded-sm"
+          className="progress-fill h-full rounded-full"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -131,6 +134,7 @@ export function ConstructLeftSidebar({
   constructProcessData,
   exhibitionProcessData,
   hallId = "all",
+  exhibitionId = "",
   loading = false,
   processLoading = false,
 }: {
@@ -138,6 +142,7 @@ export function ConstructLeftSidebar({
   constructProcessData?: any;
   exhibitionProcessData?: any;
   hallId?: string;
+  exhibitionId?: string;
   loading?: boolean;
   overviewLoading?: boolean;
   processLoading?: boolean;
@@ -153,11 +158,37 @@ export function ConstructLeftSidebar({
 
   const shouldAutoScroll = processRows.length > 6;
   const isProcessLoading = loading || processLoading;
-  const [selectedId, setSelectedId] = useState<string>('');
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailData, setDetailData] = useState<ConstructDetailData | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
-  const handleRowClick = useCallback((id: string) => {
-    setSelectedId((prev) => (prev === id ? '' : id));
+  const closeDetail = useCallback(() => {
+    setDetailOpen(false);
+    setDetailData(null);
   }, []);
+
+  const handleRowClick = useCallback(async (row: any) => {
+    const boothNo = row.boothNumber || row.exNun || '';
+    if (!boothNo || !exhibitionId) return;
+    setDetailLoading(true);
+    setDetailOpen(true);
+    setDetailData(null);
+    try {
+      const res = await screenApi.getConstructProcessByHallInfo(
+        exhibitionId,
+        hallId === 'all' ? '' : hallId,
+        boothNo,
+      );
+      const raw = (res as any)?.data ?? res;
+      const items = Array.isArray(raw) ? raw : (raw?.data ?? []);
+      // Use the latest record (first item)
+      setDetailData(items[0] ?? null);
+    } catch {
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, [exhibitionId, hallId]);
 
   // Process overview items for progress bars
   const processOverviewItems = useMemo(() => {
@@ -210,19 +241,15 @@ export function ConstructLeftSidebar({
                 height="100%"
                 speed={shouldAutoScroll ? 0.45 : 0}
                 overscan={8}
-                pauseOnHover={false}
+                pauseOnHover={true}
                 className="h-full"
                 renderItem={(row, index) => {
                   const meta = getProgressMeta(row.progressStatus);
-                  const rowId = row.boothNumber || row.exNun || '';
-                  const isSelected = selectedId === rowId;
 
                   return (
                     <div
-                      onClick={() => handleRowClick(rowId)}
-                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px] ${
-                        isSelected ? 'is-selected' : ''
-                      }`}
+                      onClick={() => handleRowClick(row)}
+                      className="progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px]"
                     >
                       <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
                         <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">
@@ -248,6 +275,13 @@ export function ConstructLeftSidebar({
           </div>
         </div>
       </section>
+
+      {/* Detail Modal — 搭建信息详情 */}
+      <BoothModal
+        visible={detailOpen}
+        onClose={closeDetail}
+        data={detailData ?? {}}
+      />
     </aside>
   );
 }

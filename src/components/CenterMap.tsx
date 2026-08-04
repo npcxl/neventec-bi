@@ -7,6 +7,8 @@ import HallOverviewMap from "./HallOverviewMap";
 import ConstructCarousel, {
   type ConstructCarouselPicture,
 } from "./Safety/ConstructCarousel";
+import { BoothModal } from "./Construct/modal/BoothModal";
+import type { ConstructDetailData } from "./Construct/modal/BoothModal";
 import { useBoothColorStrategy } from "../hooks/useBoothColorStrategy";
 import { useHallOverviewMap } from "../hooks/useHallOverviewMap";
 import { useHallSorter } from "../hooks/useHallSorter";
@@ -1309,238 +1311,114 @@ export default function CenterMap({
             </div>
           </div>
 
-          <Modal
-            open={detailOpen}
-            onCancel={() => setDetailOpen(false)}
-            footer={null}
-            centered
-            width={760}
-            destroyOnHidden
-            getContainer={false}
-            title={null}
-            closeIcon={null}
-            styles={{
-              mask: {
-                backgroundColor: "rgba(0, 0, 0, 0.65)",
-              },
-              container: {
-                padding: 0,
-                background: "#0f213a",
-                border: "none",
-                borderRadius: "8px",
-                overflow: "hidden",
-                width: "760px",
-                maxWidth: "90vw",
-                maxHeight: "76vh",
-                height: "auto",
-              },
-            }}
-          >
-            <div
-              style={{
-                color: "#f1f5f9",
-                padding: "16px 18px 12px",
-                position: "relative",
-                display: "flex",
-                flexDirection: "column",
-                height: "auto",
-                minHeight: 0,
-                maxHeight: "76vh",
+          {moduleMode === "ConstructOverview" ? (
+            <BoothModal
+              visible={detailOpen}
+              onClose={() => setDetailOpen(false)}
+              data={constructDetail ?? {}}
+            />
+          ) : (
+            <Modal
+              open={detailOpen}
+              onCancel={() => setDetailOpen(false)}
+              footer={null}
+              centered
+              width={760}
+              destroyOnHidden
+              getContainer={false}
+              title={null}
+              closeIcon={null}
+              styles={{
+                mask: {
+                  backgroundColor: "rgba(0, 0, 0, 0.65)",
+                },
+                container: {
+                  padding: 0,
+                  background: "#0f213a",
+                  border: "none",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  width: "760px",
+                  maxWidth: "90vw",
+                  maxHeight: "76vh",
+                  height: "auto",
+                },
               }}
             >
               <div
                 style={{
+                  color: "#f1f5f9",
+                  padding: "16px 18px 12px",
+                  position: "relative",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingBottom: "10px",
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        marginTop: "4px",
-                        fontSize: "12px",
-                        color: "rgba(165, 243, 252, 0.6)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <span
-                        style={{
-                          background: "rgba(0, 229, 255, 0.1)",
-                          border: "none",
-                          padding: "1px 6px",
-                          borderRadius: "3px",
-                          color: "#cffafe",
-                        }}
-                      >
-                        {selected?.code || "未分配"}
-                      </span>
-                      <span>·</span>
-                      <span>{selected?.name || "未知展位"}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className="map-overview-scrollbar"
-                style={{
-                  marginTop: "10px",
-                  display: "flex",
-                  minHeight: 0,
                   flexDirection: "column",
-                  gap: "10px",
-                  overflowY: "auto",
-                  paddingRight: "4px",
-                  maxHeight: "calc(76vh - 90px)",
+                  height: "auto",
+                  minHeight: 0,
+                  maxHeight: "76vh",
                 }}
               >
                 <div
                   style={{
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
-                    padding: "10px 12px",
-                    borderRadius: "8px",
-                    background: "rgba(10, 21, 38, 0.96)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    paddingBottom: "10px",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          marginTop: "4px",
+                          fontSize: "12px",
+                          color: "rgba(165, 243, 252, 0.6)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            background: "rgba(0, 229, 255, 0.1)",
+                            border: "none",
+                            padding: "1px 6px",
+                            borderRadius: "3px",
+                            color: "#cffafe",
+                          }}
+                        >
+                          {selected?.code || "未分配"}
+                        </span>
+                        <span>·</span>
+                        <span>{selected?.name || "未知展位"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="map-overview-scrollbar"
+                  style={{
+                    marginTop: "10px",
+                    display: "flex",
+                    minHeight: 0,
+                    flexDirection: "column",
+                    gap: "10px",
+                    overflowY: "auto",
+                    paddingRight: "4px",
+                    maxHeight: "calc(76vh - 90px)",
                   }}
                 >
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "10px",
-                      marginBottom: "8px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#cffafe",
-                    }}
-                  >
-                    {moduleMode === "SafetyOverview" ? (
-                      <span
-                        style={{
-                          border: "1px solid rgba(56,189,248,0.3)",
-                          background: "rgba(56,189,248,0.1)",
-                          color: "#9fe2ff",
-                          borderRadius: "999px",
-                          padding: "2px 8px",
-                          fontSize: "11px",
-                          fontWeight: 500,
-                        }}
-                      >
-                        共 {safetyViolationCount} 条违规
-                      </span>
-                    ) : null}
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                      gap: "5px 8px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {moduleMode === "SafetyOverview" ? (
-                      <>
-                        <DetailItem
-                          label="施工单位"
-                          value={safetyDetail?.constructionCompany || "-"}
-                        />
-                        <DetailItem
-                          label="参展商"
-                          value={safetyDetail?.exhibitor || "-"}
-                        />
-                        <DetailItem
-                          label="展位号"
-                          value={safetyDetail?.boothNo || selected?.code || "-"}
-                        />
-                        <DetailItem
-                          label="展馆"
-                          value={safetyDetail?.hallName || "-"}
-                        />
-                        <DetailItem
-                          label="责任主体"
-                          value={safetyDetail?.dutyEntity || "-"}
-                        />
-                        <DetailItem
-                          label="联系方式"
-                          value={safetyDetail?.contactWay || "-"}
-                        />
-                        <div className="col-span-2 flex flex-wrap gap-1.5">
-                          <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#7cf0c6]">
-                            {safetyDetail?.excompanytype || "展位类型"}
-                          </span>
-                          <span className="inline-flex items-center rounded-sm bg-[#4ade80]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
-                            {safetyDetail?.structureType || "结构类型"}
-                          </span>
-                          <span className="inline-flex items-center rounded-sm bg-[#facc15]/12 px-2 py-0.5 text-[11px] text-[#fde68a]">
-                            {safetyDetail?.complexEngineering || "复杂工程"}
-                          </span>
-                        </div>
-                      </>
-                    ) : moduleMode === "ExhibitionOverview" ? (
-                      <>
-                        <DetailItem
-                          label="参展商"
-                          value={boothDetail?.exhibitor || "-"}
-                        />
-                        <DetailItem
-                          label="展位号"
-                          value={selected?.code || "-"}
-                        />
-                        <DetailItem
-                          label="展馆"
-                          value={boothDetail?.hallName || "-"}
-                        />
-                        <DetailItem
-                          label="联系电话"
-                          value={
-                            boothDetail?.contactWay || boothDetail?.phone || "-"
-                          }
-                        />
-                        <DetailItem
-                          label="联系人"
-                          value={boothDetail?.contactname || "-"}
-                        />
-                        <DetailItem
-                          label="施工单位"
-                          value={boothDetail?.constructionCompany || "-"}
-                        />
-                        <DetailItem
-                          label="备注"
-                          value={boothDetail?.remarks || "-"}
-                          full
-                        />
-                        <div className="col-span-2 flex flex-wrap gap-1.5">
-                          <span className="inline-flex items-center rounded-sm bg-[#60a5fa]/12 px-2 py-0.5 text-[11px] text-[#bfdbfe]">
-                            {boothDetail?.fullPaidFee
-                              ? "已全额支付"
-                              : "未全额支付"}
-                          </span>
-                          <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
-                            {boothDetail?.expoName || "展会概况"}
-                          </span>
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-
-                {moduleMode === "ExhibitionOverview" ? (
-                  <div
-                    style={{
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 1,
                       padding: "10px 12px",
                       borderRadius: "8px",
-                      border: "1px solid rgba(96, 165, 250, 0.28)",
-                      background: "rgba(8, 22, 44, 0.55)",
+                      background: "rgba(10, 21, 38, 0.96)",
                     }}
                   >
                     <div
@@ -1555,526 +1433,489 @@ export default function CenterMap({
                         color: "#cffafe",
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          minWidth: 0,
-                        }}
-                      >
-                        <div
+                      {moduleMode === "SafetyOverview" ? (
+                        <span
                           style={{
-                            height: "10px",
-                            width: "3px",
-                            borderRadius: "2px",
-                            backgroundColor: "#60a5fa",
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span>订单信息</span>
-                      </div>
-                      <span
-                        style={{
-                          border: "1px solid rgba(96,165,250,0.3)",
-                          background: "rgba(96,165,250,0.1)",
-                          color: "#bfdbfe",
-                          borderRadius: "999px",
-                          padding: "2px 8px",
-                          fontSize: "11px",
-                          fontWeight: 500,
-                        }}
-                      >
-                        共 {orderInfos.length} 项
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
-                    >
-                      {orderInfos.length ? (
-                        orderInfos.map((order, index) => (
-                          <div
-                            key={`${order.goodsName || "order"}-${index}`}
-                            style={{
-                              borderRadius: "8px",
-                              border: "none",
-                              background: "rgba(255,255,255,0.03)",
-                              padding: "9px 10px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                gap: "10px",
-                                marginBottom: "6px",
-                                fontSize: "12px",
-                                color: "#e0f2fe",
-                              }}
-                            >
-                              <span>{order.goodsName || "-"}</span>
-                              <span>x{order.buyNum ?? 1}</span>
-                            </div>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "4px",
-                                fontSize: "10px",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  border: "1px solid rgba(250,204,21,0.28)",
-                                  background: "rgba(250,204,21,0.1)",
-                                  color: "#fde68a",
-                                  borderRadius: "4px",
-                                  padding: "1px 5px",
-                                }}
-                              >
-                                {order.specifications || "-"}
-                              </span>
-                              <span
-                                style={{
-                                  border: "1px solid rgba(52,211,153,0.28)",
-                                  background: "rgba(52,211,153,0.1)",
-                                  color: "#7cf0c6",
-                                  borderRadius: "4px",
-                                  padding: "1px 5px",
-                                }}
-                              >
-                                {order.invoiceApply ? "已开票" : "未开票"}
-                              </span>
-                              <span
-                                style={{
-                                  border: "1px solid rgba(96,165,250,0.28)",
-                                  background: "rgba(96,165,250,0.1)",
-                                  color: "#bfdbfe",
-                                  borderRadius: "4px",
-                                  padding: "1px 5px",
-                                }}
-                              >
-                                {order.refundAmount ? "已退款" : "未退款"}
-                              </span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div
-                          style={{
-                            borderRadius: "8px",
-                            border: "none",
-                            padding: "10px",
-                            textAlign: "center",
-                            color: "#a7c0de",
-                            fontSize: "12px",
+                            border: "1px solid rgba(56,189,248,0.3)",
+                            background: "rgba(56,189,248,0.1)",
+                            color: "#9fe2ff",
+                            borderRadius: "999px",
+                            padding: "2px 8px",
+                            fontSize: "11px",
+                            fontWeight: 500,
                           }}
                         >
-                          暂无订单信息
-                        </div>
-                      )}
+                          共 {safetyViolationCount} 条违规
+                        </span>
+                      ) : null}
                     </div>
-                  </div>
-                ) : moduleMode === "ConstructOverview" ? (
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(96, 165, 250, 0.28)",
-                      background: "rgba(8, 22, 44, 0.55)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                        marginBottom: "8px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#cffafe",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          minWidth: 0,
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: "10px",
-                            width: "3px",
-                            borderRadius: "2px",
-                            backgroundColor: "#60a5fa",
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span>搭建进度</span>
-                      </div>
-                      <span
-                        style={{
-                          border: "1px solid rgba(96,165,250,0.3)",
-                          background: "rgba(96,165,250,0.1)",
-                          color: "#bfdbfe",
-                          borderRadius: "999px",
-                          padding: "2px 8px",
-                          fontSize: "11px",
-                          fontWeight: 500,
-                        }}
-                      >
-                        共 {constructImages.length} 张图片
-                      </span>
-                    </div>
-
-                    <div
-                      style={{
-                        overflowX: "auto",
-                        overflowY: "hidden",
-                        whiteSpace: "nowrap",
-                        marginBottom: "10px",
-                        paddingBottom: "4px",
-                      }}
-                    >
-                      <div style={{ display: "inline-flex", gap: "8px" }}>
-                        {constructImages.length ? (
-                          constructImages.map((picture, index) => (
-                            <Image
-                              key={`${picture.address}-${index}`}
-                              src={picture.address}
-                              alt={`搭建图片${index + 1}`}
-                              width={168}
-                              height={96}
-                              style={{
-                                objectFit: "cover",
-                                borderRadius: "6px",
-                                border: "1px solid rgba(96,165,250,0.28)",
-                              }}
-                            />
-                          ))
-                        ) : (
-                          <> </>
-                        )}
-                      </div>
-                    </div>
-
                     <div
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: "4px 8px",
-                        fontSize: "16px",
+                        gap: "5px 8px",
+                        fontSize: "12px",
                       }}
                     >
-                      <DetailItem
-                        label="展位编号"
-                        value={
-                          constructDetail?.boothNumber || selected?.code || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="参展商"
-                        value={constructDetail?.exhibitor || "-"}
-                      />
-                      <DetailItem
-                        label="施工单位"
-                        value={constructDetail?.constructionCompany || "-"}
-                      />
-                      <DetailItem
-                        label="展位类型"
-                        value={
-                          mapConstructEnum(
-                            "excompanytype",
-                            constructDetail?.excompanytype,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="商品是否入场"
-                        value={
-                          mapConstructEnum(
-                            "exhibitsAdmission",
-                            constructDetail?.exhibitsAdmission,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="关键工序"
-                        value={
-                          mapConstructEnum(
-                            "complexEngineering",
-                            constructDetail?.complexEngineering,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="是否包含吊点"
-                        value={
-                          mapConstructEnum(
-                            "liftingPoint",
-                            constructDetail?.liftingPoint,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="主体结构材质"
-                        value={
-                          mapConstructEnum(
-                            "mainStructureMaterial",
-                            constructDetail?.mainStructureMaterial,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="搭建进度"
-                        value={
-                          mapConstructEnum(
-                            "progressStatus",
-                            constructDetail?.progressStatus,
-                          ) || "-"
-                        }
-                      />
-                      <DetailItem
-                        label="记录时间"
-                        value={constructDetail?.recordDate || "-"}
-                      />
+                      {moduleMode === "SafetyOverview" ? (
+                        <>
+                          <DetailItem
+                            label="施工单位"
+                            value={safetyDetail?.constructionCompany || "-"}
+                          />
+                          <DetailItem
+                            label="参展商"
+                            value={safetyDetail?.exhibitor || "-"}
+                          />
+                          <DetailItem
+                            label="展位号"
+                            value={safetyDetail?.boothNo || selected?.code || "-"}
+                          />
+                          <DetailItem
+                            label="展馆"
+                            value={safetyDetail?.hallName || "-"}
+                          />
+                          <DetailItem
+                            label="责任主体"
+                            value={safetyDetail?.dutyEntity || "-"}
+                          />
+                          <DetailItem
+                            label="联系方式"
+                            value={safetyDetail?.contactWay || "-"}
+                          />
+                          <div className="col-span-2 flex flex-wrap gap-1.5">
+                            <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#7cf0c6]">
+                              {safetyDetail?.excompanytype || "展位类型"}
+                            </span>
+                            <span className="inline-flex items-center rounded-sm bg-[#4ade80]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
+                              {safetyDetail?.structureType || "结构类型"}
+                            </span>
+                            <span className="inline-flex items-center rounded-sm bg-[#facc15]/12 px-2 py-0.5 text-[11px] text-[#fde68a]">
+                              {safetyDetail?.complexEngineering || "复杂工程"}
+                            </span>
+                          </div>
+                        </>
+                      ) : moduleMode === "ExhibitionOverview" ? (
+                        <>
+                          <DetailItem
+                            label="参展商"
+                            value={boothDetail?.exhibitor || "-"}
+                          />
+                          <DetailItem
+                            label="展位号"
+                            value={selected?.code || "-"}
+                          />
+                          <DetailItem
+                            label="展馆"
+                            value={boothDetail?.hallName || "-"}
+                          />
+                          <DetailItem
+                            label="联系电话"
+                            value={
+                              boothDetail?.contactWay || boothDetail?.phone || "-"
+                            }
+                          />
+                          <DetailItem
+                            label="联系人"
+                            value={boothDetail?.contactname || "-"}
+                          />
+                          <DetailItem
+                            label="施工单位"
+                            value={boothDetail?.constructionCompany || "-"}
+                          />
+                          <DetailItem
+                            label="备注"
+                            value={boothDetail?.remarks || "-"}
+                            full
+                          />
+                          <div className="col-span-2 flex flex-wrap gap-1.5">
+                            <span className="inline-flex items-center rounded-sm bg-[#60a5fa]/12 px-2 py-0.5 text-[11px] text-[#bfdbfe]">
+                              {boothDetail?.fullPaidFee
+                                ? "已全额支付"
+                                : "未全额支付"}
+                            </span>
+                            <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
+                              {boothDetail?.expoName || "展会概况"}
+                            </span>
+                          </div>
+                        </>
+                      ) : null}
                     </div>
                   </div>
-                ) : moduleMode === "SafetyOverview" ? (
-                  <div
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      background: "rgba(8, 22, 44, 0.55)",
-                    }}
-                  >
+
+                  {moduleMode === "ExhibitionOverview" ? (
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                        marginBottom: "8px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#cffafe",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(96, 165, 250, 0.28)",
+                        background: "rgba(8, 22, 44, 0.55)",
                       }}
                     >
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: "6px",
-                          minWidth: 0,
+                          justifyContent: "space-between",
+                          gap: "10px",
+                          marginBottom: "8px",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "#cffafe",
                         }}
                       >
                         <div
                           style={{
-                            height: "10px",
-                            width: "3px",
-                            borderRadius: "2px",
-                            backgroundColor: "#38bdf8",
-                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            minWidth: 0,
                           }}
-                        />
-                        <span>现场安全管理</span>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
-                    >
-                      {safetyInfoList.length ? (
-                        safetyInfoList.map((info, index) => (
+                        >
                           <div
-                            key={`${info.boothId || info.boothNo || "safety"}-${info.createDate || index}`}
+                            style={{
+                              height: "10px",
+                              width: "3px",
+                              borderRadius: "2px",
+                              backgroundColor: "#60a5fa",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>订单信息</span>
+                        </div>
+                        <span
+                          style={{
+                            border: "1px solid rgba(96,165,250,0.3)",
+                            background: "rgba(96,165,250,0.1)",
+                            color: "#bfdbfe",
+                            borderRadius: "999px",
+                            padding: "2px 8px",
+                            fontSize: "11px",
+                            fontWeight: 500,
+                          }}
+                        >
+                          共 {orderInfos.length} 项
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        {orderInfos.length ? (
+                          orderInfos.map((order, index) => (
+                            <div
+                              key={`${order.goodsName || "order"}-${index}`}
+                              style={{
+                                borderRadius: "8px",
+                                border: "none",
+                                background: "rgba(255,255,255,0.03)",
+                                padding: "9px 10px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  gap: "10px",
+                                  marginBottom: "6px",
+                                  fontSize: "12px",
+                                  color: "#e0f2fe",
+                                }}
+                              >
+                                <span>{order.goodsName || "-"}</span>
+                                <span>x{order.buyNum ?? 1}</span>
+                              </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: "4px",
+                                  fontSize: "10px",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    border: "1px solid rgba(250,204,21,0.28)",
+                                    background: "rgba(250,204,21,0.1)",
+                                    color: "#fde68a",
+                                    borderRadius: "4px",
+                                    padding: "1px 5px",
+                                  }}
+                                >
+                                  {order.specifications || "-"}
+                                </span>
+                                <span
+                                  style={{
+                                    border: "1px solid rgba(52,211,153,0.28)",
+                                    background: "rgba(52,211,153,0.1)",
+                                    color: "#7cf0c6",
+                                    borderRadius: "4px",
+                                    padding: "1px 5px",
+                                  }}
+                                >
+                                  {order.invoiceApply ? "已开票" : "未开票"}
+                                </span>
+                                <span
+                                  style={{
+                                    border: "1px solid rgba(96,165,250,0.28)",
+                                    background: "rgba(96,165,250,0.1)",
+                                    color: "#bfdbfe",
+                                    borderRadius: "4px",
+                                    padding: "1px 5px",
+                                  }}
+                                >
+                                  {order.refundAmount ? "已退款" : "未退款"}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div
                             style={{
                               borderRadius: "8px",
                               border: "none",
-                              background: "rgba(255,255,255,0.03)",
-                              padding: "9px 10px",
+                              padding: "10px",
+                              textAlign: "center",
+                              color: "#a7c0de",
+                              fontSize: "12px",
                             }}
                           >
+                            暂无订单信息
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : moduleMode === "SafetyOverview" ? (
+                    <div
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        background: "rgba(8, 22, 44, 0.55)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "10px",
+                          marginBottom: "8px",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "#cffafe",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            minWidth: 0,
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: "10px",
+                              width: "3px",
+                              borderRadius: "2px",
+                              backgroundColor: "#38bdf8",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>现场安全管理</span>
+                        </div>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        }}
+                      >
+                        {safetyInfoList.length ? (
+                          safetyInfoList.map((info, index) => (
                             <div
+                              key={`${info.boothId || info.boothNo || "safety"}-${info.createDate || index}`}
                               style={{
-                                display: "flex",
-                                gap: "8px",
-                                minWidth: 0,
-                                alignItems: "stretch",
+                                borderRadius: "8px",
+                                border: "none",
+                                background: "rgba(255,255,255,0.03)",
+                                padding: "9px 10px",
                               }}
                             >
-                              <div style={{ width: "112px", flex: "0 0 auto" }}>
-                                {info.imageAddress?.[0]?.address ? (
-                                  <img
-                                    src={info.imageAddress[0].address}
-                                    alt="现场安全图片"
-                                    style={{
-                                      width: "112px",
-                                      height: "96px",
-                                      objectFit: "cover",
-                                      borderRadius: "6px",
-                                      border: "none",
-                                    }}
-                                  />
-                                ) : (
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  minWidth: 0,
+                                  alignItems: "stretch",
+                                }}
+                              >
+                                <div style={{ width: "112px", flex: "0 0 auto" }}>
+                                  {info.imageAddress?.[0]?.address ? (
+                                    <img
+                                      src={info.imageAddress[0].address}
+                                      alt="现场安全图片"
+                                      style={{
+                                        width: "112px",
+                                        height: "96px",
+                                        objectFit: "cover",
+                                        borderRadius: "6px",
+                                        border: "none",
+                                      }}
+                                    />
+                                  ) : (
+                                    <div
+                                      style={{
+                                        width: "112px",
+                                        height: "96px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: "6px",
+                                        border:
+                                          "1px dashed rgba(255,255,255,0.14)",
+                                        color: "#94a3b8",
+                                        fontSize: "11px",
+                                      }}
+                                    >
+                                      暂无图片
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ minWidth: 0, flex: 1 }}>
                                   <div
                                     style={{
-                                      width: "112px",
-                                      height: "96px",
                                       display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      borderRadius: "6px",
-                                      border:
-                                        "1px dashed rgba(255,255,255,0.14)",
-                                      color: "#94a3b8",
+                                      flexWrap: "wrap",
+                                      gap: "4px",
+                                      marginBottom: "6px",
+                                      fontSize: "10px",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        border: "1px solid rgba(56,189,248,0.28)",
+                                        background: "rgba(56,189,248,0.1)",
+                                        color: "#9fe2ff",
+                                        borderRadius: "4px",
+                                        padding: "1px 5px",
+                                      }}
+                                    >
+                                      {info.createDate || "-"}
+                                    </span>
+                                    <span
+                                      style={{
+                                        border: "1px solid rgba(250,204,21,0.28)",
+                                        background: "rgba(250,204,21,0.1)",
+                                        color: "#fde68a",
+                                        borderRadius: "4px",
+                                        padding: "1px 5px",
+                                      }}
+                                    >
+                                      {info.riskAssessment || "-"}
+                                    </span>
+                                    <span
+                                      style={{
+                                        border: "1px solid rgba(52,211,153,0.28)",
+                                        background: "rgba(52,211,153,0.1)",
+                                        color: "#7cf0c6",
+                                        borderRadius: "4px",
+                                        padding: "1px 5px",
+                                      }}
+                                    >
+                                      {info.safetyStatus || "-"}
+                                    </span>
+                                  </div>
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns:
+                                        "repeat(2, minmax(0, 1fr))",
+                                      gap: "4px 8px",
                                       fontSize: "11px",
                                     }}
                                   >
-                                    暂无图片
+                                    <DetailItem
+                                      label="创建人"
+                                      value={info.createBy || "-"}
+                                    />
+                                    <DetailItem
+                                      label="目标整改时间"
+                                      value={info.targetCheckTime || "-"}
+                                    />
+                                    <DetailItem
+                                      label="展位号"
+                                      value={
+                                        info.boothNo || selected?.code || "-"
+                                      }
+                                    />
+                                    <DetailItem
+                                      label="违规内容"
+                                      value={info.recordContent || "-"}
+                                      full
+                                    />
                                   </div>
-                                )}
-                              </div>
-                              <div style={{ minWidth: 0, flex: 1 }}>
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    flexWrap: "wrap",
-                                    gap: "4px",
-                                    marginBottom: "6px",
-                                    fontSize: "10px",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      border: "1px solid rgba(56,189,248,0.28)",
-                                      background: "rgba(56,189,248,0.1)",
-                                      color: "#9fe2ff",
-                                      borderRadius: "4px",
-                                      padding: "1px 5px",
-                                    }}
-                                  >
-                                    {info.createDate || "-"}
-                                  </span>
-                                  <span
-                                    style={{
-                                      border: "1px solid rgba(250,204,21,0.28)",
-                                      background: "rgba(250,204,21,0.1)",
-                                      color: "#fde68a",
-                                      borderRadius: "4px",
-                                      padding: "1px 5px",
-                                    }}
-                                  >
-                                    {info.riskAssessment || "-"}
-                                  </span>
-                                  <span
-                                    style={{
-                                      border: "1px solid rgba(52,211,153,0.28)",
-                                      background: "rgba(52,211,153,0.1)",
-                                      color: "#7cf0c6",
-                                      borderRadius: "4px",
-                                      padding: "1px 5px",
-                                    }}
-                                  >
-                                    {info.safetyStatus || "-"}
-                                  </span>
-                                </div>
-                                <div
-                                  style={{
-                                    display: "grid",
-                                    gridTemplateColumns:
-                                      "repeat(2, minmax(0, 1fr))",
-                                    gap: "4px 8px",
-                                    fontSize: "11px",
-                                  }}
-                                >
-                                  <DetailItem
-                                    label="创建人"
-                                    value={info.createBy || "-"}
-                                  />
-                                  <DetailItem
-                                    label="目标整改时间"
-                                    value={info.targetCheckTime || "-"}
-                                  />
-                                  <DetailItem
-                                    label="展位号"
-                                    value={
-                                      info.boothNo || selected?.code || "-"
-                                    }
-                                  />
-                                  <DetailItem
-                                    label="违规内容"
-                                    value={info.recordContent || "-"}
-                                    full
-                                  />
                                 </div>
                               </div>
                             </div>
+                          ))
+                        ) : (
+                          <div
+                            style={{
+                              borderRadius: "8px",
+                              border: "none",
+                              padding: "10px",
+                              textAlign: "center",
+                              color: "#a7c0de",
+                              fontSize: "12px",
+                            }}
+                          >
+                            暂无现场安全记录
                           </div>
-                        ))
-                      ) : (
-                        <div
-                          style={{
-                            borderRadius: "8px",
-                            border: "none",
-                            padding: "10px",
-                            textAlign: "center",
-                            color: "#a7c0de",
-                            fontSize: "12px",
-                          }}
-                        >
-                          暂无现场安全记录
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </div>
-
-              {(moduleMode === "ExhibitionOverview" ||
-                moduleMode === "ConstructOverview" ||
-                (moduleMode === "SafetyOverview" &&
-                  safetyInfoList.length > 0)) && (
-                <div
-                  style={{
-                    marginTop: "12px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    borderTop: "none",
-                    paddingTop: "10px",
-                    flexShrink: 0,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setDetailOpen(false)}
-                    style={{
-                      cursor: "pointer",
-                      padding: "6px 20px",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      color: "#eef2ff",
-                      background: "rgba(0, 229, 255, 0.1)",
-                    }}
-                    className="transition-all hover:bg-cyan-500/30"
-                  >
-                    关闭
-                  </button>
+                  ) : null}
                 </div>
-              )}
-            </div>
-          </Modal>
+
+                {(moduleMode === "ExhibitionOverview" ||
+                  (moduleMode === "SafetyOverview" &&
+                    safetyInfoList.length > 0)) && (
+                  <div
+                    style={{
+                      marginTop: "12px",
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      borderTop: "none",
+                      paddingTop: "10px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setDetailOpen(false)}
+                      style={{
+                        cursor: "pointer",
+                        padding: "6px 20px",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        color: "#eef2ff",
+                        background: "rgba(0, 229, 255, 0.1)",
+                      }}
+                      className="transition-all hover:bg-cyan-500/30"
+                    >
+                      关闭
+                    </button>
+                  </div>
+                )}
+              </div>
+            </Modal>
+          )}
         </div>
       </div>
     </section>
