@@ -15,6 +15,7 @@ import Button2 from "./components/Button2";
 import ConstructCarousel from "./components/Construct/ConstructCarousel";
 import SafetyCarousel from "./components/Safety/ConstructCarousel";
 import { useSequentialApiPolling } from "./hooks/useSequentialApiPolling";
+import { dashboardLayoutConfig } from "./config/dashboardLayout.config";
 
 const STORAGE_KEY_PREFIX = "db-demo:app-prefs:v3";
 type HallSummary = {
@@ -282,6 +283,7 @@ const ExhibitionMapPanel = memo(function ExhibitionMapPanel({
         galleryRows={galleryRows}
         boothRows={boothRows}
         hallId={selectedHallId}
+        exhibitionId={initData.exhibitionId}
       />
       <CenterMap
         mode={selectedHallId}
@@ -1611,6 +1613,7 @@ export default function App() {
   const pagePadding = "px-[clamp(12px,1.4vw,24px)]";
   const pageGap = "gap-[clamp(12px,1.1vw,20px)]";
   const fontScaleClass = "text-[clamp(12px,0.78vw,16px)]";
+  const isLandscape = dashboardLayoutConfig.orientation === "landscape";
 
   return (
     <div
@@ -1625,7 +1628,7 @@ export default function App() {
       {/* 内容区 - 包在边框内部 */}
       <div className="relative h-full w-full overflow-hidden px-[clamp(12px,1.5vw,24px)] pt-0 pb-[30px]">
         {/* 边框背景图 */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-20 bg-[url('/img/背景边框.png')] bg-[length:100%_100%] bg-center bg-no-repeat" />
+        <div aria-hidden className="pointer-events-none absolute bottom-[-135px] inset-0 z-20 bg-[url('/img/背景边框.png')] bg-[length:100%_80%] bg-center bg-no-repeat" />
         <Flex
           vertical
           className={`relative z-10 mx-auto h-full w-full min-w-0 overflow-hidden pb-[clamp(12px,1.2vw,24px)] 2xl:max-w-[1920px]`}
@@ -1670,129 +1673,231 @@ export default function App() {
                 onMenuClick={handleMenuClick}
               />
               <CurrentTimeButton />
-              <main
-                className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,48%)_minmax(320px,26%)] lg:grid-cols-[minmax(340px,26%)_minmax(0,48%)_minmax(340px,26%)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,48%)_minmax(360px,26%)]`}
-              >
-                {hallMode === "ExhibitionOverview" && (
-                  <>
-                    <ExhibitionMapPanel
-                      selectedHallId={selectedHallId}
-                      hallMode={hallMode}
-                      setSelectedHallId={setSelectedHallId}
-                      setSelectedBoothId={setSelectedBoothId}
-                      initData={initData}
-                      boothRows={boothRows}
-                      safetyRows={safetyRows}
-                      constructProcessData={constructProcessData}
-                      galleryRows={galleryRows}
-                    />
-                    <ExhibitionRightSidebar
-                      boothRows={boothRows}
-                      orderCollect={orderCollectData}
-                      hallId={selectedHallId}
-                      loading={
-                        isModuleLoading && hallMode === "ExhibitionOverview"
-                      }
-                    />
-                  </>
-                )}
-
-                {hallMode === "ConstructOverview" && (
-                  <>
-                    <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                    <Flex
-                      vertical
-                      className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                    >
-                      <div className="flex min-h-0 flex-[0.66] min-w-0">
-                        <CenterMap
-                          mode={selectedHallId}
-                          moduleMode={hallMode}
-                          onModeChange={setSelectedHallId}
-                          onBoothChange={(boothId) =>
-                            setSelectedBoothId(boothId)
-                          }
-                          initData={initData}
-                          boothRows={boothRows}
-                          safetyRows={safetyRows}
-                          constructProcessRows={(Array.isArray(
-                            constructProcessData,
-                          )
-                            ? constructProcessData
-                            : (constructProcessData?.rows ??
-                              constructProcessData?.data ??
-                              [])
-                          ).map((item: any) => ({
-                            boothId:
-                              item.boothId ?? item.boothID ?? item.booth_id,
-                            boothNumber:
-                              item.boothNumber ??
-                              item.boothNo ??
-                              item.exNun ??
-                              item.booth_no,
-                            boothNo:
-                              item.boothNo ??
-                              item.exNun ??
-                              item.booth_no ??
-                              item.boothNumber,
-                            progressValue:
-                              item.progressValue ??
-                              item.progressStatus ??
-                              item.status ??
-                              item.processStatus,
-                          }))}
-                          galleryRows={galleryRows}
-                          compact={hallMode === "ConstructOverview"}
-                        />
-                      </div>
-                      <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                        <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                          <ConstructCarousel
-                            pictures={constructCarouselPicturesMemo}
-                            loading={constructCarouselLoading}
+              {isLandscape ? (
+                /* ===== LANDSCAPE: 2-column layout =====
+                   Left: original left sidebar (same width as portrait)
+                   Right: [top=center map] / [bottom=right sidebar] */
+                <main
+                  className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,1fr)] lg:grid-cols-[minmax(340px,26%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,1fr)]`}
+                >
+                  {hallMode === "ExhibitionOverview" && (
+                    <>
+                      <ExhibitionLeftSidebar
+                        loading={false}
+                        galleryRows={galleryRows}
+                        boothRows={boothRows}
+                        hallId={selectedHallId}
+                        exhibitionId={initData.exhibitionId}
+                      />
+                      <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex min-h-0 flex-[0.62] min-w-0">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            constructProcessRows={
+                              Array.isArray(constructProcessData)
+                                ? constructProcessData
+                                : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
+                            }
+                            galleryRows={galleryRows}
                           />
                         </div>
-                      </section>
-                    </Flex>
-                    <ConstructRightSidebar {...constructRightSidebarProps} />
-                  </>
-                )}
-
-                {hallMode === "SafetyOverview" && (
-                  <>
-                    <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                    <Flex
-                      vertical
-                      className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                    >
-                      <div className="flex min-h-0 flex-[0.66] min-w-0">
-                        <CenterMap
-                          mode={selectedHallId}
-                          moduleMode={hallMode}
-                          onModeChange={setSelectedHallId}
-                          onBoothChange={(boothId) =>
-                            setSelectedBoothId(boothId)
-                          }
-                          initData={initData}
-                          boothRows={boothRows}
-                          safetyRows={safetyRows}
-                          galleryRows={galleryRows}
-                          compact={hallMode === "SafetyOverview"}
-                        />
-                      </div>
-                      <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                        <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                          <SafetyCarousel
-                            pictures={safetyCarouselPicturesMemo}
-                            loading={safetyCarouselLoading}
+                        <div className="flex min-h-0 flex-[0.38] min-w-0">
+                          <ExhibitionRightSidebar
+                            boothRows={boothRows}
+                            orderCollect={orderCollectData}
+                            hallId={selectedHallId}
+                            loading={isModuleLoading && hallMode === "ExhibitionOverview"}
+                            variant="landscape"
                           />
                         </div>
-                      </section>
-                    </Flex>
-                    <SafetyRightSidebar {...safetyRightSidebarProps} />
-                  </>
-                )}
-              </main>
+                      </div>
+                    </>
+                  )}
+
+                  {hallMode === "ConstructOverview" && (
+                    <>
+                      <ConstructLeftSidebar {...constructLeftSidebarProps} />
+                      <Flex
+                        vertical
+                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
+                      >
+                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            constructProcessRows={(Array.isArray(constructProcessData)
+                              ? constructProcessData
+                              : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
+                            ).map((item: any) => ({
+                              boothId: item.boothId ?? item.boothID ?? item.booth_id,
+                              boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
+                              boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
+                              progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                            }))}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "ConstructOverview"}
+                          />
+                        </div>
+                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
+                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
+                            <ConstructCarousel
+                              pictures={constructCarouselPicturesMemo}
+                              loading={constructCarouselLoading}
+                            />
+                          </div>
+                        </section>
+                      </Flex>
+                      <ConstructRightSidebar {...constructRightSidebarProps} />
+                    </>
+                  )}
+
+                  {hallMode === "SafetyOverview" && (
+                    <>
+                      <SafetyLeftSidebar {...safetyLeftSidebarProps} />
+                      <Flex
+                        vertical
+                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
+                      >
+                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "SafetyOverview"}
+                          />
+                        </div>
+                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
+                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
+                            <SafetyCarousel
+                              pictures={safetyCarouselPicturesMemo}
+                              loading={safetyCarouselLoading}
+                            />
+                          </div>
+                        </section>
+                      </Flex>
+                      <SafetyRightSidebar {...safetyRightSidebarProps} />
+                    </>
+                  )}
+                </main>
+              ) : (
+                /* ===== PORTRAIT: original 3-column layout ===== */
+                <main
+                  className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,48%)_minmax(320px,26%)] lg:grid-cols-[minmax(340px,26%)_minmax(0,48%)_minmax(340px,26%)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,48%)_minmax(360px,26%)]`}
+                >
+                  {hallMode === "ExhibitionOverview" && (
+                    <>
+                      <ExhibitionMapPanel
+                        selectedHallId={selectedHallId}
+                        hallMode={hallMode}
+                        setSelectedHallId={setSelectedHallId}
+                        setSelectedBoothId={setSelectedBoothId}
+                        initData={initData}
+                        boothRows={boothRows}
+                        safetyRows={safetyRows}
+                        constructProcessData={constructProcessData}
+                        galleryRows={galleryRows}
+                      />
+                      <ExhibitionRightSidebar
+                        boothRows={boothRows}
+                        orderCollect={orderCollectData}
+                        hallId={selectedHallId}
+                        loading={isModuleLoading && hallMode === "ExhibitionOverview"}
+                      />
+                    </>
+                  )}
+
+                  {hallMode === "ConstructOverview" && (
+                    <>
+                      <ConstructLeftSidebar {...constructLeftSidebarProps} />
+                      <Flex
+                        vertical
+                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
+                      >
+                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            constructProcessRows={(Array.isArray(constructProcessData)
+                              ? constructProcessData
+                              : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
+                            ).map((item: any) => ({
+                              boothId: item.boothId ?? item.boothID ?? item.booth_id,
+                              boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
+                              boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
+                              progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                            }))}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "ConstructOverview"}
+                          />
+                        </div>
+                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
+                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
+                            <ConstructCarousel
+                              pictures={constructCarouselPicturesMemo}
+                              loading={constructCarouselLoading}
+                            />
+                          </div>
+                        </section>
+                      </Flex>
+                      <ConstructRightSidebar {...constructRightSidebarProps} />
+                    </>
+                  )}
+
+                  {hallMode === "SafetyOverview" && (
+                    <>
+                      <SafetyLeftSidebar {...safetyLeftSidebarProps} />
+                      <Flex
+                        vertical
+                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
+                      >
+                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "SafetyOverview"}
+                          />
+                        </div>
+                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
+                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
+                            <SafetyCarousel
+                              pictures={safetyCarouselPicturesMemo}
+                              loading={safetyCarouselLoading}
+                            />
+                          </div>
+                        </section>
+                      </Flex>
+                      <SafetyRightSidebar {...safetyRightSidebarProps} />
+                    </>
+                  )}
+                </main>
+              )}
             </>
           )}
         </Flex>
