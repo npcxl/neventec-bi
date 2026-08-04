@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useConstructProgress } from "../../hooks/useConstructProgress";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
 
@@ -12,63 +12,116 @@ function PanelTitle({ title }: { title: string }) {
   );
 }
 
-const PAGE_SIZE = 5;
-const SWITCH_INTERVAL = 3000;
+const VISIBLE_COUNT = 5;
+const SCROLL_INTERVAL = 5000;
+const ANIMATION_DURATION = 500;
+const ROW_HEIGHT = 38; // py-1.5 (6px) + content ~26px + 6px gap = 38px
+
+function ProgressRow({ item }: { item: { name: string; completion: number; commence: number } }) {
+  const total = item.completion + item.commence;
+  const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
+  return (
+    <div
+      className="grid flex-shrink-0 items-center gap-[10px] px-4 py-1.5"
+      style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px', height: ROW_HEIGHT }}
+    >
+      <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
+      <div className="progress-track h-2 overflow-hidden rounded-sm">
+        <div
+          className="progress-fill h-full rounded-sm"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-right text-xs tabular-nums text-[#dbeeff]">{pct}%</span>
+    </div>
+  );
+}
 
 function ProgressOverviewList({ items }: { items: Array<{ name: string; completion: number; commence: number }> }) {
-  const [currentPage, setCurrentPage] = useState(0);
-  const timerRef = useRef<number | null>(null);
-  const [animKey, setAnimKey] = useState(0);
+  const [startIndex, setStartIndex] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+  const animTimeoutRef = useRef<number | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
-  const pageCount = Math.ceil(items.length / PAGE_SIZE);
-  const visibleItems = items.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+  const needsScroll = items.length > VISIBLE_COUNT;
+
+  // Build visible rows: VISIBLE_COUNT + 1 (the extra one for smooth scroll-in)
+  const displayItems = useMemo(() => {
+    if (items.length === 0) return [];
+    const count = Math.min(items.length, VISIBLE_COUNT + 1);
+    return Array.from({ length: count }, (_, offset) =>
+      items[(startIndex + offset) % items.length],
+    );
+  }, [items, startIndex]);
+
+  // Cleanup function
+  const clearAllTimers = useCallback(() => {
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (animTimeoutRef.current !== null) {
+      window.clearTimeout(animTimeoutRef.current);
+      animTimeoutRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    setCurrentPage(0);
-    setAnimKey(0);
-    if (pageCount <= 1) {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      return;
-    }
+    clearAllTimers();
+    setStartIndex(0);
+    setIsScrolling(false);
 
-    timerRef.current = window.setInterval(() => {
-      setCurrentPage((page) => (page + 1) % pageCount);
-      setAnimKey((k) => k + 1);
-    }, SWITCH_INTERVAL);
+    if (!needsScroll) return;
 
-    return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [pageCount]);
+    intervalRef.current = window.setInterval(() => {
+      setIsScrolling(true);
+
+      animTimeoutRef.current = window.setTimeout(() => {
+        setIsScrolling(false);
+        setStartIndex((idx) => (idx + 1) % items.length);
+        animTimeoutRef.current = null;
+      }, ANIMATION_DURATION);
+    }, SCROLL_INTERVAL);
+
+    return clearAllTimers;
+  }, [needsScroll, items.length, clearAllTimers]);
+
+  if (items.length === 0) {
+    return (
+      <div className="flex items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]" style={{ height: VISIBLE_COUNT * ROW_HEIGHT }}>
+        暂无进程数据
+      </div>
+    );
+  }
+
+  // Static: render all items directly, no scroll
+  if (!needsScroll) {
+    return (
+      <div className="px-4 pb-3 pt-1">
+        {items.map((item, i) => (
+          <ProgressRow key={`${item.name}-${i}`} item={item} />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div key={animKey} className="animate-fade-in-up px-4 pb-3 pt-1">
-      {visibleItems.map((item, i) => {
-        const total = item.completion + item.commence;
-        const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
-        return (
-          <div
-            key={i}
-            className="grid items-center gap-[10px] py-1.5"
-            style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px' }}
-          >
-            <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
-            <div className="progress-track h-2 overflow-hidden rounded-sm">
-              <div
-                className="progress-fill h-full rounded-sm"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-right text-xs tabular-nums text-[#dbeeff]">{pct}%</span>
-          </div>
-        );
-      })}
+    <div className="overflow-hidden px-0" style={{ height: VISIBLE_COUNT * ROW_HEIGHT }}>
+      <div
+        ref={listRef}
+        className="transition-none"
+        style={{
+          transform: isScrolling ? `translateY(-${ROW_HEIGHT}px)` : 'translateY(0)',
+          transition: isScrolling ? `transform ${ANIMATION_DURATION}ms cubic-bezier(0.4,0,0.2,1)` : 'none',
+          willChange: 'transform',
+        }}
+      >
+        {displayItems.map((item, i) => {
+          const globalIndex = (startIndex + i) % items.length;
+          return <ProgressRow key={`${globalIndex}-${item.name}`} item={item} />;
+        })}
+      </div>
     </div>
   );
 }
