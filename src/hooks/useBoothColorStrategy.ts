@@ -90,11 +90,11 @@ function resolveConstructProgressColor(progressValue?: string) {
   const text = normalizeKey(progressValue);
   if (!text) return DEFAULT_COLOR;
   if (text.includes('暂未入场')||text.includes('NOT_ADMISSIBLE_PROGRESS')) return '#8fb4d8';
-  if (text.includes('搭建正常')||text.includes('NORMAL_PROGRESS')) return '#6dc8ff';
-  if (text.includes('进度缓慢')||text.includes('SLOW_PROGRESS')) return '#ffb84d';
-  if (text.includes('严重滞后')||text.includes('DELAY_PROGRESS')) return '#ff8f8f';
-  if (text.includes('搭建完成')||text.includes('COMPLETED_PROGRESS')) return '#7fe7c4';
-  if (text.includes('有搭建材料') || text.includes('未搭建')||text.includes('BUILDING_MATERIALS_NOT_BUILT')) return '#d8a6ff';
+  if (text.includes('搭建正常')||text.includes('NORMAL_PROGRESS')) return '#2563EB';
+  if (text.includes('进度缓慢')||text.includes('搭建缓慢')||text.includes('SLOW_PROGRESS')) return '#FA8C16';
+  if (text.includes('严重滞后')||text.includes('DELAY_PROGRESS')) return '#F5222D';
+  if (text.includes('搭建完成')||text.includes('COMPLETED_PROGRESS')) return '#63F222';
+  if (text.includes('有搭建材料') || text.includes('未搭建')||text.includes('BUILDING_MATERIALS_NOT_BUILT')) return '#8fb4d8';
   return DEFAULT_COLOR;
 }
 
