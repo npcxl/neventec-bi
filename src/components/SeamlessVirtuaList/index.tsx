@@ -1,6 +1,7 @@
 import {
   ReactNode,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useCallback,
@@ -17,7 +18,8 @@ type SeamlessVirtualListProps<T> = {
   renderItem: (item: T, index: number) => ReactNode;
 };
 
-/** Minimum interval between DOM transform writes (~30fps) */
+/** Minimum interval between normal DOM transform writes (~30fps).
+ *  Cross-row boundary flushes are NOT throttled. */
 const FRAME_INTERVAL = 33;
 
 export function SeamlessVirtualList<T>({
@@ -49,6 +51,7 @@ export function SeamlessVirtualList<T>({
   const windowStartRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
   const lastFrameTimeRef = useRef(0); // for ~30fps transform throttle
+  const crossedRef = useRef(false); // true when a row boundary was crossed this tick
 
   // --- Split pause states ---
   const hoverPausedRef = useRef(false);
@@ -63,37 +66,35 @@ export function SeamlessVirtualList<T>({
   const singleHeight = dataLen * itemHeight;
   const needsScroll = dataLen > 0 && containerHeight > 0 && singleHeight > containerHeight;
 
-  // renderCount: visible + overscan above + overscan below + 2 extra for seamless wrap
+  // renderCount: when scrolling, always render at least visibleCount+1 so the
+  // bottom never shows blank. Do NOT cap by dataLen — modulo wraps around.
+  // When not scrolling, render only what fits (capped by dataLen, no wrapping).
   const renderCount = needsScroll
-    ? Math.min(dataLen, visibleCount + overscan * 2 + 2)
+    ? Math.max(visibleCount + 1, Math.min(dataLen, visibleCount + overscan * 2 + 2))
     : Math.min(dataLen, visibleCount + overscan * 2);
 
-  // --- Measure height helper ---
-  const measureHeight = useCallback(() => {
-    const el = trackRef.current?.parentElement ?? null;
-    if (!el) return;
-    const h = el.clientHeight || el.getBoundingClientRect().height || 0;
+  // --- Measure height directly from the container node (callback ref arg) ---
+  const measureFromNode = useCallback((node: HTMLElement) => {
+    const h = node.clientHeight || node.getBoundingClientRect().height || 0;
     setContainerHeight((prev) => (prev === h ? prev : h));
   }, []);
 
-  // --- Callback ref: always bind container measurement + ResizeObserver,
-  //     even when data is empty (so data arriving later works immediately) ---
+  // --- Callback ref: always bind container measurement + ResizeObserver ---
   const setContainerRef = useCallback(
     (node: HTMLDivElement | null) => {
-      // Disconnect previous observer
       if (roRef.current) {
         roRef.current.disconnect();
         roRef.current = null;
       }
       if (!node) return;
 
-      measureHeight();
+      measureFromNode(node);
 
-      const ro = new ResizeObserver(() => measureHeight());
+      const ro = new ResizeObserver(() => measureFromNode(node));
       ro.observe(node);
       roRef.current = ro;
     },
-    [measureHeight],
+    [measureFromNode],
   );
 
   // Cleanup observer on unmount
@@ -165,7 +166,6 @@ export function SeamlessVirtualList<T>({
         const curSpeed = speedRef.current;
         const curDataLen = dataRef.current.length;
 
-        // Guard: invalid itemHeight or empty data → skip
         if (curItemHeight <= 0 || curDataLen <= 0) {
           rafRef.current = requestAnimationFrame(tick);
           return;
@@ -173,18 +173,18 @@ export function SeamlessVirtualList<T>({
 
         localOffsetRef.current += curSpeed * (dt / 16.67);
 
-        // O(1) integer calculation for row crossing (no while loop)
+        // O(1) integer calculation for row crossing
         const crossed = Math.floor(localOffsetRef.current / curItemHeight);
         localOffsetRef.current = localOffsetRef.current % curItemHeight;
 
         if (crossed > 0) {
           windowStartRef.current = (windowStartRef.current + crossed) % curDataLen;
-          // Always sync windowStart state on crossing — never skip it
+          crossedRef.current = true;
           setWindowStart(windowStartRef.current);
         }
 
-        // Throttle DOM transform writes to ~30fps
-        if (timestamp - lastFrameTimeRef.current >= FRAME_INTERVAL) {
+        // Normal 30fps throttled transform write (only when no crossing)
+        if (!crossedRef.current && timestamp - lastFrameTimeRef.current >= FRAME_INTERVAL) {
           lastFrameTimeRef.current = timestamp;
           const track = trackRef.current;
           if (track) {
@@ -209,7 +209,24 @@ export function SeamlessVirtualList<T>({
     };
   }, [needsScroll]);
 
-  // --- Build visible items via modulo (no loopData / repeatCount) ---
+  // --- useLayoutEffect: after windowStart commit, flush transform synchronously
+  //     before paint so the track position matches the new content window.
+  //     This write is NOT throttled — it's a boundary correction. ---
+  useLayoutEffect(() => {
+    if (crossedRef.current) {
+      crossedRef.current = false;
+      // Reset throttle timer so next normal frame isn't delayed
+      lastFrameTimeRef.current = 0;
+      const track = trackRef.current;
+      if (track) {
+        track.style.transform = `translate3d(0, ${-localOffsetRef.current}px, 0)`;
+      }
+    }
+  }, [windowStart]);
+
+  // --- Build visible items via modulo (no loopData / repeatCount).
+  //     Key = slotIndex only, so DOM slots are stable across windowStart changes.
+  //     React reuses the same <div> and only updates its content. ---
   const visibleItems: Array<{ item: T; realIndex: number; slotIndex: number }> = [];
   if (dataLen > 0 && renderCount > 0) {
     for (let i = 0; i < renderCount; i++) {
@@ -255,7 +272,7 @@ export function SeamlessVirtualList<T>({
         }}
       >
         {visibleItems.map(({ item, realIndex, slotIndex }) => (
-          <div key={`${slotIndex}-${realIndex}`} style={{ height: itemHeight }}>
+          <div key={slotIndex} style={{ height: itemHeight }}>
             {renderItem(item, realIndex)}
           </div>
         ))}
