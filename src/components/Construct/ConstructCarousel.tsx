@@ -28,7 +28,7 @@ type Props = {
 function ConstructCarousel({
   pictures,
   records = [],
-  title = "搭建进度",
+  title,
   loading = false,
 }: Props) {
   const normalizedPictures = useMemo(
@@ -69,7 +69,9 @@ function ConstructCarousel({
       onMouseLeave={() => { hoverPausedRef.current = false; }}
     >
       <div className="flex h-full min-h-0 flex-col gap-2 p-3">
-        <div className="text-sm font-medium text-[#dbeeff]">{title}</div>
+        {title ? (
+          <div className="shrink-0 text-sm font-medium text-[#dbeeff]">{title}</div>
+        ) : null}
         <div ref={containerRef} className="flex h-full min-h-0 overflow-hidden">
           <div ref={trackRef} className="flex h-full gap-3" style={{ willChange: "transform" }}>
             {visibleItems.map(({ item, realIndex, slotIndex, isEager }) => (

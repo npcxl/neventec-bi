@@ -8,11 +8,11 @@ export type ConstructProgressMeta = {
 
 export const CONSTRUCT_PROGRESS_META: Record<string, ConstructProgressMeta> = {
   '10': { label: '暂未入场(空地)', color: 'text-[#8fb4d8]', icon: 'mdi:map-marker-off-outline' },
-  '11': { label: '搭建正常', color: 'text-[#6dc8ff]', icon: 'mdi:check-circle-outline' },
-  '12': { label: '进度缓慢', color: 'text-[#ffb84d]', icon: 'mdi:clock-alert-outline' },
-  '13': { label: '严重滞后', color: 'text-[#ff8f8f]', icon: 'mdi:alert-octagon-outline' },
-  '14': { label: '搭建完成', color: 'text-[#7fe7c4]', icon: 'mdi:checkbox-marked-circle-outline' },
-  '15': { label: '有搭建材料（未搭建）', color: 'text-[#d8a6ff]', icon: 'mdi:package-variant-closed' },
+  '11': { label: '搭建正常', color: 'text-[#2563EB]', icon: 'mdi:check-circle-outline' },
+  '12': { label: '搭建缓慢', color: 'text-[#FA8C16]', icon: 'mdi:clock-alert-outline' },
+  '13': { label: '严重滞后', color: 'text-[#F5222D]', icon: 'mdi:alert-octagon-outline' },
+  '14': { label: '搭建完成', color: 'text-[#63F222]', icon: 'mdi:checkbox-marked-circle-outline' },
+  '15': { label: '有搭建材料（未搭建）', color: 'text-[#8fb4d8]', icon: 'mdi:package-variant-closed' },
 };
 
 export const CONSTRUCT_PROGRESS_NAME_TO_CODE: Record<string, string> = {
