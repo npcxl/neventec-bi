@@ -1,7 +1,6 @@
 import {
   ReactNode,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useCallback,
@@ -18,8 +17,8 @@ type SeamlessVirtualListProps<T> = {
   renderItem: (item: T, index: number) => ReactNode;
 };
 
-/** Throttle setState to ~30fps (33ms) instead of every rAF (60fps) */
-const SETSTATE_INTERVAL = 33;
+/** Minimum interval between DOM transform writes (~30fps) */
+const FRAME_INTERVAL = 33;
 
 export function SeamlessVirtualList<T>({
   data,
@@ -31,7 +30,6 @@ export function SeamlessVirtualList<T>({
   className,
   renderItem,
 }: SeamlessVirtualListProps<T>) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const roRef = useRef<ResizeObserver | null>(null);
@@ -50,7 +48,7 @@ export function SeamlessVirtualList<T>({
   const localOffsetRef = useRef(0); // 0 <= localOffset < itemHeight
   const windowStartRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
-  const lastSetStateTimeRef = useRef(0);
+  const lastFrameTimeRef = useRef(0); // for ~30fps transform throttle
 
   // --- Split pause states ---
   const hoverPausedRef = useRef(false);
@@ -69,6 +67,44 @@ export function SeamlessVirtualList<T>({
   const renderCount = needsScroll
     ? Math.min(dataLen, visibleCount + overscan * 2 + 2)
     : Math.min(dataLen, visibleCount + overscan * 2);
+
+  // --- Measure height helper ---
+  const measureHeight = useCallback(() => {
+    const el = trackRef.current?.parentElement ?? null;
+    if (!el) return;
+    const h = el.clientHeight || el.getBoundingClientRect().height || 0;
+    setContainerHeight((prev) => (prev === h ? prev : h));
+  }, []);
+
+  // --- Callback ref: always bind container measurement + ResizeObserver,
+  //     even when data is empty (so data arriving later works immediately) ---
+  const setContainerRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Disconnect previous observer
+      if (roRef.current) {
+        roRef.current.disconnect();
+        roRef.current = null;
+      }
+      if (!node) return;
+
+      measureHeight();
+
+      const ro = new ResizeObserver(() => measureHeight());
+      ro.observe(node);
+      roRef.current = ro;
+    },
+    [measureHeight],
+  );
+
+  // Cleanup observer on unmount
+  useEffect(() => {
+    return () => {
+      if (roRef.current) {
+        roRef.current.disconnect();
+        roRef.current = null;
+      }
+    };
+  }, []);
 
   // --- Reduced motion detection ---
   useEffect(() => {
@@ -96,31 +132,6 @@ export function SeamlessVirtualList<T>({
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
   }, []);
-
-  // --- Measure container ---
-  const measureHeight = useCallback(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const h = el.clientHeight || el.getBoundingClientRect().height || 0;
-    setContainerHeight((prev) => (prev === h ? prev : h));
-  }, []);
-
-  useLayoutEffect(() => {
-    measureHeight();
-  }, [dataLen, itemHeight, height, measureHeight]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    measureHeight();
-    const ro = new ResizeObserver(() => measureHeight());
-    ro.observe(el);
-    roRef.current = ro;
-    return () => {
-      ro.disconnect();
-      roRef.current = null;
-    };
-  }, [measureHeight]);
 
   // --- Pause helper (reads all refs) ---
   const isPaused = () =>
@@ -154,33 +165,31 @@ export function SeamlessVirtualList<T>({
         const curSpeed = speedRef.current;
         const curDataLen = dataRef.current.length;
 
+        // Guard: invalid itemHeight or empty data → skip
+        if (curItemHeight <= 0 || curDataLen <= 0) {
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+
         localOffsetRef.current += curSpeed * (dt / 16.67);
 
-        // Handle crossing one or more rows (clamp large dt safely)
-        let crossed = 0;
-        while (localOffsetRef.current >= curItemHeight) {
-          localOffsetRef.current -= curItemHeight;
-          crossed++;
-        }
-        // Safety: prevent runaway offset from extreme dt
-        if (localOffsetRef.current >= curItemHeight) {
-          crossed += Math.floor(localOffsetRef.current / curItemHeight);
-          localOffsetRef.current = localOffsetRef.current % curItemHeight;
-        }
+        // O(1) integer calculation for row crossing (no while loop)
+        const crossed = Math.floor(localOffsetRef.current / curItemHeight);
+        localOffsetRef.current = localOffsetRef.current % curItemHeight;
 
-        if (crossed > 0 && curDataLen > 0) {
+        if (crossed > 0) {
           windowStartRef.current = (windowStartRef.current + crossed) % curDataLen;
-          // Throttle setState to ~30fps
-          if (timestamp - lastSetStateTimeRef.current >= SETSTATE_INTERVAL) {
-            lastSetStateTimeRef.current = timestamp;
-            setWindowStart(windowStartRef.current);
-          }
+          // Always sync windowStart state on crossing — never skip it
+          setWindowStart(windowStartRef.current);
         }
 
-        // Direct DOM transform (no setState in rAF)
-        const track = trackRef.current;
-        if (track) {
-          track.style.transform = `translate3d(0, ${-localOffsetRef.current}px, 0)`;
+        // Throttle DOM transform writes to ~30fps
+        if (timestamp - lastFrameTimeRef.current >= FRAME_INTERVAL) {
+          lastFrameTimeRef.current = timestamp;
+          const track = trackRef.current;
+          if (track) {
+            track.style.transform = `translate3d(0, ${-localOffsetRef.current}px, 0)`;
+          }
         }
       }
 
@@ -188,7 +197,7 @@ export function SeamlessVirtualList<T>({
     };
 
     lastTimeRef.current = null;
-    lastSetStateTimeRef.current = 0;
+    lastFrameTimeRef.current = 0;
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
@@ -219,6 +228,7 @@ export function SeamlessVirtualList<T>({
   if (!dataLen) {
     return (
       <div
+        ref={setContainerRef}
         className={className}
         style={{ height, overflow: "hidden", position: "relative" }}
       />
@@ -227,7 +237,7 @@ export function SeamlessVirtualList<T>({
 
   return (
     <div
-      ref={containerRef}
+      ref={setContainerRef}
       className={className}
       style={{ height, overflow: "hidden", position: "relative" }}
       onMouseEnter={() => {
