@@ -353,8 +353,8 @@ video {
 
 /* Progress bar with diagonal stripe track */
 .progress-track {
-  height: 16px;
-  border-radius: 9999px;
+  height: 20px;
+  border-radius: 4px;
   background-color: rgba(37, 99, 235, 0.10);
   background-image: repeating-linear-gradient(
     -45deg,
@@ -379,7 +379,13 @@ video {
 }
 
 .progress-detail-row:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(37, 99, 235, 0.10);
+}
+
+.progress-detail-row.is-selected {
+  color: #fff;
+  background: rgba(37, 99, 235, 0.18);
+  border-bottom-color: rgba(83, 158, 255, 0.32);
 }
 
 /* 弹窗滚动条 — 深色科技风 */

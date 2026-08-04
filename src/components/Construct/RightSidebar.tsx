@@ -55,19 +55,18 @@ type ConstructRightSidebarProps = {
    ============================================ */
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  '10': { label: '搭建正常', color: '#2563EB' },
-  '11': { label: '搭建完成', color: '#63F222' },
+  // 数字枚举（对齐 useConstructProgress.ts）
+  '10': { label: '暂未入场', color: '#8fb4d8' },
+  '11': { label: '搭建正常', color: '#2563EB' },
   '12': { label: '搭建缓慢', color: '#FA8C16' },
   '13': { label: '严重滞后', color: '#F5222D' },
-  // 兼容中文/英文名称
+  '14': { label: '搭建完成', color: '#63F222' },
+  '15': { label: '有搭建材料', color: '#8fb4d8' },
+  // 兼容中文名称
   '搭建正常': { label: '搭建正常', color: '#2563EB' },
   '搭建完成': { label: '搭建完成', color: '#63F222' },
   '搭建缓慢': { label: '搭建缓慢', color: '#FA8C16' },
   '严重滞后': { label: '严重滞后', color: '#F5222D' },
-  'NORMAL_PROGRESS': { label: '搭建正常', color: '#2563EB' },
-  'COMPLETED_PROGRESS': { label: '搭建完成', color: '#63F222' },
-  'SLOW_PROGRESS': { label: '搭建缓慢', color: '#FA8C16' },
-  'DELAY_PROGRESS': { label: '严重滞后', color: '#F5222D' },
 };
 
 const STATUS_ORDER = ['搭建正常', '搭建完成', '搭建缓慢', '严重滞后'] as const;
@@ -90,26 +89,26 @@ function darken(hex: string, factor: number): string {
 type StatusEntry = { label: string; color: string; count: number };
 
 function extractStatusData(rawData: any): StatusEntry[] {
-  // 解析数据源
-  const rows: Array<{ enumName?: string | number; name?: string; num?: number }> =
+  const rows: Array<Record<string, any>> =
     Array.isArray(rawData)
       ? rawData
       : (rawData?.data ?? rawData?.list ?? rawData?.rows ?? rawData?.result ?? []);
 
-  // 按 STATUS_ORDER 顺序汇总
   const map = new Map<string, number>();
   STATUS_ORDER.forEach((label) => map.set(label, 0));
 
   for (const row of rows) {
-    // 优先 enumName（数字/字符串枚举），其次 name（中文标签）
-    const key = String(row.enumName ?? row.name ?? '').trim();
-    const info = STATUS_MAP[key];
-    if (info) {
-      map.set(info.label, (map.get(info.label) ?? 0) + Number(row.num ?? 0));
-    } else if (key) {
-      // 未识别状态：开发环境提示
+    // 兼容多种字段名
+    const statusKey = String(
+      row.enumName ?? row.progressStatus ?? row.status ?? row.name ?? ''
+    ).trim();
+    const count = Number(row.num ?? row.count ?? row.value ?? 0) || 0;
+    const info = STATUS_MAP[statusKey];
+    if (info && STATUS_ORDER.includes(info.label as any)) {
+      map.set(info.label, (map.get(info.label) ?? 0) + count);
+    } else if (statusKey) {
       if (import.meta.env.DEV) {
-        console.warn('[ConstructOverview] 未识别的状态值:', key, row);
+        console.warn('[ConstructOverview] 未识别的状态值:', statusKey, row);
       }
     }
   }
@@ -145,16 +144,20 @@ function draw25DRing(
   const innerRx = outerRx * 0.75;
   const innerRy = outerRy * 0.75;
 
-  const maxCount = Math.max(...entries.map((e) => e.count), 1);
-  // 减薄侧壁
-  const minDepth = 3;
-  const maxDepth = 8;
-  const depths = entries.map((e) =>
-    maxCount > 0 ? minDepth + (e.count / maxCount) * (maxDepth - minDepth) : minDepth,
-  );
+  const total = entries.reduce((sum, e) => sum + e.count, 0);
+  // 按真实比例计算角度
+  const totalAngle = Math.PI * 2;
+  const gapAngle = 0.03; // 1-2px 视觉间隔
+  const totalGap = entries.filter((e) => e.count > 0).length * gapAngle;
+  const availableAngle = total > 0 ? totalAngle - totalGap : 0;
 
-  const gapAngle = 0.03;
-  const sliceAngle = (Math.PI * 2) / 4 - gapAngle;
+  // 减薄侧壁（深度仅作为立体效果）
+  const minDepth = 3;
+  const maxDepth = 7;
+  const maxCount = Math.max(...entries.map((e) => e.count), 1);
+  const depths = entries.map((e) =>
+    maxCount > 0 ? minDepth + (e.count / maxCount) * (maxDepth - minDepth) : 0,
+  );
 
   // 减弱底部阴影
   ctx.fillStyle = 'rgba(20, 92, 210, 0.12)';
@@ -162,11 +165,16 @@ function draw25DRing(
   ctx.ellipse(cx, cy + maxDepth + 2, outerRx + 2, outerRy + 1.5, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  let currentAngle = -Math.PI / 2;
+
   for (let i = 0; i < 4; i++) {
     const entry = entries[i];
-    if (entry.count === 0) continue;
-    const startAngle = -Math.PI / 2 + i * (Math.PI * 2) / 4 + gapAngle / 2;
+    if (entry.count === 0 || total === 0) continue;
+    const sliceAngle = (entry.count / total) * availableAngle;
+    if (sliceAngle <= 0.001) continue;
+    const startAngle = currentAngle + gapAngle / 2;
     const endAngle = startAngle + sliceAngle;
+    currentAngle = endAngle + gapAngle / 2;
     const topColor = entry.color;
     const sideColor = darken(topColor, 0.35);
     const depth = depths[i];
@@ -234,12 +242,12 @@ function draw25DRing(
   ctx.stroke();
 
   // 中心总数
-  const total = entries.reduce((sum, e) => sum + e.count, 0);
+  const centerTotal = entries.reduce((sum, e) => sum + e.count, 0);
   ctx.fillStyle = '#ffffff';
   ctx.font = `bold ${Math.max(14, outerRx * 0.28)}px "Source Han Sans CN", sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(String(total), cx, cy - 4);
+  ctx.fillText(String(centerTotal), cx, cy - 4);
 
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.font = `${Math.max(9, outerRx * 0.14)}px "Source Han Sans CN", sans-serif`;

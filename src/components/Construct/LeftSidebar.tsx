@@ -18,7 +18,7 @@ function PanelTitle({ title }: { title: string }) {
 const VISIBLE_COUNT = 5;
 const SCROLL_INTERVAL = 5000;
 const ANIMATION_DURATION = 500;
-const ROW_HEIGHT = 30; // py-1 (4px) + bar 16px + py-1 (4px) + gap
+const ROW_HEIGHT = 34; // py-1(4px) + bar 20px + py-1(4px) + gap
 
 function ProgressRow({ item }: { item: { name: string; completion: number; commence: number } }) {
   const total = item.completion + item.commence;
@@ -29,9 +29,9 @@ function ProgressRow({ item }: { item: { name: string; completion: number; comme
       style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px', height: ROW_HEIGHT }}
     >
       <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
-      <div className="progress-track h-[16px] overflow-hidden rounded-full">
+      <div className="progress-track h-[20px] overflow-hidden rounded">
         <div
-          className="progress-fill h-full rounded-full"
+          className="progress-fill h-full rounded"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -49,7 +49,6 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
 
   const needsScroll = items.length > VISIBLE_COUNT;
 
-  // Build visible rows: VISIBLE_COUNT + 1 (the extra one for smooth scroll-in)
   const displayItems = useMemo(() => {
     if (items.length === 0) return [];
     const count = Math.min(items.length, VISIBLE_COUNT + 1);
@@ -58,7 +57,6 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
     );
   }, [items, startIndex]);
 
-  // Cleanup function
   const clearAllTimers = useCallback(() => {
     if (intervalRef.current !== null) {
       window.clearInterval(intervalRef.current);
@@ -98,7 +96,6 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
     );
   }
 
-  // Static: render all items directly, no scroll
   if (!needsScroll) {
     return (
       <div className="px-4 pb-3 pt-1">
@@ -161,16 +158,30 @@ export function ConstructLeftSidebar({
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState<ConstructDetailData | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const closeDetail = useCallback(() => {
     setDetailOpen(false);
     setDetailData(null);
+    setDetailError(false);
+    setSelectedId(null);
   }, []);
 
   const handleRowClick = useCallback(async (row: any) => {
-    const boothNo = row.boothNumber || row.exNun || '';
-    if (!boothNo || !exhibitionId) return;
+    const boothNo =
+      row.boothNo ??
+      row.boothNumber ??
+      row.exNun ??
+      row.boothId ??
+      '';
+    if (!boothNo || boothNo === '-' || !exhibitionId) return;
+
+    // 设置选中状态
+    setSelectedId(String(row.boothNumber ?? row.boothNo ?? row.boothId ?? ''));
+
     setDetailLoading(true);
+    setDetailError(false);
     setDetailOpen(true);
     setDetailData(null);
     try {
@@ -180,10 +191,14 @@ export function ConstructLeftSidebar({
         boothNo,
       );
       const raw = (res as any)?.data ?? res;
-      const items = Array.isArray(raw) ? raw : (raw?.data ?? []);
-      // Use the latest record (first item)
-      setDetailData(items[0] ?? null);
+      const detail = Array.isArray(raw)
+        ? raw[0]
+        : Array.isArray(raw?.data)
+          ? raw.data[0]
+          : raw?.data ?? raw;
+      setDetailData(detail ?? null);
     } catch {
+      setDetailError(true);
       setDetailData(null);
     } finally {
       setDetailLoading(false);
@@ -209,7 +224,7 @@ export function ConstructLeftSidebar({
         {processOverviewItems.length > 0 ? (
           <ProgressOverviewList items={processOverviewItems} />
         ) : (
-          <div className="flex h-[calc(5*38px)] items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]">
+          <div className="flex h-[calc(5*34px)] items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]">
             暂无进程数据
           </div>
         )}
@@ -242,14 +257,17 @@ export function ConstructLeftSidebar({
                 speed={shouldAutoScroll ? 0.45 : 0}
                 overscan={8}
                 pauseOnHover={true}
+                paused={detailOpen || selectedId !== null}
                 className="h-full"
                 renderItem={(row, index) => {
                   const meta = getProgressMeta(row.progressStatus);
+                  const rowId = String(row.boothNumber ?? row.boothNo ?? index);
+                  const isSelected = selectedId === rowId;
 
                   return (
                     <div
                       onClick={() => handleRowClick(row)}
-                      className="progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px]"
+                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px]${isSelected ? ' is-selected' : ''}`}
                     >
                       <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
                         <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">
@@ -280,7 +298,12 @@ export function ConstructLeftSidebar({
       <BoothModal
         visible={detailOpen}
         onClose={closeDetail}
-        data={detailData ?? {}}
+        data={detailLoading
+          ? { boothNumber: '加载中...' }
+          : detailError
+            ? { boothNumber: '详情加载失败' }
+            : detailData ?? {}
+        }
       />
     </aside>
   );

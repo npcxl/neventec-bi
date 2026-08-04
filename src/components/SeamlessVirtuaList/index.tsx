@@ -14,6 +14,7 @@ type SeamlessVirtualListProps<T> = {
   overscan?: number;
   speed?: number;
   pauseOnHover?: boolean;
+  paused?: boolean;
   className?: string;
   renderItem: (item: T, index: number) => ReactNode;
 };
@@ -29,6 +30,7 @@ export function SeamlessVirtualList<T>({
   overscan = 6,
   speed = 0.35,
   pauseOnHover = true,
+  paused = false,
   className,
   renderItem,
 }: SeamlessVirtualListProps<T>) {
@@ -57,6 +59,8 @@ export function SeamlessVirtualList<T>({
   const hoverPausedRef = useRef(false);
   const visibilityPausedRef = useRef(false);
   const reducedMotionRef = useRef(false);
+  const externalPausedRef = useRef(paused);
+  externalPausedRef.current = paused;
 
   const [containerHeight, setContainerHeight] = useState(0);
   const [windowStart, setWindowStart] = useState(0);
@@ -136,7 +140,7 @@ export function SeamlessVirtualList<T>({
 
   // --- Pause helper (reads all refs) ---
   const isPaused = () =>
-    hoverPausedRef.current || visibilityPausedRef.current || reducedMotionRef.current;
+    externalPausedRef.current || hoverPausedRef.current || visibilityPausedRef.current || reducedMotionRef.current;
 
   // --- rAF scroll loop ---
   useEffect(() => {
