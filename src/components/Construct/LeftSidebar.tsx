@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useConstructProgress } from "../../hooks/useConstructProgress";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
 
@@ -8,6 +8,67 @@ function PanelTitle({ title }: { title: string }) {
       <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-[clamp(12px,0.82vw,15px)] font-medium text-[#d8efff]">
         <span className="pl-10 pb-1">{title}</span>
       </div>
+    </div>
+  );
+}
+
+const PAGE_SIZE = 5;
+const SWITCH_INTERVAL = 3000;
+
+function ProgressOverviewList({ items }: { items: Array<{ name: string; completion: number; commence: number }> }) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const timerRef = useRef<number | null>(null);
+  const [animKey, setAnimKey] = useState(0);
+
+  const pageCount = Math.ceil(items.length / PAGE_SIZE);
+  const visibleItems = items.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(0);
+    setAnimKey(0);
+    if (pageCount <= 1) {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+
+    timerRef.current = window.setInterval(() => {
+      setCurrentPage((page) => (page + 1) % pageCount);
+      setAnimKey((k) => k + 1);
+    }, SWITCH_INTERVAL);
+
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [pageCount]);
+
+  return (
+    <div key={animKey} className="animate-fade-in-up px-4 pb-3 pt-1">
+      {visibleItems.map((item, i) => {
+        const total = item.completion + item.commence;
+        const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
+        return (
+          <div
+            key={i}
+            className="grid items-center gap-[10px] py-1.5"
+            style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px' }}
+          >
+            <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
+            <div className="progress-track h-2 overflow-hidden rounded-sm">
+              <div
+                className="progress-fill h-full rounded-sm"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="text-right text-xs tabular-nums text-[#dbeeff]">{pct}%</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -40,59 +101,29 @@ export function ConstructLeftSidebar({
   const shouldAutoScroll = processRows.length > 6;
   const isProcessLoading = loading || processLoading;
 
-  // Process overview data
-  const processRows2 = useMemo(() => {
+  // Process overview items for progress bars
+  const processOverviewItems = useMemo(() => {
     const source = exhibitionProcessData?.data ?? exhibitionProcessData?.list ?? exhibitionProcessData?.rows ?? exhibitionProcessData?.result ?? exhibitionProcessData?.records ?? exhibitionProcessData?.content ?? exhibitionProcessData;
-    const arr = Array.isArray(source) ? source : Array.isArray(source?.data) ? source.data : [];
-    return arr;
+    const arr: Array<{ name?: string; completion?: number; commence?: number }> = Array.isArray(source) ? source : Array.isArray(source?.data) ? source.data : [];
+    return arr.map((row) => ({
+      name: row.name || '-',
+      completion: Number(row.completion ?? 0),
+      commence: Number(row.commence ?? 0),
+    }));
   }, [exhibitionProcessData]);
-
-  const [processIndex, setProcessIndex] = useState(0);
-
-  useEffect(() => {
-    setProcessIndex(0);
-    if (processRows2.length <= 1) return;
-    const timer = window.setInterval(() => {
-      setProcessIndex((current) => (current + 1) % processRows2.length);
-    }, 3000);
-    return () => window.clearInterval(timer);
-  }, [processRows2.length]);
-
-  const currentProcess = processRows2[processIndex] ?? null;
 
   return (
     <aside className="flex h-full min-h-0 min-w-0 flex-col gap-[clamp(0.35rem,0.6vw,0.65rem)] xl:gap-2 overflow-hidden">
-      {/* Process overview — always show section, even if no data */}
+      {/* Progress overview — progress bars with page switching */}
       <section className="shrink-0 overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)]">
-        <PanelTitle title="展会进程情况" />
-        <div className="px-4 pb-3 pt-1">
-          {currentProcess ? (
-            <div className="rounded-lg bg-[rgba(8,23,42,0.68)] p-3">
-              <div className="flex items-center justify-between gap-3 text-xs text-[#dbeeff]">
-                <span className="truncate">{currentProcess?.name ?? '展会进程情况'}</span>
-                <span className="shrink-0 text-[#7da7cf]">
-                  {Math.round(
-                    ((Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0)) > 0
-                      ? (Number(currentProcess?.completion ?? 0) / (Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0))) * 100
-                      : 0)
-                  )}%
-                </span>
-              </div>
-              <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#7da7cf]">
-                <span>已完成 {currentProcess?.completion ?? 0}</span>
-                <span>进行中 {currentProcess?.commence ?? 0}</span>
-                <span>总计 {(Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0))}</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-[#7da7cf] mt-1">
-                <span>第 {processIndex + 1} / {processRows2.length} 条</span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex h-16 items-center justify-center rounded-lg bg-[rgba(8,23,42,0.68)] text-sm text-[#93aed0]">
-              暂无数据
-            </div>
-          )}
-        </div>
+        <PanelTitle title="搭建进程总览" />
+        {processOverviewItems.length > 0 ? (
+          <ProgressOverviewList items={processOverviewItems} />
+        ) : (
+          <div className="flex h-[calc(5*38px)] items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]">
+            暂无进程数据
+          </div>
+        )}
       </section>
 
       {/* Process detail */}

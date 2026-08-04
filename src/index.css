@@ -350,3 +350,36 @@ video {
 .scrollbar-dark::-webkit-scrollbar-thumb:hover {
   background: rgba(103, 232, 249, 0.6);
 }
+
+/* Progress bar with diagonal stripe track */
+.progress-track {
+  background-color: rgba(37, 99, 235, 0.10);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(93, 164, 255, 0.20) 0,
+    rgba(93, 164, 255, 0.20) 4px,
+    rgba(22, 67, 126, 0.12) 4px,
+    rgba(22, 67, 126, 0.12) 8px
+  );
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #2563EB 0%, #39A7FF 100%);
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.35);
+  transition: width 500ms ease;
+}
+
+/* Fade-in-up animation for page switching */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 250ms ease-out;
+}
