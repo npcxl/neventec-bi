@@ -64,7 +64,7 @@ function ConstructCarousel({
 
   return (
     <div
-      className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]"
+      className="relative h-full overflow-hidden"
       onMouseEnter={() => { hoverPausedRef.current = true; }}
       onMouseLeave={() => { hoverPausedRef.current = false; }}
     >
@@ -77,7 +77,7 @@ function ConstructCarousel({
             {visibleItems.map(({ item, realIndex, slotIndex, isEager }) => (
               <div
                 key={`${slotIndex}-${realIndex}-${item.address}`}
-                className="flex h-full flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
+                className="flex h-full flex-shrink-0 flex-col overflow-hidden"
                 style={{ width: CARD_WIDTH }}
               >
                 <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black/10">
@@ -89,7 +89,7 @@ function ConstructCarousel({
                     className="h-[150px] w-full object-cover"
                   />
                 </div>
-                <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] px-3 py-3">
+                <div className="flex h-[30px] items-center justify-center overflow-hidden px-3 py-3">
                   <span className="text-[14px] font-semibold text-[#cffafe]">
                     {item.boothNo} - {item.exhibitor}
                   </span>
