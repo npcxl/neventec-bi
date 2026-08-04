@@ -288,7 +288,9 @@ export function ConstructRightSidebar({
 
   const overviewSection = (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <PanelTitle title="搭建总览" />
+      <div className="shrink-0">
+        <PanelTitle title="搭建总览" />
+      </div>
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <ConstructOverviewChart data={boothProgressData} />
       </div>
@@ -297,7 +299,9 @@ export function ConstructRightSidebar({
 
   const carouselSection = (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <PanelTitle title="现场图片" />
+      <div className="shrink-0 w-1/2">
+        <PanelTitle title="现场图片" />
+      </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden p-3">
         <ConstructCarousel
           pictures={displayPictures}
