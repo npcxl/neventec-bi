@@ -1724,37 +1724,27 @@ export default function App() {
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
                       <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,66fr)_minmax(0,34fr)] gap-[clamp(10px,0.8vw,14px)] overflow-hidden">
-                          <div className="h-full min-h-0 min-w-0 overflow-hidden">
-                            <CenterMap
-                              mode={selectedHallId}
-                              moduleMode={hallMode}
-                              onModeChange={setSelectedHallId}
-                              onBoothChange={(boothId) => setSelectedBoothId(boothId)}
-                              initData={initData}
-                              boothRows={boothRows}
-                              safetyRows={safetyRows}
-                              constructProcessRows={(Array.isArray(constructProcessData)
-                                ? constructProcessData
-                                : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
-                              ).map((item: any) => ({
-                                boothId: item.boothId ?? item.boothID ?? item.booth_id,
-                                boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
-                                boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
-                                progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
-                              }))}
-                              galleryRows={galleryRows}
-                              compact={hallMode === "ConstructOverview"}
-                            />
-                          </div>
-                          <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                            <div className="min-h-0 min-w-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(8px,0.8vw,12px)]">
-                              <ConstructCarousel
-                                pictures={constructCarouselPicturesMemo}
-                                loading={constructCarouselLoading}
-                              />
-                            </div>
-                          </section>
+                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            constructProcessRows={(Array.isArray(constructProcessData)
+                              ? constructProcessData
+                              : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
+                            ).map((item: any) => ({
+                              boothId: item.boothId ?? item.boothID ?? item.booth_id,
+                              boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
+                              boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
+                              progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                            }))}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "ConstructOverview"}
+                          />
                         </div>
                         <div className="h-full min-h-0 min-w-0 overflow-hidden">
                           <ConstructRightSidebar {...constructRightSidebarProps} variant="landscape" />
@@ -1767,28 +1757,18 @@ export default function App() {
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
                       <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="grid h-full min-h-0 min-w-0 grid-rows-[minmax(0,66fr)_minmax(0,34fr)] gap-[clamp(10px,0.8vw,14px)] overflow-hidden">
-                          <div className="h-full min-h-0 min-w-0 overflow-hidden">
-                            <CenterMap
-                              mode={selectedHallId}
-                              moduleMode={hallMode}
-                              onModeChange={setSelectedHallId}
-                              onBoothChange={(boothId) => setSelectedBoothId(boothId)}
-                              initData={initData}
-                              boothRows={boothRows}
-                              safetyRows={safetyRows}
-                              galleryRows={galleryRows}
-                              compact={hallMode === "SafetyOverview"}
-                            />
-                          </div>
-                          <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                            <div className="min-h-0 min-w-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(8px,0.8vw,12px)]">
-                              <SafetyCarousel
-                                pictures={safetyCarouselPicturesMemo}
-                                loading={safetyCarouselLoading}
-                              />
-                            </div>
-                          </section>
+                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                          <CenterMap
+                            mode={selectedHallId}
+                            moduleMode={hallMode}
+                            onModeChange={setSelectedHallId}
+                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                            initData={initData}
+                            boothRows={boothRows}
+                            safetyRows={safetyRows}
+                            galleryRows={galleryRows}
+                            compact={hallMode === "SafetyOverview"}
+                          />
                         </div>
                         <div className="h-full min-h-0 min-w-0 overflow-hidden">
                           <SafetyRightSidebar {...safetyRightSidebarProps} variant="landscape" />
