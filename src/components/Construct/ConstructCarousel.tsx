@@ -72,9 +72,9 @@ function ConstructCarousel({
         <div className="text-sm font-medium text-[#dbeeff]">{title}</div>
         <div ref={containerRef} className="flex h-full min-h-0 overflow-hidden">
           <div ref={trackRef} className="flex h-full gap-3" style={{ willChange: "transform" }}>
-            {visibleItems.map(({ item, realIndex, isEager }) => (
+            {visibleItems.map(({ item, realIndex, slotIndex, isEager }) => (
               <div
-                key={`${item.address}-${realIndex}`}
+                key={`${slotIndex}-${realIndex}-${item.address}`}
                 className="flex h-full flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
                 style={{ width: CARD_WIDTH }}
               >

@@ -4,7 +4,6 @@ export const CARD_WIDTH = 300;
 export const CARD_GAP = 12;
 export const STEP = CARD_WIDTH + CARD_GAP; // 312px per card
 const SCROLL_SPEED = 0.8; // px per frame at 60fps
-const BUFFER_COUNT = 2; // buffer cards on each side
 const MAX_DOM_CARDS = 12;
 
 function calcContentWidth(total: number) {
@@ -37,11 +36,18 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
 
   // viewportCount: cards needed to fill container
   const viewportCount = containerWidth > 0 ? Math.ceil(containerWidth / STEP) : 0;
-  // renderCount: viewport + buffers, capped at MAX_DOM_CARDS and totalCount
-  const renderCount = Math.min(MAX_DOM_CARDS, totalCount, viewportCount + BUFFER_COUNT * 2);
   // content width to determine scroll
   const contentWidth = calcContentWidth(totalCount);
   const needsScroll = contentWidth > containerWidth;
+
+  // renderCount: must include viewportCount + 1 for seamless loop (one extra card so
+  // the right side always has the next card while the track shifts one full STEP).
+  // Capped at MAX_DOM_CARDS. totalCount is NOT used as a cap — when totalCount is
+  // smaller than viewportCount+1, we duplicate cards via modulo (see visibleItems).
+  // When content does not overflow, renderCount = totalCount (no extra cards needed).
+  const renderCount = needsScroll
+    ? Math.min(MAX_DOM_CARDS, viewportCount + 1)
+    : Math.min(totalCount, viewportCount);
 
   // --- Callback ref for container: triggers measurement immediately ---
   const setContainerRef = useCallback((node: HTMLDivElement | null) => {
@@ -157,17 +163,18 @@ export function useWindowedCarousel<T>(items: T[], totalCount: number) {
     };
   }, [totalCount, containerWidth, needsScroll]);
 
-  // Build visible window with slotIndex and isEager
+  // Build visible window with slotIndex and isEager.
+  // When renderCount > totalCount, modulo wraps around so the same realIndex
+  // appears multiple times — this is intentional for seamless looping.
   const visibleItems: VisibleItem<T>[] = [];
-  for (let i = 0; i < renderCount; i++) {
-    const idx = (windowStart + i) % totalCount;
-    if (idx >= 0 && idx < items.length) {
-      // slotIndex: 0 = first visible card, viewportCount-1 = last visible
-      // isEager: current viewport cards + next 1 buffer card
+  if (totalCount > 0) {
+    for (let i = 0; i < renderCount; i++) {
+      const idx = (windowStart + i) % totalCount;
       visibleItems.push({
         item: items[idx],
         realIndex: idx,
         slotIndex: i,
+        // eager: viewport cards + next 1 (the extra loop buffer card)
         isEager: i < viewportCount + 1,
       });
     }
