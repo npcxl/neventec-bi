@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import { Spin } from "antd";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useConstructProgress } from "../../hooks/useConstructProgress";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
 
@@ -72,6 +72,7 @@ const OVERVIEW_STATUS_META: Record<string, { label: string; color: string; icon:
 export function ConstructLeftSidebar({
   constructOverviewData,
   constructProcessData,
+  exhibitionProcessData,
   hallId = "all",
   loading = false,
   overviewLoading = false,
@@ -79,6 +80,7 @@ export function ConstructLeftSidebar({
 }: {
   constructOverviewData?: any;
   constructProcessData?: any;
+  exhibitionProcessData?: any;
   hallId?: string;
   loading?: boolean;
   overviewLoading?: boolean;
@@ -132,6 +134,25 @@ export function ConstructLeftSidebar({
   );
   const shouldAutoScroll = processRows.length > 6;
   const isProcessLoading = loading || processLoading;
+  const processRows2 = useMemo(() => {
+    const source = exhibitionProcessData?.data ?? exhibitionProcessData?.list ?? exhibitionProcessData?.rows ?? exhibitionProcessData?.result ?? exhibitionProcessData?.records ?? exhibitionProcessData?.content ?? exhibitionProcessData;
+    const arr = Array.isArray(source) ? source : Array.isArray(source?.data) ? source.data : [];
+    return arr;
+  }, [exhibitionProcessData]);
+
+  const [processIndex, setProcessIndex] = useState(0);
+
+  useEffect(() => {
+    setProcessIndex(0);
+    if (processRows2.length <= 1) return;
+    const timer = window.setInterval(() => {
+      setProcessIndex((current) => (current + 1) % processRows2.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [processRows2.length]);
+
+  const currentProcess = processRows2[processIndex] ?? null;
+
   return (
     <aside className="relative flex h-full min-h-0 min-w-0 flex-col gap-[clamp(0.35rem,0.6vw,0.65rem)] xl:gap-2">
       {(loading || overviewLoading) && (
@@ -139,7 +160,36 @@ export function ConstructLeftSidebar({
           <Spin size="large" tip="正在加载搭建概况..." />
         </div>
       )}
-      <section className="relative flex-none overflow-hidden border border-[rgba(128,185,255,0.32)] bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[0_0_0_1px_rgba(88,150,255,0.12),inset_0_0_30px_rgba(80,157,255,0.08)] backdrop-blur-sm max-[1280px]:min-h-[280px]">
+      {/* Process section moved to left sidebar, first position */}
+      {currentProcess && (
+        <section className="relative flex-none overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)]">
+          <PanelTitle title="展会进程情况" />
+          <div className="px-4 pb-3 pt-1">
+            <div className="rounded-lg bg-[rgba(8,23,42,0.68)] p-3">
+              <div className="flex items-center justify-between gap-3 text-xs text-[#dbeeff]">
+                <span className="truncate">{currentProcess?.name ?? '展会进程情况'}</span>
+                <span className="shrink-0 text-[#7da7cf]">
+                  {Math.round(
+                    ((Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0)) > 0
+                      ? (Number(currentProcess?.completion ?? 0) / (Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0))) * 100
+                      : 0)
+                  )}%
+                </span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#7da7cf]">
+                <span>已完成 {currentProcess?.completion ?? 0}</span>
+                <span>进行中 {currentProcess?.commence ?? 0}</span>
+                <span>总计 {(Number(currentProcess?.completion ?? 0) + Number(currentProcess?.commence ?? 0))}</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-[#7da7cf] mt-1">
+                <span>第 {processIndex + 1} / {processRows2.length} 条</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="relative flex-none overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)] backdrop-blur-sm max-[1280px]:min-h-[280px]">
         <div className="flex h-full min-h-0 w-full flex-col">
           <PanelTitle title="搭建总览" />
           <div className="flex min-h-0 flex-col px-[clamp(6px,0.7vw,12px)] pb-[clamp(3px,0.35vw,6px)] pt-[clamp(4px,0.6vw,8px)] max-[640px]:px-1.5 max-[640px]:pb-1 max-[640px]:pt-1">
@@ -191,7 +241,7 @@ export function ConstructLeftSidebar({
         </div>
       </section>
 
-      <section className="relative flex min-h-0 flex-1 overflow-hidden border border-[rgba(128,185,255,0.32)] bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[0_0_0_1px_rgba(88,150,255,0.12),inset_0_0_30px_rgba(80,157,255,0.08)] backdrop-blur-sm max-[1280px]:min-h-[320px] max-[1280px]:flex-none max-[1280px]:basis-auto">
+      <section className="relative flex min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)] backdrop-blur-sm max-[1280px]:min-h-[320px] max-[1280px]:flex-none max-[1280px]:basis-auto">
         <div className="flex h-full min-h-0 w-full flex-col">
           <PanelTitle title="搭建进度明细" />
           <div className="flex min-h-0 flex-1 flex-col px-[clamp(6px,0.7vw,12px)] pb-[clamp(6px,0.7vw,12px)] pt-[clamp(4px,0.6vw,8px)] max-[640px]:px-1.5 max-[640px]:pb-1.5 max-[640px]:pt-1">

@@ -1099,20 +1099,10 @@ export default function App() {
   const constructLeftSidebarProps = {
     constructOverviewData,
     constructProcessData,
-    hallId: selectedHallId,
-    loading: isModuleLoading && hallMode === "ConstructOverview",
-    overviewLoading: isSwitchLoading && hallMode === "ConstructOverview",
-    processLoading: false,
-  };
-  const constructRightSidebarProps = {
-    boothProgressData,
-    constructProcessData,
-    constructMaterialData,
     exhibitionProcessData,
     hallId: selectedHallId,
     loading: isModuleLoading && hallMode === "ConstructOverview",
-    materialLoading: isSwitchLoading && hallMode === "ConstructOverview",
-    boothProgressLoading: isSwitchLoading && hallMode === "ConstructOverview",
+    overviewLoading: isSwitchLoading && hallMode === "ConstructOverview",
     processLoading: false,
   };
   const safetyCollectRows = Array.isArray(safetyCollect)
@@ -1135,6 +1125,19 @@ export default function App() {
     () => normalizeCarouselPictures(constructCarouselState.pictures),
     [constructCarouselState],
   );
+  const constructRightSidebarProps = {
+    boothProgressData,
+    constructProcessData,
+    constructMaterialData,
+    exhibitionProcessData,
+    hallId: selectedHallId,
+    loading: isModuleLoading && hallMode === "ConstructOverview",
+    materialLoading: isSwitchLoading && hallMode === "ConstructOverview",
+    boothProgressLoading: isSwitchLoading && hallMode === "ConstructOverview",
+    processLoading: false,
+    constructCarouselPictures: constructCarouselPicturesMemo,
+    constructCarouselLoading,
+  };
   const safetyCarouselPicturesMemo = useMemo(
     () => normalizeCarouselPictures(safetyCarouselState.pictures),
     [safetyCarouselState],
