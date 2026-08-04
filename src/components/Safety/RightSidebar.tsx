@@ -402,7 +402,10 @@ export function SafetyRightSidebar({
   );
 
   return (
-    <aside className="relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
+    <aside className={isLandscape
+      ? "relative flex min-h-[360px] min-w-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]"
+      : "relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]"
+    }>
       {loading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
           <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">

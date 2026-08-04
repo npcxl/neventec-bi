@@ -1690,7 +1690,7 @@ export default function App() {
                         exhibitionId={initData.exhibitionId}
                       />
                       <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex min-h-0 flex-[0.62] min-w-0">
+                        <div className="flex min-h-0 flex-[0.55] min-w-0">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1707,7 +1707,7 @@ export default function App() {
                             galleryRows={galleryRows}
                           />
                         </div>
-                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.45]">
                           <ExhibitionRightSidebar
                             boothRows={boothRows}
                             orderCollect={orderCollectData}
@@ -1724,7 +1724,7 @@ export default function App() {
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
                       <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex min-h-0 flex-[0.62] min-w-0">
+                        <div className="flex min-h-0 flex-[0.55] min-w-0">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1746,7 +1746,7 @@ export default function App() {
                             compact={hallMode === "ConstructOverview"}
                           />
                         </div>
-                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.45]">
                           <ConstructRightSidebar {...constructRightSidebarProps} variant="landscape" />
                         </div>
                       </div>
@@ -1757,7 +1757,7 @@ export default function App() {
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
                       <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex min-h-0 flex-[0.62] min-w-0">
+                        <div className="flex min-h-0 flex-[0.55] min-w-0">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1770,7 +1770,7 @@ export default function App() {
                             compact={hallMode === "SafetyOverview"}
                           />
                         </div>
-                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.45]">
                           <SafetyRightSidebar {...safetyRightSidebarProps} variant="landscape" />
                         </div>
                       </div>

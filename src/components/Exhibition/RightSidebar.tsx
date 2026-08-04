@@ -82,7 +82,7 @@ export function ExhibitionRightSidebar({
 
   // Shared sections extracted so they render once regardless of layout
   const expenseSection = (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
       <PanelTitle title="特装费用缴纳" />
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         {loading ? (
@@ -164,7 +164,7 @@ export function ExhibitionRightSidebar({
   );
 
   const unreportedSection = (
-    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
       <PanelTitle title="未报到展位汇总" />
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         <div className="flex items-center justify-between">
@@ -214,7 +214,7 @@ export function ExhibitionRightSidebar({
   );
 
   const ordersSection = (
-    <section className="flex min-h-0 flex-[0.38] flex-col overflow-hidden">
+    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-[0.38] flex-col overflow-hidden"}>
       <PanelTitle title="水电气网络申报订单数量" />
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-2">
         {(() => {
@@ -250,33 +250,32 @@ export function ExhibitionRightSidebar({
     </section>
   );
 
-  return (
-    <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
-      {isLandscape ? (
-        /* LANDSCAPE: all three sections in one row */
-        <div className="grid min-h-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
-          <div className="min-h-0 min-w-0 overflow-hidden">
-            {expenseSection}
-          </div>
-          <div className="min-h-0 min-w-0 overflow-hidden">
-            {unreportedSection}
-          </div>
-          <div className="min-h-0 min-w-0 overflow-hidden">
-            {ordersSection}
-          </div>
+  return isLandscape ? (
+    /* LANDSCAPE: w-full, min-height so App.tsx bottom scroll works.
+       Do NOT use h-full here — that locks height and prevents overflow. */
+    <aside className="w-full min-h-[400px] min-w-0">
+      <div className="grid min-h-[400px] min-w-0 grid-cols-[repeat(3,minmax(0,1fr))] gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
+        <div className="flex min-h-0 min-w-0">
+          {expenseSection}
         </div>
-      ) : (
-        /* PORTRAIT: original vertical stacking */
-        <>
-          <div className="flex min-h-0 flex-[0.38] flex-col overflow-hidden">
-            {expenseSection}
-          </div>
-          <div className="flex min-h-0 flex-[0.24] flex-col overflow-hidden">
-            {unreportedSection}
-          </div>
+        <div className="flex min-h-0 min-w-0">
+          {unreportedSection}
+        </div>
+        <div className="flex min-h-0 min-w-0">
           {ordersSection}
-        </>
-      )}
+        </div>
+      </div>
+    </aside>
+  ) : (
+    /* PORTRAIT: original vertical stacking */
+    <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
+      <div className="flex min-h-0 flex-[0.38] flex-col overflow-hidden">
+        {expenseSection}
+      </div>
+      <div className="flex min-h-0 flex-[0.24] flex-col overflow-hidden">
+        {unreportedSection}
+      </div>
+      {ordersSection}
     </aside>
   );
 }
