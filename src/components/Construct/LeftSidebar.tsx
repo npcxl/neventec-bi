@@ -4,8 +4,8 @@ import { SeamlessVirtualList } from "../SeamlessVirtuaList";
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-[clamp(40px,3.5vw,52px)] px-[clamp(10px,0.8vw,14px)] shrink-0">
-      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-[clamp(12px,0.82vw,15px)] font-medium text-[#d8efff]">
+    <div className="relative h-11 px-3 shrink-0">
+      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
         <span className="pl-10 pb-1">{title}</span>
       </div>
     </div>
@@ -153,6 +153,11 @@ export function ConstructLeftSidebar({
 
   const shouldAutoScroll = processRows.length > 6;
   const isProcessLoading = loading || processLoading;
+  const [selectedId, setSelectedId] = useState<string>('');
+
+  const handleRowClick = useCallback((id: string) => {
+    setSelectedId((prev) => (prev === id ? '' : id));
+  }, []);
 
   // Process overview items for progress bars
   const processOverviewItems = useMemo(() => {
@@ -166,9 +171,9 @@ export function ConstructLeftSidebar({
   }, [exhibitionProcessData]);
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-[clamp(0.35rem,0.6vw,0.65rem)] xl:gap-2 overflow-hidden">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 xl:gap-3 overflow-hidden">
       {/* Progress overview — progress bars with page switching */}
-      <section className="shrink-0 overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)]">
+      <section className="shrink-0 overflow-hidden">
         <PanelTitle title="搭建进程总览" />
         {processOverviewItems.length > 0 ? (
           <ProgressOverviewList items={processOverviewItems} />
@@ -180,16 +185,16 @@ export function ConstructLeftSidebar({
       </section>
 
       {/* Process detail */}
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(11,31,61,0.94),rgba(5,14,28,0.96))] shadow-[inset_0_0_30px_rgba(80,157,255,0.08)]">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PanelTitle title="搭建进度明细" />
-        <div className="flex min-h-0 flex-1 flex-col px-[clamp(6px,0.7vw,12px)] pb-[clamp(6px,0.7vw,12px)] pt-[clamp(4px,0.6vw,8px)] max-[640px]:px-1.5 max-[640px]:pb-1.5 max-[640px]:pt-1">
-          <div className="grid min-w-0 grid-cols-[20%_15%_40%_20%] gap-2 overflow-hidden rounded-lg bg-[rgba(118,169,255,0.1)] px-3 py-1 text-xs text-[#93aed0]">
+        <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-1">
+          <div className="grid min-w-0 shrink-0 grid-cols-[20%_15%_40%_20%] gap-2 overflow-hidden px-3 py-1.5 text-xs text-[#93aed0] border-b border-[rgba(111,170,255,0.1)]">
             <span className="block truncate whitespace-nowrap text-center">展位号</span>
             <span className="block truncate whitespace-nowrap text-center">面积</span>
             <span className="block truncate whitespace-nowrap text-center">最新进程</span>
             <span className="block truncate whitespace-nowrap text-center">展位进度</span>
           </div>
-          <div className="demo-br2-scroll mt-1 min-h-0 flex-1 overflow-hidden rounded-lg">
+          <div className="min-h-0 flex-1 overflow-hidden">
             {isProcessLoading ? (
               <div className="flex h-20 items-center justify-center text-sm text-[#93aed0]">
                 正在加载明细数据...
@@ -206,25 +211,26 @@ export function ConstructLeftSidebar({
                 speed={shouldAutoScroll ? 0.45 : 0}
                 overscan={8}
                 pauseOnHover={false}
-                className="h-full rounded-lg"
+                className="h-full"
                 renderItem={(row, index) => {
                   const meta = getProgressMeta(row.progressStatus);
+                  const rowId = row.boothNumber || row.exNun || '';
+                  const isSelected = selectedId === rowId;
 
                   return (
                     <div
-                      className={`grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 rounded-xl px-3 text-[12px] leading-tight transition-all xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px] ${
-                        index % 2 === 1
-                          ? "bg-[rgba(118,169,255,0.08)]"
-                          : "bg-[rgba(8,23,42,0.45)]"
+                      onClick={() => handleRowClick(rowId)}
+                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px] ${
+                        isSelected ? 'is-selected' : ''
                       }`}
                     >
-                      <div className="flex min-w-0 items-center justify-center whitespace-nowrap text-[#93aed0]">
-                        <span className="min-w-0 truncate text-center font-medium tabular-nums">
+                      <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
+                        <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">
                           {row.boothNumber || "-"}
                         </span>
                       </div>
-                      <div className="flex min-w-0 items-center justify-center text-[#dbeeff]">
-                        <span className="truncate text-center tabular-nums">
+                      <div className="flex min-w-0 items-center justify-center">
+                        <span className="truncate text-center tabular-nums text-[#dbeeff]">
                           {row.area || "-"}
                         </span>
                       </div>

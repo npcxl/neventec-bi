@@ -369,4 +369,54 @@ video {
   transition: width 500ms ease;
 }
 
+/* Progress detail row — default transparent, hover + selected states */
+.progress-detail-row {
+  position: relative;
+  color: rgba(224, 238, 255, 0.88);
+  background: transparent;
+  border-bottom: 1px solid rgba(111, 170, 255, 0.08);
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.progress-detail-row:hover {
+  color: #ffffff;
+  background: rgba(37, 99, 235, 0.10);
+  border-bottom-color: rgba(83, 158, 255, 0.22);
+}
+
+.progress-detail-row:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 2px;
+  border-radius: 1px;
+  background: rgba(83, 158, 255, 0.75);
+}
+
+.progress-detail-row.is-selected {
+  color: #ffffff;
+  background: rgba(37, 99, 235, 0.18);
+  border-bottom-color: rgba(83, 158, 255, 0.32);
+}
+
+.progress-detail-row.is-selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  bottom: 5px;
+  width: 3px;
+  border-radius: 1px;
+  background: #3B82F6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.45);
+}
+
+.progress-detail-row.is-selected:hover {
+  background: rgba(37, 99, 235, 0.22);
+}
+
+
 
