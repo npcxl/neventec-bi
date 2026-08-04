@@ -1,11 +1,15 @@
+export type DashboardOrientation =
+  | "landscape"
+  | "portrait";
+
 
 /**
- * - landscape：横屏布局
- * - portrait：竖屏布局
+ * 仪表盘布局配置
+ * @landscape 横屏(default)
+ * @portrait 竖屏
  */
-export const dashboardLayoutConfig = {
+export const dashboardLayoutConfig: {
+  orientation: DashboardOrientation;
+} = {
   orientation: "landscape",
-} as const;
-
-export type DashboardOrientation =
-  typeof dashboardLayoutConfig.orientation;
+};

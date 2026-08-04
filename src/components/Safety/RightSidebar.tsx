@@ -8,6 +8,7 @@ type SafetyRightSidebarProps = {
   rectificationSituationData?: any;
   hallId?: string;
   loading?: boolean;
+  variant?: "landscape";
 };
 
 type RiskRow = {
@@ -45,6 +46,7 @@ function PanelTitle({ title }: { title: string }) {
 function useChart() {
   const elRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<echarts.EChartsType | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
 
   const setRef = useCallback((node: HTMLDivElement | null) => {
     elRef.current = node;
@@ -61,9 +63,22 @@ function useChart() {
       if (!chart.isDisposed()) chart.resize();
     };
 
+    // ResizeObserver for container size changes (layout switch)
+    if (elRef.current) {
+      const ro = new ResizeObserver(onResize);
+      ro.observe(elRef.current);
+      roRef.current = ro;
+    }
+
+    // Also keep window.resize for font scaling etc.
     window.addEventListener("resize", onResize);
+
     return () => {
       window.removeEventListener("resize", onResize);
+      if (roRef.current) {
+        roRef.current.disconnect();
+        roRef.current = null;
+      }
       chartRef.current = null;
       if (!chart.isDisposed()) chart.dispose();
     };
@@ -77,7 +92,9 @@ export function SafetyRightSidebar({
   violationRecordData,
   rectificationSituationData,
   loading = false,
+  variant,
 }: SafetyRightSidebarProps) {
+  const isLandscape = variant === "landscape";
   const riskRows: RiskRow[] = Array.isArray(violationTypeData)
     ? violationTypeData
     : (violationTypeData?.data ??
@@ -344,6 +361,46 @@ export function SafetyRightSidebar({
     });
   }, [statusMemoKey]);
 
+  const riskSection = (
+    <section
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      onMouseEnter={() => setIsRiskPaused(true)}
+      onMouseLeave={() => setIsRiskPaused(false)}
+    >
+      <PanelTitle title="违规风险等级" />
+      <div className="min-h-0 flex-1 p-2.5">
+        {loading ? (
+          <div className="flex h-full items-center justify-center rounded-xl border border-white/10 ">
+            <Spin size="large" tip="正在加载风险数据..." />
+          </div>
+        ) : (
+          <div
+            ref={riskRef}
+            className="h-full w-full rounded-xl border border-white/10 p-2"
+          />
+        )}
+      </div>
+    </section>
+  );
+
+  const typeSection = (
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <PanelTitle title="违规类型统计" />
+      <div className="min-h-0 flex-1 p-2.5">
+        {loading ? (
+          <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]">
+            <Spin size="large" tip="正在加载类型数据..." />
+          </div>
+        ) : (
+          <div
+            ref={typeRef}
+            className="h-full w-full rounded-xl border border-white/10 bg-[rgba(8,23,42,0.68)] p-2"
+          />
+        )}
+      </div>
+    </section>
+  );
+
   return (
     <aside className="relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
       {loading && (
@@ -358,52 +415,22 @@ export function SafetyRightSidebar({
           </div>
         </div>
       )}
-      <section
-        className="flex min-h-0 flex-[1] flex-col overflow-hidden"
-        onMouseEnter={() => setIsRiskPaused(true)}
-        onMouseLeave={() => setIsRiskPaused(false)}
-      >
-        <PanelTitle title="违规风险等级" />
-        <div className="min-h-0 flex-1 p-2.5">
-          {loading ? (
-            <div className="flex h-full items-center justify-center rounded-xl border border-white/10 ">
-              <Spin size="large" tip="正在加载风险数据..." />
-            </div>
-          ) : (
-            <div
-              ref={riskRef}
-              className="h-full w-full rounded-xl border border-white/10  p-2"
-            />
-          )}
+      {isLandscape ? (
+        <div className="grid min-h-full min-w-0 grid-cols-2 gap-3">
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {riskSection}
+          </div>
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {typeSection}
+          </div>
         </div>
-      </section>
-      <section className="mt-2 flex min-h-0 flex-[1] flex-col overflow-hidden   ">
-        <PanelTitle title="违规类型统计" />
-        <div className="min-h-0 flex-1 p-2.5">
-          {loading ? (
-            <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]">
-              <Spin size="large" tip="正在加载类型数据..." />
-            </div>
-          ) : (
-            <div
-              ref={typeRef}
-              className="h-full w-full rounded-xl border border-white/10 bg-[rgba(8,23,42,0.68)] p-2"
-            />
-          )}
-        </div>
-      </section>
-      {/* <section className="mt-2 flex min-h-0 flex-[1] flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
-        <PanelTitle title="违规整改情况" />
-        <div className="min-h-0 flex-1 p-2.5">
-          {loading ? (
-            <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]">
-              <Spin size="large" tip="正在加载整改数据..." />
-            </div>
-          ) : (
-            <div ref={rectRef} className="h-full w-full rounded-xl border border-white/10 bg-[rgba(8,23,42,0.68)] p-2" />
-          )}
-        </div>
-      </section> */}
+      ) : (
+        <>
+          {riskSection}
+          <div className="mt-2" />
+          {typeSection}
+        </>
+      )}
     </aside>
   );
 }

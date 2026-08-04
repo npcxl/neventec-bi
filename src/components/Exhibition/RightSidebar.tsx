@@ -253,18 +253,18 @@ export function ExhibitionRightSidebar({
   return (
     <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
       {isLandscape ? (
-        /* LANDSCAPE: expense + unreported side-by-side, orders below */
-        <>
-          <div className="flex min-h-0 flex-[0.55] gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
-            <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-              {expenseSection}
-            </div>
-            <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
-              {unreportedSection}
-            </div>
+        /* LANDSCAPE: all three sections in one row */
+        <div className="grid min-h-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {expenseSection}
           </div>
-          {ordersSection}
-        </>
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {unreportedSection}
+          </div>
+          <div className="min-h-0 min-w-0 overflow-hidden">
+            {ordersSection}
+          </div>
+        </div>
       ) : (
         /* PORTRAIT: original vertical stacking */
         <>

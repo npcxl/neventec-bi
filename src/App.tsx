@@ -1675,8 +1675,8 @@ export default function App() {
               <CurrentTimeButton />
               {isLandscape ? (
                 /* ===== LANDSCAPE: 2-column layout =====
-                   Left: original left sidebar (same width as portrait)
-                   Right: [top=center map] / [bottom=right sidebar] */
+                   Left: left sidebar (same width as portrait)
+                   Right: [top=center map (62%)] / [bottom=right sidebar (38%, scrollable)] */
                 <main
                   className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,1fr)] lg:grid-cols-[minmax(340px,26%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,1fr)]`}
                 >
@@ -1707,7 +1707,7 @@ export default function App() {
                             galleryRows={galleryRows}
                           />
                         </div>
-                        <div className="flex min-h-0 flex-[0.38] min-w-0">
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
                           <ExhibitionRightSidebar
                             boothRows={boothRows}
                             orderCollect={orderCollectData}
@@ -1723,11 +1723,8 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <Flex
-                        vertical
-                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                      >
-                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                      <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex min-h-0 flex-[0.62] min-w-0">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1749,27 +1746,18 @@ export default function App() {
                             compact={hallMode === "ConstructOverview"}
                           />
                         </div>
-                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                            <ConstructCarousel
-                              pictures={constructCarouselPicturesMemo}
-                              loading={constructCarouselLoading}
-                            />
-                          </div>
-                        </section>
-                      </Flex>
-                      <ConstructRightSidebar {...constructRightSidebarProps} />
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
+                          <ConstructRightSidebar {...constructRightSidebarProps} variant="landscape" />
+                        </div>
+                      </div>
                     </>
                   )}
 
                   {hallMode === "SafetyOverview" && (
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                      <Flex
-                        vertical
-                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                      >
-                        <div className="flex min-h-0 flex-[0.66] min-w-0">
+                      <div className="flex min-h-0 min-w-0 flex-col gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex min-h-0 flex-[0.62] min-w-0">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1782,16 +1770,10 @@ export default function App() {
                             compact={hallMode === "SafetyOverview"}
                           />
                         </div>
-                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                            <SafetyCarousel
-                              pictures={safetyCarouselPicturesMemo}
-                              loading={safetyCarouselLoading}
-                            />
-                          </div>
-                        </section>
-                      </Flex>
-                      <SafetyRightSidebar {...safetyRightSidebarProps} />
+                        <div className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-dark flex-[0.38]">
+                          <SafetyRightSidebar {...safetyRightSidebarProps} variant="landscape" />
+                        </div>
+                      </div>
                     </>
                   )}
                 </main>

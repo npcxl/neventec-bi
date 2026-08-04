@@ -268,6 +268,7 @@ type ConstructRightSidebarProps = {
   materialLoading?: boolean;
   boothProgressLoading?: boolean;
   processLoading?: boolean;
+  variant?: "landscape";
 };
 
 type MaterialRow = {
@@ -437,8 +438,22 @@ function ProcessSection({ data, hallId = 'all', loading = false }: { data?: any;
   );
 }
 
-export function ConstructRightSidebar({ boothProgressData, constructProcessData, exhibitionProcessData, constructMaterialData, hallId = 'all', loading = false, materialLoading = false, boothProgressLoading = false, processLoading = false }: ConstructRightSidebarProps) {
-  return (
+export function ConstructRightSidebar({ boothProgressData, constructProcessData, exhibitionProcessData, constructMaterialData, hallId = 'all', loading = false, materialLoading = false, boothProgressLoading = false, processLoading = false, variant }: ConstructRightSidebarProps) {
+  const isLandscape = variant === "landscape";
+
+  return isLandscape ? (
+    <div className="grid min-h-full min-w-0 grid-cols-3 gap-3">
+      <div className="min-h-0 min-w-0 h-full overflow-hidden">
+        <MaterialSection data={constructMaterialData} hallId={hallId} loading={loading || materialLoading} />
+      </div>
+      <div className="min-h-0 min-w-0 h-full overflow-hidden">
+        <BoothProgressSection data={boothProgressData} hallId={hallId} loading={loading || boothProgressLoading} />
+      </div>
+      <div className="min-h-0 min-w-0 h-full overflow-hidden">
+        <ProcessSection data={exhibitionProcessData} hallId={hallId} loading={loading || processLoading} />
+      </div>
+    </div>
+  ) : (
     <aside className="flex h-full min-h-0 flex-col gap-3">
       <MaterialSection data={constructMaterialData} hallId={hallId} loading={loading || materialLoading} />
       <BoothProgressSection data={boothProgressData} hallId={hallId} loading={loading || boothProgressLoading} />
