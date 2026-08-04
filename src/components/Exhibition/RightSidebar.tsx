@@ -80,9 +80,11 @@ export function ExhibitionRightSidebar({
   const orderItems = useMemo(() => normalizeOrderCollect(orderCollect), [orderCollect]);
   const displayRows = payMode === "paid" ? paidRows : unpaidRows;
 
+  const landscapeSectionClass = "flex min-h-0 min-w-0 flex-col overflow-hidden";
+
   // Shared sections extracted so they render once regardless of layout
   const expenseSection = (
-    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
+    <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
       <PanelTitle title="特装费用缴纳" />
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         {loading ? (
@@ -164,7 +166,7 @@ export function ExhibitionRightSidebar({
   );
 
   const unreportedSection = (
-    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
+    <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
       <PanelTitle title="未报到展位汇总" />
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         <div className="flex items-center justify-between">
@@ -214,7 +216,7 @@ export function ExhibitionRightSidebar({
   );
 
   const ordersSection = (
-    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-[0.38] flex-col overflow-hidden"}>
+    <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-[0.38] flex-col overflow-hidden"}>
       <PanelTitle title="水电气网络申报订单数量" />
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-2">
         {(() => {
@@ -251,20 +253,12 @@ export function ExhibitionRightSidebar({
   );
 
   return isLandscape ? (
-    /* LANDSCAPE: w-full, min-height so App.tsx bottom scroll works.
-       Do NOT use h-full here — that locks height and prevents overflow. */
-    <aside className="w-full min-h-[400px] min-w-0">
-      <div className="grid min-h-[400px] min-w-0 grid-cols-[repeat(3,minmax(0,1fr))] gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
-        <div className="flex min-h-0 min-w-0">
-          {expenseSection}
-        </div>
-        <div className="flex min-h-0 min-w-0">
-          {unreportedSection}
-        </div>
-        <div className="flex min-h-0 min-w-0">
-          {ordersSection}
-        </div>
-      </div>
+    /* LANDSCAPE: aside IS the 3-column grid. Sections are direct children.
+       min-height so App.tsx bottom row's overflow-y-auto actually scrolls. */
+    <aside className="grid min-h-[420px] w-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
+      {expenseSection}
+      {unreportedSection}
+      {ordersSection}
     </aside>
   ) : (
     /* PORTRAIT: original vertical stacking */
