@@ -2,7 +2,6 @@ import {
   ReactNode,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   useCallback,
@@ -19,6 +18,9 @@ type SeamlessVirtualListProps<T> = {
   renderItem: (item: T, index: number) => ReactNode;
 };
 
+/** Throttle setState to ~30fps (33ms) instead of every rAF (60fps) */
+const SETSTATE_INTERVAL = 33;
+
 export function SeamlessVirtualList<T>({
   data,
   itemHeight,
@@ -31,44 +33,71 @@ export function SeamlessVirtualList<T>({
 }: SeamlessVirtualListProps<T>) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const offsetRef = useRef(0);
-  const pausedRef = useRef(false);
-  const lastTimestampRef = useRef<number | null>(null);
-  const prevStartIndexRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const roRef = useRef<ResizeObserver | null>(null);
+
+  // --- Refs that survive re-renders without restarting rAF ---
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const renderItemRef = useRef(renderItem);
+  renderItemRef.current = renderItem;
+  const itemHeightRef = useRef(itemHeight);
+  itemHeightRef.current = itemHeight;
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
+
+  // --- Scroll state (ref-only, no per-frame setState) ---
+  const localOffsetRef = useRef(0); // 0 <= localOffset < itemHeight
+  const windowStartRef = useRef(0);
+  const lastTimeRef = useRef<number | null>(null);
+  const lastSetStateTimeRef = useRef(0);
+
+  // --- Split pause states ---
+  const hoverPausedRef = useRef(false);
+  const visibilityPausedRef = useRef(false);
+  const reducedMotionRef = useRef(false);
 
   const [containerHeight, setContainerHeight] = useState(0);
-  const [startIndex, setStartIndex] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  });
+  const [windowStart, setWindowStart] = useState(0);
 
-  const singleHeight = data.length * itemHeight;
+  const dataLen = data.length;
   const visibleCount = containerHeight > 0 ? Math.ceil(containerHeight / itemHeight) : 0;
-  const needsScroll = data.length > 0 && containerHeight > 0 && singleHeight > containerHeight;
+  const singleHeight = dataLen * itemHeight;
+  const needsScroll = dataLen > 0 && containerHeight > 0 && singleHeight > containerHeight;
 
-  // Reduced motion detection via MediaQueryList
+  // renderCount: visible + overscan above + overscan below + 2 extra for seamless wrap
+  const renderCount = needsScroll
+    ? Math.min(dataLen, visibleCount + overscan * 2 + 2)
+    : Math.min(dataLen, visibleCount + overscan * 2);
+
+  // --- Reduced motion detection ---
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mq.matches);
+    reducedMotionRef.current = mq.matches;
     const handler = (e: MediaQueryListEvent) => {
-      setPrefersReducedMotion(e.matches);
+      const prev = reducedMotionRef.current;
+      reducedMotionRef.current = e.matches;
+      if (prev && !e.matches) {
+        lastTimeRef.current = null;
+      }
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  // Visibility detection
+  // --- Visibility detection (separate from hover) ---
   useEffect(() => {
     const handler = () => {
-      pausedRef.current = document.hidden;
+      visibilityPausedRef.current = document.visibilityState !== "visible";
+      if (document.visibilityState === "visible") {
+        lastTimeRef.current = null;
+      }
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
   }, []);
 
-  // Measure container
+  // --- Measure container ---
   const measureHeight = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -78,7 +107,7 @@ export function SeamlessVirtualList<T>({
 
   useLayoutEffect(() => {
     measureHeight();
-  }, [data.length, itemHeight, height, measureHeight]);
+  }, [dataLen, itemHeight, height, measureHeight]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -86,17 +115,24 @@ export function SeamlessVirtualList<T>({
     measureHeight();
     const ro = new ResizeObserver(() => measureHeight());
     ro.observe(el);
-    return () => ro.disconnect();
+    roRef.current = ro;
+    return () => {
+      ro.disconnect();
+      roRef.current = null;
+    };
   }, [measureHeight]);
 
-  // rAF scroll loop - DOM only, no setState in rAF
+  // --- Pause helper (reads all refs) ---
+  const isPaused = () =>
+    hoverPausedRef.current || visibilityPausedRef.current || reducedMotionRef.current;
+
+  // --- rAF scroll loop ---
   useEffect(() => {
-    if (!data.length || !containerHeight) return;
-    if (!needsScroll || prefersReducedMotion) {
-      // data fits or reduced motion: reset to top
-      offsetRef.current = 0;
-      prevStartIndexRef.current = 0;
-      setStartIndex(0);
+    if (!needsScroll || reducedMotionRef.current) {
+      localOffsetRef.current = 0;
+      windowStartRef.current = 0;
+      setWindowStart(0);
+      lastTimeRef.current = null;
       const track = trackRef.current;
       if (track) track.style.transform = "translate3d(0, 0, 0)";
       return;
@@ -107,77 +143,80 @@ export function SeamlessVirtualList<T>({
     const tick = (timestamp: number) => {
       if (cancelled) return;
 
-      if (lastTimestampRef.current === null) {
-        lastTimestampRef.current = timestamp;
+      if (lastTimeRef.current === null) {
+        lastTimeRef.current = timestamp;
       }
-      const dt = timestamp - lastTimestampRef.current;
-      lastTimestampRef.current = timestamp;
+      const dt = timestamp - lastTimeRef.current;
+      lastTimeRef.current = timestamp;
 
-      if (!pausedRef.current) {
-        offsetRef.current += speed * (dt / 16.67);
-        if (offsetRef.current >= singleHeight) {
-          offsetRef.current -= singleHeight;
+      if (!isPaused()) {
+        const curItemHeight = itemHeightRef.current;
+        const curSpeed = speedRef.current;
+        const curDataLen = dataRef.current.length;
+
+        localOffsetRef.current += curSpeed * (dt / 16.67);
+
+        // Handle crossing one or more rows (clamp large dt safely)
+        let crossed = 0;
+        while (localOffsetRef.current >= curItemHeight) {
+          localOffsetRef.current -= curItemHeight;
+          crossed++;
+        }
+        // Safety: prevent runaway offset from extreme dt
+        if (localOffsetRef.current >= curItemHeight) {
+          crossed += Math.floor(localOffsetRef.current / curItemHeight);
+          localOffsetRef.current = localOffsetRef.current % curItemHeight;
         }
 
-        // Update DOM transform directly (no setState in rAF)
+        if (crossed > 0 && curDataLen > 0) {
+          windowStartRef.current = (windowStartRef.current + crossed) % curDataLen;
+          // Throttle setState to ~30fps
+          if (timestamp - lastSetStateTimeRef.current >= SETSTATE_INTERVAL) {
+            lastSetStateTimeRef.current = timestamp;
+            setWindowStart(windowStartRef.current);
+          }
+        }
+
+        // Direct DOM transform (no setState in rAF)
         const track = trackRef.current;
         if (track) {
-          const windowStart = prevStartIndexRef.current;
-          track.style.transform = `translate3d(0, ${windowStart * itemHeight - offsetRef.current}px, 0)`;
-        }
-
-        // Only update startIndex when crossing a row boundary
-        const newStartIndex = Math.floor(offsetRef.current / itemHeight);
-        if (newStartIndex !== prevStartIndexRef.current) {
-          prevStartIndexRef.current = newStartIndex;
-          setStartIndex(newStartIndex);
+          track.style.transform = `translate3d(0, ${-localOffsetRef.current}px, 0)`;
         }
       }
 
-      frameRef.current = requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame(tick);
     };
 
-    // Reset state on data/container change
-    offsetRef.current = 0;
-    lastTimestampRef.current = null;
-    prevStartIndexRef.current = 0;
-    setStartIndex(0);
-    frameRef.current = requestAnimationFrame(tick);
+    lastTimeRef.current = null;
+    lastSetStateTimeRef.current = 0;
+    rafRef.current = requestAnimationFrame(tick);
 
     return () => {
       cancelled = true;
-      if (frameRef.current) {
-        cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
-  }, [data.length, singleHeight, containerHeight, speed, itemHeight, needsScroll, prefersReducedMotion]);
+  }, [needsScroll]);
 
-  const repeatCount = useMemo(() => {
-    if (!data.length) return 0;
-    if (!containerHeight) return 3;
-    const needCount = data.length + visibleCount + overscan * 2 + 2;
-    return Math.max(3, Math.ceil(needCount / data.length));
-  }, [data.length, containerHeight, itemHeight, overscan, visibleCount]);
+  // --- Build visible items via modulo (no loopData / repeatCount) ---
+  const visibleItems: Array<{ item: T; realIndex: number; slotIndex: number }> = [];
+  if (dataLen > 0 && renderCount > 0) {
+    for (let i = 0; i < renderCount; i++) {
+      const realIndex = (windowStart + i) % dataLen;
+      visibleItems.push({
+        item: data[realIndex],
+        realIndex,
+        slotIndex: i,
+      });
+    }
+  }
 
-  const loopData = useMemo(() => {
-    if (!data.length || !repeatCount) return [];
-    return Array.from({ length: repeatCount }).flatMap(() => data);
-  }, [data, repeatCount]);
+  // Initial transform (before rAF first tick)
+  const initialTranslateY = needsScroll ? -localOffsetRef.current : 0;
 
-  const endIndex = Math.min(
-    loopData.length,
-    startIndex + visibleCount + overscan * 2,
-  );
-
-  const visibleData = loopData.slice(startIndex, endIndex);
-
-  // Initial render position (before rAF kicks in)
-  const initialTranslateY = needsScroll
-    ? startIndex * itemHeight - offsetRef.current
-    : 0;
-
-  if (!data.length) {
+  if (!dataLen) {
     return (
       <div
         className={className}
@@ -192,27 +231,24 @@ export function SeamlessVirtualList<T>({
       className={className}
       style={{ height, overflow: "hidden", position: "relative" }}
       onMouseEnter={() => {
-        if (pauseOnHover) pausedRef.current = true;
+        if (pauseOnHover) hoverPausedRef.current = true;
       }}
       onMouseLeave={() => {
-        if (pauseOnHover) pausedRef.current = false;
+        if (pauseOnHover) hoverPausedRef.current = false;
       }}
     >
       <div
         ref={trackRef}
         style={{
           transform: `translate3d(0, ${initialTranslateY}px, 0)`,
+          willChange: "transform",
         }}
       >
-        {visibleData.map((item, i) => {
-          const realIndex = startIndex + i;
-          const originIndex = realIndex % data.length;
-          return (
-            <div key={realIndex} style={{ height: itemHeight }}>
-              {renderItem(item, originIndex)}
-            </div>
-          );
-        })}
+        {visibleItems.map(({ item, realIndex, slotIndex }) => (
+          <div key={`${slotIndex}-${realIndex}`} style={{ height: itemHeight }}>
+            {renderItem(item, realIndex)}
+          </div>
+        ))}
       </div>
     </div>
   );
