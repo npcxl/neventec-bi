@@ -140,8 +140,8 @@ export function ExhibitionRightSidebar({
               </div>
 
               {/* 列表 */}
-              <div className="mt-1 min-h-0 flex-1 overflow-hidden rounded-md bg-black/10">
-                <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-4 px-4 py-2 text-xs text-[rgba(255,255,255,0.8)]">
+              <div className="mt-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-md bg-black/10">
+                <div className="grid flex-none grid-cols-[100px_minmax(0,1fr)] gap-4 px-4 py-2 text-xs text-[rgba(255,255,255,0.8)]">
                   <span>展位号</span>
                   <span>参展商</span>
                 </div>
@@ -195,8 +195,8 @@ export function ExhibitionRightSidebar({
           </div>
 
           {/* 列表 */}
-          <div className="mt-2 min-h-0 flex-1 overflow-hidden rounded-md bg-black/10">
-            <div className="grid grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-1.5 text-xs text-[rgba(255,255,255,0.8)]">
+          <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-md bg-black/10">
+            <div className="grid flex-none grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-1.5 text-xs text-[rgba(255,255,255,0.8)]">
               <span>序号</span>
               <span>展位号</span>
               <span>参展商</span>
