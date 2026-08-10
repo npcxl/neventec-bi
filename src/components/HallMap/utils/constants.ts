@@ -15,7 +15,7 @@ export const BOOTH_DEFAULT_OPACITY = 0.45;
 export const BOOTH_HOVER_OPACITY = 0.65;
 
 /** 最小缩放 */
-export const MIN_ZOOM = 0.5;
+export const MIN_ZOOM = 0.2;
 
 /** 最大缩放 */
 export const MAX_ZOOM = 3;

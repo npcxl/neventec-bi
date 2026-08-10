@@ -281,20 +281,23 @@ export default function CenterMap({
   const [constructLoading, setConstructLoading] = useState(false);
 
   // HallData: 根据 mode 映射到对应的 mock 数据
+  // 基于 hallName 模糊匹配，而非数组索引
   const hallData = useMemo<HallData | null>(() => {
     if (mode === "all") return null;
     const halls = initData?.halls ?? [];
-    // 第一个展馆对应 1号馆 = 北京方案展
-    // 第二个展馆对应 2号馆 = 首钢会展中心4号馆1层
-    const hallIndex = halls.findIndex((h) => h.hallId === mode);
-    if (hallIndex === 0) {
-      return transformMockToHallData(mockBeijing as any, halls[0]?.hallName || "1号馆");
+    const currentHall = halls.find((h) => h.hallId === mode);
+    const hallName = currentHall?.hallName || "";
+
+    // 匹配"方案展"/"1号馆" → 北京方案展
+    if (hallName.includes("方案展") || hallName.includes("1号")) {
+      return transformMockToHallData(mockBeijing as any, hallName);
     }
-    if (hallIndex === 1) {
-      return transformMockToHallData(mockShougang as any, halls[1]?.hallName || "2号馆");
+    // 匹配"4号馆"/"首钢"/"2号馆" → 首钢会展中心4号馆1层
+    if (hallName.includes("4号馆") || hallName.includes("首钢") || hallName.includes("2号")) {
+      return transformMockToHallData(mockShougang as any, hallName);
     }
-    // 其他展馆暂时返回 null
-    return null;
+    // 其他展馆 fallback: 使用首钢数据兜底
+    return transformMockToHallData(mockShougang as any, hallName || "展馆");
   }, [mode, initData?.halls]);
   const safetyInfoList = useMemo(
     () => safetyDetail?.safetyInfoList ?? [],
