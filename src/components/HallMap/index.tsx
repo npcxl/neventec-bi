@@ -207,6 +207,8 @@ export default function HallMap({ hallData, onBoothClick }: HallMapProps) {
     const canvas = canvasRef.current;
     if (!container || !canvas) return;
 
+    let initial = true;
+
     const sync = () => {
       const dpr = window.devicePixelRatio || 1;
       const w = container.clientWidth;
@@ -217,7 +219,11 @@ export default function HallMap({ hallData, onBoothClick }: HallMapProps) {
       canvas.style.height = `${h}px`;
       const ctx = canvas.getContext('2d');
       if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      fitToCenter();
+      if (initial) {
+        // 首次居中，后续 resize 不再重置 camera
+        fitToCenter();
+        initial = false;
+      }
       draw();
     };
 
@@ -300,41 +306,36 @@ export default function HallMap({ hallData, onBoothClick }: HallMapProps) {
     [screenToWorld, hitTest],
   );
 
-  // ========== 鼠标滚轮缩放 ==========
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+  // ========== 鼠标滚轮缩放（原生事件，绕过 React passive wheel） ==========
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const canvas = canvasRef.current;
-      if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
 
-      // 鼠标在 canvas 上的屏幕坐标
       const mouseScreenX = e.clientX - rect.left;
       const mouseScreenY = e.clientY - rect.top;
 
       const { scale, offsetX, offsetY } = cameraRef.current;
 
-      // 鼠标指向的世界坐标
       const worldX = (mouseScreenX - offsetX) / scale;
       const worldY = (mouseScreenY - offsetY) / scale;
 
-      // 计算新的缩放
       const zoomFactor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
       const newScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, scale * zoomFactor));
 
-      // 保持鼠标指向的世界坐标在屏幕上位置不变
       const newOffsetX = mouseScreenX - worldX * newScale;
       const newOffsetY = mouseScreenY - worldY * newScale;
 
-      cameraRef.current = {
-        scale: newScale,
-        offsetX: newOffsetX,
-        offsetY: newOffsetY,
-      };
+      cameraRef.current = { scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY };
       draw();
-    },
-    [draw],
-  );
+    };
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas.removeEventListener('wheel', handleWheel);
+  }, [draw]);
 
   // ========== 按钮控制 ==========
   const handleZoomIn = useCallback(() => {
@@ -404,7 +405,6 @@ export default function HallMap({ hallData, onBoothClick }: HallMapProps) {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onWheel={handleWheel}
         onContextMenu={handleContextMenu}
       />
 
