@@ -27,7 +27,7 @@ function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12 px-3">
       <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-1">{title}</span>
+        <span className="pl-10 pb-3">{title}</span>
       </div>
     </div>
   );
@@ -85,7 +85,7 @@ export function ExhibitionRightSidebar({
   // Shared sections extracted so they render once regardless of layout
   const expenseSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <PanelTitle title="特装费用缴纳" />
+      <div className="shrink-0 w-2/3"><PanelTitle title="特装费用缴纳" /></div>
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         {loading ? (
           <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl">
@@ -93,36 +93,21 @@ export function ExhibitionRightSidebar({
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-4">
-              <div className="relative flex h-[120px] w-[120px] shrink-0 items-center justify-center">
-                <PieRing
-                  percent={parseFloat(paidRate)}
-                  size={120}
-                  color1="#13B8D6"
-                  color2="#2563EB"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span style={{ color: "rgba(255,255,255,0.8)", fontFamily: '"Source Han Sans CN"', fontSize: 12, fontWeight: 400, lineHeight: "20px" }}>缴费完成率</span>
-                  <span style={{ color: "#FFF", fontFamily: '"Source Han Sans CN"', fontSize: 20, fontWeight: 500, lineHeight: "28px" }}>{paidRate}%</span>
-                </div>
+            {/* 已缴费 / 未缴费 汇总 */}
+            <div className="flex items-center justify-between py-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-[rgba(255,255,255,0.8)]">已缴费</span>
+                <span className="text-sm font-medium text-[#63F222]">{paidCount}</span>
               </div>
-              <div className="flex flex-1 flex-col gap-2">
-                <div className="text-xl font-bold text-white">
-                  {paidCount}<span className="text-sm font-normal text-white/80">/{totalBooth}</span>
-                </div>
-                <div className="flex items-center gap-10">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm text-[rgba(255,255,255,0.8)]">已缴费</span>
-                    <span className="text-sm font-medium text-[#63F222]">{paidCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm text-[rgba(255,255,255,0.8)]">未缴费</span>
-                    <span className="text-sm font-medium text-[#F5222D]">{unpaidCount}</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm text-[rgba(255,255,255,0.8)]">未缴费</span>
+                <span className="text-sm font-medium text-[#F5222D]">{unpaidCount}</span>
+              </div>
+              <div className="text-sm text-[rgba(255,255,255,0.6)]">
+                共 {totalBooth} 个
               </div>
             </div>
-            <div className="mt-2 flex border-b border-[rgba(255,255,255,0.1)]">
+            <div className="mt-1 flex border-b border-[rgba(255,255,255,0.1)]">
               <button
                 className={`flex-1 pb-2 text-center text-sm transition-colors ${payMode === "paid" ? "text-[#93C5FD] border-b-2 border-[#93C5FD]" : "text-[#738AA9] border-b-2 border-transparent"}`}
                 onClick={() => setPayMode("paid")}
@@ -167,7 +152,7 @@ export function ExhibitionRightSidebar({
 
   const unreportedSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <PanelTitle title="未报到展位汇总" />
+      <div className="shrink-0 w-2/3"><PanelTitle title="未报到展位汇总" /></div>
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -217,7 +202,7 @@ export function ExhibitionRightSidebar({
 
   const ordersSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-[0.38] flex-col overflow-hidden"}>
-      <PanelTitle title="水电气网络申报订单数量" />
+      <div className="shrink-0 w-2/3"><PanelTitle title="水电气网络申报" /></div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-2">
         {(() => {
           const maxNum = Math.max(...orderItems.map((i) => i.num), 1);
@@ -253,8 +238,7 @@ export function ExhibitionRightSidebar({
   );
 
   return isLandscape ? (
-    /* LANDSCAPE: aside IS the 3-column grid, sections are direct children.
-       h-full inherits from App.tsx bottom row's minmax(0,1fr). */
+    /* LANDSCAPE: 3-column grid */
     <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-3 gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3 overflow-hidden">
       {expenseSection}
       {unreportedSection}
@@ -278,7 +262,7 @@ export function ExhibitionRightSidebar({
 function PieRing({
   percent,
   size = 80,
-  color1 = "#13B8D6",
+  color1 = "#13B8D6", 
   color2 = "#2563EB",
 }: {
   percent: number;

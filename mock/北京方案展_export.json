@@ -1,0 +1,395 @@
+{
+  "image": "北京方案展.png",
+  "image_size": {
+    "width": 1734,
+    "height": 3618
+  },
+  "booth_count": 24,
+  "with_booth_no": 24,
+  "booths": [
+    {
+      "booth_no": "S03T101",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        884,
+        518,
+        1178
+      ],
+      "center": [
+        412,
+        1031
+      ],
+      "width": 212,
+      "height": 294
+    },
+    {
+      "booth_no": "S03T301",
+      "exhibitor": "",
+      "bbox": [
+        594,
+        884,
+        825,
+        1178
+      ],
+      "center": [
+        710,
+        1031
+      ],
+      "width": 231,
+      "height": 294
+    },
+    {
+      "booth_no": "S03T501",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        884,
+        1192,
+        1178
+      ],
+      "center": [
+        1076,
+        1031
+      ],
+      "width": 233,
+      "height": 294
+    },
+    {
+      "booth_no": "S03T701",
+      "exhibitor": "",
+      "bbox": [
+        1274,
+        884,
+        1469,
+        1178
+      ],
+      "center": [
+        1372,
+        1031
+      ],
+      "width": 195,
+      "height": 294
+    },
+    {
+      "booth_no": "S03T103",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        1264,
+        518,
+        1561
+      ],
+      "center": [
+        412,
+        1413
+      ],
+      "width": 212,
+      "height": 297
+    },
+    {
+      "booth_no": "S03T303",
+      "exhibitor": "",
+      "bbox": [
+        594,
+        1264,
+        825,
+        1561
+      ],
+      "center": [
+        710,
+        1413
+      ],
+      "width": 231,
+      "height": 297
+    },
+    {
+      "booth_no": "S03T503",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        1264,
+        1192,
+        1561
+      ],
+      "center": [
+        1076,
+        1413
+      ],
+      "width": 233,
+      "height": 297
+    },
+    {
+      "booth_no": "S03T703",
+      "exhibitor": "",
+      "bbox": [
+        1274,
+        1264,
+        1469,
+        1561
+      ],
+      "center": [
+        1372,
+        1413
+      ],
+      "width": 195,
+      "height": 297
+    },
+    {
+      "booth_no": "S03T705",
+      "exhibitor": "",
+      "bbox": [
+        1274,
+        1689,
+        1469,
+        2318
+      ],
+      "center": [
+        1372,
+        2004
+      ],
+      "width": 195,
+      "height": 629
+    },
+    {
+      "booth_no": "S03T305",
+      "exhibitor": "",
+      "bbox": [
+        594,
+        1689,
+        825,
+        2005
+      ],
+      "center": [
+        710,
+        1847
+      ],
+      "width": 231,
+      "height": 316
+    },
+    {
+      "booth_no": "S03T307",
+      "exhibitor": "",
+      "bbox": [
+        594,
+        2005,
+        825,
+        2318
+      ],
+      "center": [
+        710,
+        2162
+      ],
+      "width": 231,
+      "height": 313
+    },
+    {
+      "booth_no": "S03T505",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        1689,
+        1192,
+        2005
+      ],
+      "center": [
+        1076,
+        1847
+      ],
+      "width": 233,
+      "height": 316
+    },
+    {
+      "booth_no": "S03T507",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        2005,
+        1192,
+        2318
+      ],
+      "center": [
+        1076,
+        2162
+      ],
+      "width": 233,
+      "height": 313
+    },
+    {
+      "booth_no": "S03T111",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        2830,
+        825,
+        3128
+      ],
+      "center": [
+        566,
+        2979
+      ],
+      "width": 519,
+      "height": 298
+    },
+    {
+      "booth_no": "S03T511",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        2830,
+        1303,
+        3128
+      ],
+      "center": [
+        1131,
+        2979
+      ],
+      "width": 344,
+      "height": 298
+    },
+    {
+      "booth_no": "S03T711",
+      "exhibitor": "",
+      "bbox": [
+        1303,
+        2830,
+        1469,
+        3128
+      ],
+      "center": [
+        1386,
+        2979
+      ],
+      "width": 166,
+      "height": 298
+    },
+    {
+      "booth_no": "S03T105",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        1689,
+        497,
+        2193
+      ],
+      "center": [
+        402,
+        1941
+      ],
+      "width": 191,
+      "height": 504
+    },
+    {
+      "booth_no": "S03T107",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        2193,
+        497,
+        2319
+      ],
+      "center": [
+        402,
+        2256
+      ],
+      "width": 191,
+      "height": 126
+    },
+    {
+      "booth_no": "S03T511",
+      "exhibitor": "",
+      "bbox": [
+        959,
+        2453,
+        1236,
+        2704
+      ],
+      "center": [
+        1098,
+        2579
+      ],
+      "width": 277,
+      "height": 251
+    },
+    {
+      "booth_no": "S03T711",
+      "exhibitor": "",
+      "bbox": [
+        1236,
+        2453,
+        1469,
+        2704
+      ],
+      "center": [
+        1353,
+        2579
+      ],
+      "width": 233,
+      "height": 251
+    },
+    {
+      "booth_no": "S03T109",
+      "exhibitor": "",
+      "bbox": [
+        306,
+        2453,
+        522,
+        2704
+      ],
+      "center": [
+        414,
+        2579
+      ],
+      "width": 216,
+      "height": 251
+    },
+    {
+      "booth_no": "S03T309",
+      "exhibitor": "",
+      "bbox": [
+        597,
+        2453,
+        700,
+        2704
+      ],
+      "center": [
+        649,
+        2579
+      ],
+      "width": 103,
+      "height": 251
+    },
+    {
+      "booth_no": "S03T409",
+      "exhibitor": "",
+      "bbox": [
+        700,
+        2453,
+        825,
+        2576
+      ],
+      "center": [
+        763,
+        2515
+      ],
+      "width": 125,
+      "height": 123
+    },
+    {
+      "booth_no": "S03T410",
+      "exhibitor": "",
+      "bbox": [
+        700,
+        2576,
+        825,
+        2704
+      ],
+      "center": [
+        763,
+        2640
+      ],
+      "width": 125,
+      "height": 128
+    }
+  ]
+}

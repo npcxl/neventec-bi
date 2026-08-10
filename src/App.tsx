@@ -1115,18 +1115,26 @@ export default function App() {
     safetyRows,
     safetyCollect: safetyCollectRows,
     hallId: selectedHallId,
-    loading: isModuleLoading && hallMode === "SafetyOverview",
-  };
-  const safetyRightSidebarProps = {
-    violationTypeData,
-    violationRecordData,
-    rectificationSituationData: violationSituationData,
+    exhibitionId: DEFAULT_EXHIBITION_ID,
     loading: isModuleLoading && hallMode === "SafetyOverview",
   };
   const constructCarouselPicturesMemo = useMemo(
     () => normalizeCarouselPictures(constructCarouselState.pictures),
     [constructCarouselState],
   );
+  const safetyCarouselPicturesMemo = useMemo(
+    () => normalizeCarouselPictures(safetyCarouselState.pictures),
+    [safetyCarouselState],
+  );
+  const safetyRightSidebarProps = {
+    violationTypeData,
+    violationRecordData,
+    rectificationSituationData: violationSituationData,
+    loading: isModuleLoading && hallMode === "SafetyOverview",
+    safetyCarouselPictures: safetyCarouselPicturesMemo,
+    safetyCarouselLoading,
+    showFloatCards: Boolean(selectedHallId) && selectedHallId !== 'all' && dashboardLayoutConfig.orientation === 'landscape',
+  };
   const constructRightSidebarProps = {
     constructOverviewData,
     boothProgressData,
@@ -1141,10 +1149,6 @@ export default function App() {
     constructCarouselPictures: constructCarouselPicturesMemo,
     constructCarouselLoading,
   };
-  const safetyCarouselPicturesMemo = useMemo(
-    () => normalizeCarouselPictures(safetyCarouselState.pictures),
-    [safetyCarouselState],
-  );
 
   const pollingTasks = useMemo(() => {
     const safeData = <T,>(res: any, fallback: T): T =>
@@ -1698,8 +1702,8 @@ export default function App() {
                         hallId={selectedHallId}
                         exhibitionId={initData.exhibitionId}
                       />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1733,8 +1737,8 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1767,8 +1771,8 @@ export default function App() {
                   {hallMode === "SafetyOverview" && (
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}

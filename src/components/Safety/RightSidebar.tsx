@@ -1,6 +1,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Spin } from "antd";
 import * as echarts from "echarts";
+import SafetyCarousel from "./ConstructCarousel";
+import { SafetyFloatCards } from "./SafetyFloatCards";
+
+const MOCK_SAFETY_PICTURES = [
+  {
+    address: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80",
+    dataStr: "安全巡检01",
+    boothNo: "A01",
+    exhibitor: "安全现场",
+    hallId: "",
+    hallName: "",
+  },
+  {
+    address: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80",
+    dataStr: "安全巡检02",
+    boothNo: "A02",
+    exhibitor: "违规记录",
+    hallId: "",
+    hallName: "",
+  },
+  {
+    address: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
+    dataStr: "安全巡检03",
+    boothNo: "A03",
+    exhibitor: "现场检查",
+    hallId: "",
+    hallName: "",
+  },
+];
 
 type SafetyRightSidebarProps = {
   violationTypeData?: any;
@@ -9,6 +38,9 @@ type SafetyRightSidebarProps = {
   hallId?: string;
   loading?: boolean;
   variant?: "landscape";
+  safetyCarouselPictures?: Array<{ address: string; dataStr: string }>;
+  safetyCarouselLoading?: boolean;
+  showFloatCards?: boolean;
 };
 
 type RiskRow = {
@@ -37,7 +69,7 @@ function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12 px-3">
       <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-1">{title}</span>
+        <span className="pl-8 pb-3">{title}</span>
       </div>
     </div>
   );
@@ -93,6 +125,9 @@ export function SafetyRightSidebar({
   rectificationSituationData,
   loading = false,
   variant,
+  safetyCarouselPictures = [],
+  safetyCarouselLoading = false,
+  showFloatCards = false,
 }: SafetyRightSidebarProps) {
   const isLandscape = variant === "landscape";
   const riskRows: RiskRow[] = Array.isArray(violationTypeData)
@@ -187,7 +222,7 @@ export function SafetyRightSidebar({
   );
   const [riskOffset, setRiskOffset] = useState(0);
   const [isRiskPaused, setIsRiskPaused] = useState(false);
-  const riskWindow = 3;
+  const riskWindow = 6;
   const riskSlice = (arr: number[] | string[]) => {
     if (!arr.length) return [];
     const start = riskOffset % arr.length;
@@ -311,115 +346,66 @@ export function SafetyRightSidebar({
     riskShownHigh,
   ]);
 
-  const [typeRef, typeChartRef] = useChart();
-  const [rectRef, rectChartRef] = useChart();
-
-  useEffect(() => {
-    const chart = typeChartRef.current;
-    if (!chart) return;
-    const data = Object.entries(type).map(([name, value]) => ({ name, value }));
-    chart.setOption({
-      animation: false,
-      backgroundColor: "transparent",
-      tooltip: { trigger: "item" },
-      label: { color: "#dbeeff", formatter: "{b} {c}" },
-      series: [
-        {
-          type: "pie",
-          radius: ["42%", "68%"],
-          center: ["50%", "50%"],
-          data,
-          label: { color: "#dbeeff" },
-          itemStyle: { borderColor: "#0b1f3d", borderWidth: 2 },
-        },
-      ],
-    });
-  }, [typeMemoKey]);
-
-  useEffect(() => {
-    const chart = rectChartRef.current;
-    if (!chart) return;
-    const data = Object.entries(status).map(([name, value]) => ({
-      name,
-      value,
-    }));
-    chart.setOption({
-      animation: false,
-      backgroundColor: "transparent",
-      tooltip: { trigger: "item", formatter: "{a} <br/>{b} : {c} ({d}%)" },
-      series: [
-        {
-          type: "pie",
-          radius: ["28%", "45%"],
-          center: ["50%", "52%"],
-          roseType: "area",
-          data,
-          label: { color: "#dbeeff", formatter: "{b} {c}" },
-          itemStyle: { borderColor: "#0b1f3d", borderWidth: 2 },
-        },
-      ],
-    });
-  }, [statusMemoKey]);
 
   const riskSection = (
     <section
-      className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}
+      className={isLandscape ? "flex flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}
+      style={isLandscape ? { height: 268 } : undefined}
       onMouseEnter={() => setIsRiskPaused(true)}
       onMouseLeave={() => setIsRiskPaused(false)}
     >
-      <PanelTitle title="违规风险等级" />
+      <div className="shrink-0 w-1/2">
+        <PanelTitle title="违规风险等级" />
+      </div>
       <div className="min-h-0 flex-1 p-2.5">
         {loading ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-white/10 ">
-            <Spin size="large" tip="正在加载风险数据..." />
-          </div>
+          <div className="flex h-full items-center justify-center rounded-xl" />
         ) : (
           <div
             ref={riskRef}
-            className="h-full w-full rounded-xl border border-white/10 p-2"
+            className="h-full w-full rounded-xl p-2"
           />
         )}
       </div>
     </section>
   );
 
-  const typeSection = (
-    <section className={isLandscape ? "flex h-full min-h-0 min-w-0 flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <PanelTitle title="违规类型统计" />
-      <div className="min-h-0 flex-1 p-2.5">
-        {loading ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]">
-            <Spin size="large" tip="正在加载类型数据..." />
-          </div>
-        ) : (
-          <div
-            ref={typeRef}
-            className="h-full w-full rounded-xl border border-white/10 bg-[rgba(8,23,42,0.68)] p-2"
-          />
-        )}
+  const carouselSection = (
+    <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
+      <div className="shrink-0 w-1/2">
+        <PanelTitle title="现场图片" />
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden p-2.5">
+        <SafetyCarousel
+          pictures={safetyCarouselPictures.length > 0 ? safetyCarouselPictures : MOCK_SAFETY_PICTURES}
+          loading={safetyCarouselLoading}
+        />
       </div>
     </section>
   );
 
   return isLandscape ? (
-    <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-2 gap-3 overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
-      {loading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
-          <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
-            <div className="flex items-center gap-3 text-sm text-[#dbeeff]">
-              <span className="inline-flex">
-                <Spin size="large" tip="正在加载安全信息..." />
-              </span>
-              <span>正在加载安全信息...</span>
+    <aside className="flex h-full min-h-0 w-full min-w-0 flex-col gap-3 overflow-hidden p-2">
+      {showFloatCards && <SafetyFloatCards />}
+      <div className="relative grid min-h-0 flex-1 grid-cols-2 gap-3 overflow-hidden">
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
+            <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
+              <div className="flex items-center gap-3 text-sm text-[#dbeeff]">
+                <span className="inline-flex">
+                  <Spin size="large" tip="正在加载安全信息..." />
+                </span>
+                <span>正在加载安全信息...</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      {riskSection}
-      {typeSection}
+        )}
+        {riskSection}
+        {carouselSection}
+      </div>
     </aside>
   ) : (
-    <aside className="relative flex h-full min-h-0 flex-col rounded-2xl border border-[rgba(128,185,255,0.22)] bg-[linear-gradient(180deg,rgba(8,20,38,0.92),rgba(5,13,26,0.96))] p-2 shadow-[inset_0_0_24px_rgba(80,157,255,0.08)]">
+    <aside className="relative flex h-full min-h-0 flex-col p-2">
       {loading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
           <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
@@ -434,7 +420,7 @@ export function SafetyRightSidebar({
       )}
       {riskSection}
       <div className="mt-2" />
-      {typeSection}
+      {carouselSection}
     </aside>
   );
 }

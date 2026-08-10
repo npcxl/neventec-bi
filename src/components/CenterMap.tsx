@@ -9,6 +9,7 @@ import ConstructCarousel, {
 } from "./Safety/ConstructCarousel";
 import { BoothModal as ConstructBoothModal } from "./Construct/modal/BoothModal";
 import { BoothModal } from "./modal/BoothModal";
+import { BoothModal as SafetyBoothModal } from "./Safety/modal/BoothModal";
 import { useBoothColorStrategy } from "../hooks/useBoothColorStrategy";
 import { useHallOverviewMap } from "../hooks/useHallOverviewMap";
 import { useHallSorter } from "../hooks/useHallSorter";
@@ -1217,10 +1218,10 @@ export default function CenterMap({
             : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 overflow-visible"
       }
     >
-      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-visible " style={{ marginLeft: -30, marginRight: -30 }}>
-        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-visible" style={{ marginLeft: 30, marginRight: 30 }}>
+      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-[22px] ">
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[20px]">
           <div className="relative z-20 mb-3 flex shrink-0 flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
-            <div className="relative min-w-0 w-full">
+            <div className="relative min-w-0" style={{ width: 1200 }}>
               <div
                 ref={tabsScrollRef}
                 className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-1"
@@ -1254,22 +1255,52 @@ export default function CenterMap({
                   </div>
                 ))}
               </div>
-              <img
-                src="/img/左侧滚动显示.svg"
-                alt=""
-                className="absolute left-0 top-1/2 -translate-y-1/2 h-6 pointer-events-none z-10"
+              <button
+                className="absolute -left-3 top-[15px] -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs"
+                style={{ opacity: 1 }}
+                onClick={() => {
+                  if (tabsScrollRef.current) {
+                    tabsScrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                  }
+                }}
                 ref={(node) => {
                   if (node && tabsScrollRef.current) {
                     const container = tabsScrollRef.current;
                     const update = () => {
-                      node.style.opacity = container.scrollLeft > 5 ? '1' : '0';
+                      const maxScroll = container.scrollWidth - container.clientWidth;
+                      node.style.opacity = maxScroll > 0 && container.scrollLeft > 5 ? '1' : '0';
                     };
                     update();
                     container.addEventListener('scroll', update);
                     return () => container.removeEventListener('scroll', update);
                   }
                 }}
-              />
+              >
+                ‹
+              </button>
+              <button
+                className="absolute -right-2 top-[15px] -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs"
+                style={{ opacity: 1 }}
+                onClick={() => {
+                  if (tabsScrollRef.current) {
+                    tabsScrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+                  }
+                }}
+                ref={(node) => {
+                  if (node && tabsScrollRef.current) {
+                    const container = tabsScrollRef.current;
+                    const update = () => {
+                      const maxScroll = container.scrollWidth - container.clientWidth;
+                      node.style.opacity = maxScroll > 0 && container.scrollLeft < maxScroll - 5 ? '1' : '0';
+                    };
+                    update();
+                    container.addEventListener('scroll', update);
+                    return () => container.removeEventListener('scroll', update);
+                  }
+                }}
+              >
+                ›
+              </button>
             </div>
             <img
               src="/img/展馆按钮底部线条.png"
@@ -1278,12 +1309,10 @@ export default function CenterMap({
             />
           </div>
 
-          <div className="map-card-frame relative min-h-0 flex-1 overflow-visible" style={{ marginLeft: -30, marginRight: -30 }}>
-            {/* 四边渐变遮罩 — 地图边缘朦胧消失 */}
-           
+          <div className="map-card-frame relative min-h-0 flex-1 overflow-hidden">
             <div className="map-card-bg" />
             <div className="map-card-blob" />
-            <div className="absolute inset-0 z-10 min-h-0 min-w-0 overflow-hidden" style={{ left: 30, right: 30 }}>
+            <div className="absolute inset-0 z-10 min-h-0 min-w-0 overflow-hidden">
               {mode === "all" ? (
                 <HallOverviewMap
                   halls={hallOverview}
@@ -1337,411 +1366,12 @@ export default function CenterMap({
               }}
             />
           ) : (
-            <Modal
-              open={detailOpen}
-              onCancel={() => setDetailOpen(false)}
-              footer={null}
-              centered
-              width={760}
-              destroyOnHidden
-              getContainer={false}
-              title={null}
-              closeIcon={null}
-              styles={{
-                mask: {
-                  backgroundColor: "rgba(0, 0, 0, 0.65)",
-                },
-                container: {
-                  padding: 0,
-                  background: "#0f213a",
-                  border: "none",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                  width: "760px",
-                  maxWidth: "90vw",
-                  maxHeight: "76vh",
-                  height: "auto",
-                },
-              }}
-            >
-              <div
-                style={{
-                  color: "#f1f5f9",
-                  padding: "16px 18px 12px",
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "auto",
-                  minHeight: 0,
-                  maxHeight: "76vh",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    paddingBottom: "10px",
-                    flexShrink: 0,
-                  }}
-                >
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                  >
-                    <div>
-                      <div
-                        style={{
-                          marginTop: "4px",
-                          fontSize: "12px",
-                          color: "rgba(165, 243, 252, 0.6)",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            background: "rgba(0, 229, 255, 0.1)",
-                            border: "none",
-                            padding: "1px 6px",
-                            borderRadius: "3px",
-                            color: "#cffafe",
-                          }}
-                        >
-                          {selected?.code || "未分配"}
-                        </span>
-                        <span>·</span>
-                        <span>{selected?.name || "未知展位"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className="map-overview-scrollbar"
-                  style={{
-                    marginTop: "10px",
-                    display: "flex",
-                    minHeight: 0,
-                    flexDirection: "column",
-                    gap: "10px",
-                    overflowY: "auto",
-                    paddingRight: "4px",
-                    maxHeight: "calc(76vh - 90px)",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 1,
-                      padding: "10px 12px",
-                      borderRadius: "8px",
-                      background: "rgba(10, 21, 38, 0.96)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "10px",
-                        marginBottom: "8px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#cffafe",
-                      }}
-                    >
-                      {moduleMode === "SafetyOverview" ? (
-                        <span
-                          style={{
-                            border: "1px solid rgba(56,189,248,0.3)",
-                            background: "rgba(56,189,248,0.1)",
-                            color: "#9fe2ff",
-                            borderRadius: "999px",
-                            padding: "2px 8px",
-                            fontSize: "11px",
-                            fontWeight: 500,
-                          }}
-                        >
-                          共 {safetyViolationCount} 条违规
-                        </span>
-                      ) : null}
-                    </div>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                        gap: "5px 8px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {moduleMode === "SafetyOverview" ? (
-                        <>
-                          <DetailItem
-                            label="施工单位"
-                            value={safetyDetail?.constructionCompany || "-"}
-                          />
-                          <DetailItem
-                            label="参展商"
-                            value={safetyDetail?.exhibitor || "-"}
-                          />
-                          <DetailItem
-                            label="展位号"
-                            value={safetyDetail?.boothNo || selected?.code || "-"}
-                          />
-                          <DetailItem
-                            label="展馆"
-                            value={safetyDetail?.hallName || "-"}
-                          />
-                          <DetailItem
-                            label="责任主体"
-                            value={safetyDetail?.dutyEntity || "-"}
-                          />
-                          <DetailItem
-                            label="联系方式"
-                            value={safetyDetail?.contactWay || "-"}
-                          />
-                          <div className="col-span-2 flex flex-wrap gap-1.5">
-                            <span className="inline-flex items-center rounded-sm bg-[#34d399]/12 px-2 py-0.5 text-[11px] text-[#7cf0c6]">
-                              {safetyDetail?.excompanytype || "展位类型"}
-                            </span>
-                            <span className="inline-flex items-center rounded-sm bg-[#4ade80]/12 px-2 py-0.5 text-[11px] text-[#86efac]">
-                              {safetyDetail?.structureType || "结构类型"}
-                            </span>
-                            <span className="inline-flex items-center rounded-sm bg-[#facc15]/12 px-2 py-0.5 text-[11px] text-[#fde68a]">
-                              {safetyDetail?.complexEngineering || "复杂工程"}
-                            </span>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {moduleMode === "SafetyOverview" ? (
-                    <div
-                      style={{
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        background: "rgba(8, 22, 44, 0.55)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "10px",
-                          marginBottom: "8px",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: "#cffafe",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            minWidth: 0,
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: "10px",
-                              width: "3px",
-                              borderRadius: "2px",
-                              backgroundColor: "#38bdf8",
-                              flexShrink: 0,
-                            }}
-                          />
-                          <span>现场安全管理</span>
-                        </div>
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "8px",
-                        }}
-                      >
-                        {safetyInfoList.length ? (
-                          safetyInfoList.map((info, index) => (
-                            <div
-                              key={`${info.boothId || info.boothNo || "safety"}-${info.createDate || index}`}
-                              style={{
-                                borderRadius: "8px",
-                                border: "none",
-                                background: "rgba(255,255,255,0.03)",
-                                padding: "9px 10px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "8px",
-                                  minWidth: 0,
-                                  alignItems: "stretch",
-                                }}
-                              >
-                                <div style={{ width: "112px", flex: "0 0 auto" }}>
-                                  {info.imageAddress?.[0]?.address ? (
-                                    <img
-                                      src={info.imageAddress[0].address}
-                                      alt="现场安全图片"
-                                      style={{
-                                        width: "112px",
-                                        height: "96px",
-                                        objectFit: "cover",
-                                        borderRadius: "6px",
-                                        border: "none",
-                                      }}
-                                    />
-                                  ) : (
-                                    <div
-                                      style={{
-                                        width: "112px",
-                                        height: "96px",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        borderRadius: "6px",
-                                        border:
-                                          "1px dashed rgba(255,255,255,0.14)",
-                                        color: "#94a3b8",
-                                        fontSize: "11px",
-                                      }}
-                                    >
-                                      暂无图片
-                                    </div>
-                                  )}
-                                </div>
-                                <div style={{ minWidth: 0, flex: 1 }}>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexWrap: "wrap",
-                                      gap: "4px",
-                                      marginBottom: "6px",
-                                      fontSize: "10px",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        border: "1px solid rgba(56,189,248,0.28)",
-                                        background: "rgba(56,189,248,0.1)",
-                                        color: "#9fe2ff",
-                                        borderRadius: "4px",
-                                        padding: "1px 5px",
-                                      }}
-                                    >
-                                      {info.createDate || "-"}
-                                    </span>
-                                    <span
-                                      style={{
-                                        border: "1px solid rgba(250,204,21,0.28)",
-                                        background: "rgba(250,204,21,0.1)",
-                                        color: "#fde68a",
-                                        borderRadius: "4px",
-                                        padding: "1px 5px",
-                                      }}
-                                    >
-                                      {info.riskAssessment || "-"}
-                                    </span>
-                                    <span
-                                      style={{
-                                        border: "1px solid rgba(52,211,153,0.28)",
-                                        background: "rgba(52,211,153,0.1)",
-                                        color: "#7cf0c6",
-                                        borderRadius: "4px",
-                                        padding: "1px 5px",
-                                      }}
-                                    >
-                                      {info.safetyStatus || "-"}
-                                    </span>
-                                  </div>
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns:
-                                        "repeat(2, minmax(0, 1fr))",
-                                      gap: "4px 8px",
-                                      fontSize: "11px",
-                                    }}
-                                  >
-                                    <DetailItem
-                                      label="创建人"
-                                      value={info.createBy || "-"}
-                                    />
-                                    <DetailItem
-                                      label="目标整改时间"
-                                      value={info.targetCheckTime || "-"}
-                                    />
-                                    <DetailItem
-                                      label="展位号"
-                                      value={
-                                        info.boothNo || selected?.code || "-"
-                                      }
-                                    />
-                                    <DetailItem
-                                      label="违规内容"
-                                      value={info.recordContent || "-"}
-                                      full
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div
-                            style={{
-                              borderRadius: "8px",
-                              border: "none",
-                              padding: "10px",
-                              textAlign: "center",
-                              color: "#a7c0de",
-                              fontSize: "12px",
-                            }}
-                          >
-                            暂无现场安全记录
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-
-                {safetyInfoList.length > 0 && (
-                  <div
-                    style={{
-                      marginTop: "12px",
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      borderTop: "none",
-                      paddingTop: "10px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setDetailOpen(false)}
-                      style={{
-                        cursor: "pointer",
-                        padding: "6px 20px",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        color: "#eef2ff",
-                        background: "rgba(0, 229, 255, 0.1)",
-                      }}
-                      className="transition-all hover:bg-cyan-500/30"
-                    >
-                      关闭
-                    </button>
-                  </div>
-                )}
-              </div>
-            </Modal>
+            <SafetyBoothModal
+              visible={detailOpen}
+              onClose={() => setDetailOpen(false)}
+              data={safetyDetail}
+              loading={detailLoading}
+            />
           )}
         </div>
       </div>

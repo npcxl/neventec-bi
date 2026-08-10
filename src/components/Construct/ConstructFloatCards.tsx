@@ -3,11 +3,15 @@
    地图右上角悬浮，搭建信息 + 已选展馆时显示
    ============================================ */
 
+import { Card, Steps, Tag, Flex, Typography } from 'antd';
+
+const { Text } = Typography;
+
 const PROCESS_STEPS = [
-  { label: '办理进度手续', number: '1号' },
-  { label: '展位进场状态', number: '2号' },
-  { label: '尺寸开口确认', number: '3号' },
-  { label: '主体结构搭建', number: '4号' },
+  { title: '办理进度手续' },
+  { title: '展位进场状态' },
+  { title: '尺寸开口确认' },
+  { title: '主体结构搭建' },
 ];
 
 const PROGRESS_LEGEND = [
@@ -17,23 +21,11 @@ const PROGRESS_LEGEND = [
   { color: '#63F222', label: '搭建完成' },
 ];
 
-const cardStyle: React.CSSProperties = {
-  width: 170,
-  height: 205,
-  padding: '14px 14px',
-  borderRadius: 16,
-  border: '1px solid rgba(128,185,255,0.28)',
+const glassCardStyle: React.CSSProperties = {
+  width: 180,
+  border: '1px solid #2563EB',
   background: 'linear-gradient(180deg, rgba(9,26,52,0.78), rgba(6,17,34,0.86))',
-  boxShadow: '0 0 24px rgba(80,157,255,0.10), inset 0 0 24px rgba(80,157,255,0.06)',
   backdropFilter: 'blur(8px)',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: 13, fontWeight: 500, color: '#7fc6ff',
-  textAlign: 'center', flexShrink: 0,
 };
 
 export function ConstructFloatCards() {
@@ -48,40 +40,91 @@ export function ConstructFloatCards() {
       gap: 10,
     }}>
       {/* 卡片 1：施工进程 */}
-      <div style={cardStyle}>
-        <div style={titleStyle}>施工进程：</div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', width: '100%' }}>
-          {PROCESS_STEPS.map((step, idx) => (
-            <div key={step.label}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#9bb8d8' }}>{step.label}：</span>
-                <span style={{ fontSize: 12, fontWeight: 500, color: '#fff' }}>{step.number}</span>
-              </div>
-              {idx < PROCESS_STEPS.length - 1 && (
-                <div style={{ textAlign: 'center', fontSize: 10, color: '#6f8eb5', lineHeight: '12px' }}>
-                  ↓
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
+      <Card
+        size="small"
+        title={
+          <Text strong style={{ color: '#7fc6ff', fontSize: 13 }}>
+            施工进程
+          </Text>
+        }
+        style={glassCardStyle}
+        styles={{
+          header: {
+            borderBottom: '1px solid rgba(128,185,255,0.12)',
+            minHeight: 36,
+            padding: '8px 14px',
+            background: 'transparent',
+          },
+          body: {
+            padding: '10px 14px 14px',
+            background: 'transparent',
+          },
+        }}
+      >
+        <Steps
+          direction="vertical"
+          size="small"
+          current={-1}
+          items={PROCESS_STEPS.map((step) => ({
+            title: (
+              <Flex justify="space-between" align="center">
+                <Text style={{ color: '#fff', fontSize: 12 }}>{step.title}</Text>
+              </Flex>
+            ),
+          }))}
+          styles={{
+            itemIcon: {
+              color: '#fff',
+              borderColor: '#fff',
+              background: 'rgba(255,255,255,0.12)',
+            },
+            itemContent: {
+              color: '#fff',
+            },
+          }}
+          className="[&_.ant-steps-item-tail]:after:!border-l-[rgba(255,255,255,0.2)]"
+        />
+      </Card>
 
       {/* 卡片 2：搭建进度图例 */}
-      <div style={cardStyle}>
-        <div style={titleStyle}>搭建进度：</div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', alignItems: 'center' }}>
+      <Card
+        size="small"
+        title={
+          <Text strong style={{ color: '#7fc6ff', fontSize: 13 }}>
+            搭建进度
+          </Text>
+        }
+        style={glassCardStyle}
+        styles={{
+          header: {
+            borderBottom: '1px solid rgba(128,185,255,0.12)',
+            minHeight: 36,
+            padding: '8px 14px',
+            background: 'transparent',
+          },
+          body: {
+            padding: '16px 14px',
+            background: 'transparent',
+            display: 'flex',
+            justifyContent: 'center',
+          },
+        }}
+      >
+        <Flex vertical gap={12} align="center">
           {PROGRESS_LEGEND.map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+            <Flex key={item.label} align="center" gap={10}>
               <span style={{
-                width: 8, height: 8, flexShrink: 0, borderRadius: 2,
+                width: 10,
+                height: 10,
+                flexShrink: 0,
+                borderRadius: 2,
                 backgroundColor: item.color,
               }} />
-              <span style={{ color: '#dbeeff' }}>{item.label}</span>
-            </div>
+              <Text style={{ color: '#fff', fontSize: 12 }}>{item.label}</Text>
+            </Flex>
           ))}
-        </div>
-      </div>
+        </Flex>
+      </Card>
     </div>
   );
 }

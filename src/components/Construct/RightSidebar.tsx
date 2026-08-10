@@ -27,7 +27,7 @@ function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12 px-3 shrink-0">
       <div className="flex h-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-1">{title}</span>
+        <span className="pl-10 pb-3">{title}</span>
       </div>
     </div>
   );
@@ -140,15 +140,7 @@ export function ConstructRightSidebar({
         style={{ gridTemplateColumns: 'minmax(0,1fr) auto', columnGap: 16 }}
       >
         <div className="h-full min-h-0 min-w-0">
-          <ConstructOverviewChart
-            entries={entries}
-            depthByLabel={{
-              '搭建正常': 55,
-              '搭建缓慢': 35,
-              '严重滞后': 20,
-              '搭建完成': 50,
-            }}
-          />
+          <ConstructOverviewChart entries={entries} />
         </div>
         <StatusLegend entries={entries} />
       </div>

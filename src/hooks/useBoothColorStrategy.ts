@@ -65,7 +65,7 @@ function resolvePaidColor(paid?: string) {
 function resolveSafetyColor(status?: string) {
   const text = normalizeKey(status);
   if (!text) return DEFAULT_COLOR;
-  if (text.includes('一般风险')) return '#FAAD14';
+  if (text.includes('一般风险')) return '#FA8C16';
   if (text.includes('较大风险')) return '#F5222D';
   return DEFAULT_COLOR;
 }
@@ -126,11 +126,11 @@ function createSafetyOverviewStrategy(safetyRows: SafetyRecordRow[]): ColorStrat
     getColor: (booth) => {
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
       const status = statusMap[boothKey];
-      if (status === '整改合格') return 'rgb(53, 213, 167,0.8)';
-      if (status === '待整改' || status === '未整改') return 'rgb(250, 173, 20,0.8)';
-      if (status === '整改不合格') return 'rgb(255, 34, 45,0.8)';
-      if (status === '拒不整改') return 'rgb(0, 127, 255,0.8)';
-      if (status === '已作废' || status === '作废') return 'rgb(153, 153, 153,0.8)';
+      if (status === '整改合格') return 'rgba(99,242,34,0.8)';
+      if (status === '待整改' || status === '未整改') return 'rgba(250,140,22,0.8)';
+      if (status === '整改不合格') return 'rgba(245,34,45,0.8)';
+      if (status === '拒不整改') return 'rgba(37,99,235,0.8)';
+      if (status === '已作废' || status === '作废') return 'rgba(107,124,147,0.8)';
       return 'rgba(5, 212, 248, 0.97)';
     },
   };
