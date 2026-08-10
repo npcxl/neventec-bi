@@ -5,6 +5,7 @@ import { ExhibitionLeftSidebar } from "./components/Exhibition/LeftSidebar";
 import { ExhibitionRightSidebar } from "./components/Exhibition/RightSidebar";
 import { ConstructLeftSidebar } from "./components/Construct/LeftSidebar";
 import { ConstructRightSidebar } from "./components/Construct/RightSidebar";
+import { ConstructFloatCards } from "./components/Construct/ConstructFloatCards";
 import { SafetyLeftSidebar } from "./components/Safety/LeftSidebar";
 import { SafetyRightSidebar } from "./components/Safety/RightSidebar";
 import CenterMap from "./components/CenterMap";
@@ -1127,6 +1128,7 @@ export default function App() {
     [constructCarouselState],
   );
   const constructRightSidebarProps = {
+    constructOverviewData,
     boothProgressData,
     constructProcessData,
     constructMaterialData,
@@ -1672,6 +1674,9 @@ export default function App() {
           ) : (
             <>
               <DashboardHeader title={expoName} />
+              {hallMode === "ConstructOverview" && selectedHallId !== "all" && (
+                <ConstructFloatCards />
+              )}
               <MenuButtonGroup
                 items={menuButtons}
                 onMenuClick={handleMenuClick}
@@ -1693,8 +1698,8 @@ export default function App() {
                         hallId={selectedHallId}
                         exhibitionId={initData.exhibitionId}
                       />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1728,8 +1733,8 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1762,8 +1767,8 @@ export default function App() {
                   {hallMode === "SafetyOverview" && (
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[55%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-visible">
+                        <div className="flex h-full min-h-0 min-w-0 overflow-visible">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}

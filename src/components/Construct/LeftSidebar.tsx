@@ -7,7 +7,7 @@ import { screenApi } from "../../api";
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-11 px-3 shrink-0">
+    <div className="relative h-12 px-3 shrink-0">
       <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
         <span className="pl-10 pb-1">{title}</span>
       </div>
@@ -308,3 +308,4 @@ export function ConstructLeftSidebar({
     </aside>
   );
 }
+  

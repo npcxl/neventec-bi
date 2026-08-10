@@ -1211,14 +1211,14 @@ export default function CenterMap({
     <section
       className={
         fillAvailableHeight
-          ? "relative flex h-full min-h-0 w-full min-w-0 overflow-hidden rounded-3xl"
+          ? "relative flex h-full min-h-0 w-full min-w-0 overflow-visible"
           : compact
-            ? "relative flex w-full min-h-[22rem] flex-1 min-w-0 rounded-3xl"
-            : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 rounded-3xl"
+            ? "relative flex w-full min-h-[22rem] flex-1 min-w-0 overflow-visible"
+            : "relative flex w-full min-h-[clamp(32rem,72vh,52rem)] flex-1 min-w-0 overflow-visible"
       }
     >
-      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-[22px] bg-[#081120]">
-        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[20px] bg-[rgba(10,25,47,0.72)]">
+      <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-visible " style={{ marginLeft: -30, marginRight: -30 }}>
+        <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-visible" style={{ marginLeft: 30, marginRight: 30 }}>
           <div className="relative z-20 mb-3 flex shrink-0 flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
             <div className="relative min-w-0 w-full">
               <div
@@ -1278,10 +1278,12 @@ export default function CenterMap({
             />
           </div>
 
-          <div className="map-card-frame relative min-h-0 flex-1 overflow-hidden">
+          <div className="map-card-frame relative min-h-0 flex-1 overflow-visible" style={{ marginLeft: -30, marginRight: -30 }}>
+            {/* 四边渐变遮罩 — 地图边缘朦胧消失 */}
+           
             <div className="map-card-bg" />
             <div className="map-card-blob" />
-            <div className="absolute inset-0 z-10 min-h-0 min-w-0 overflow-hidden">
+            <div className="absolute inset-0 z-10 min-h-0 min-w-0 overflow-hidden" style={{ left: 30, right: 30 }}>
               {mode === "all" ? (
                 <HallOverviewMap
                   halls={hallOverview}
