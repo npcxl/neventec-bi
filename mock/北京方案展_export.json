@@ -9,7 +9,7 @@
   "booths": [
     {
       "booth_no": "S03T101",
-      "exhibitor": "",
+      "exhibitor": "我是公司名字",
       "bbox": [
         306,
         884,
@@ -25,7 +25,7 @@
     },
     {
       "booth_no": "S03T301",
-      "exhibitor": "",
+      "exhibitor": "我是公司名字我是公司名字我是公司名字",
       "bbox": [
         594,
         884,
@@ -41,7 +41,7 @@
     },
     {
       "booth_no": "S03T501",
-      "exhibitor": "",
+      "exhibitor": "我是公司名字我是公司名字我是公司名字我是公司名字",
       "bbox": [
         959,
         884,
