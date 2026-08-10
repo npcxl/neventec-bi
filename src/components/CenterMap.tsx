@@ -5,7 +5,7 @@ import XButton from "./Buttons";
 import HallOverviewMap from "./HallOverviewMap";
 import HallMap from "./HallMap";
 import type { Booth as HallBooth, HallData } from "./HallMap/types";
-import { transformMockToHallData } from "./HallMap/utils/transform";
+import { transformMockToHallData, transformApiToHallData } from "./HallMap/utils/transform";
 import ConstructCarousel, {
   type ConstructCarouselPicture,
 } from "./Safety/ConstructCarousel";
@@ -280,25 +280,79 @@ export default function CenterMap({
   const [orderInfos, setOrderInfos] = useState<BoothOrderInfo[]>([]);
   const [constructLoading, setConstructLoading] = useState(false);
 
-  // HallData: 根据 mode 映射到对应的 mock 数据
-  // 基于 hallName 模糊匹配，而非数组索引
-  const hallData = useMemo<HallData | null>(() => {
-    if (mode === "all") return null;
+  // HallData: 根据 mode 映射到对应的数据
+  // 1号馆/2号馆使用 Mock 数据，其他展馆使用 API 数据
+  const [hallData, setHallData] = useState<HallData | null>(null);
+  const hallDataCacheRef = useRef<Record<string, HallData>>({});
+
+  // 判断是否使用 Mock 数据的展馆
+  const isMockHall = useMemo(() => {
+    if (mode === "all") return false;
+    const halls = initData?.halls ?? [];
+    const currentHall = halls.find((h) => h.hallId === mode);
+    const hallName = currentHall?.hallName || "";
+    return hallName.includes("方案展") || hallName.includes("1号") ||
+      hallName.includes("4号馆") || hallName.includes("首钢") || hallName.includes("2号");
+  }, [mode, initData?.halls]);
+
+  // Mock 数据直接同步计算
+  const mockHallData = useMemo<HallData | null>(() => {
+    if (!isMockHall || mode === "all") return null;
     const halls = initData?.halls ?? [];
     const currentHall = halls.find((h) => h.hallId === mode);
     const hallName = currentHall?.hallName || "";
 
-    // 匹配"方案展"/"1号馆" → 北京方案展
     if (hallName.includes("方案展") || hallName.includes("1号")) {
       return transformMockToHallData(mockBeijing as any, hallName);
     }
-    // 匹配"4号馆"/"首钢"/"2号馆" → 首钢会展中心4号馆1层
-    if (hallName.includes("4号馆") || hallName.includes("首钢") || hallName.includes("2号")) {
-      return transformMockToHallData(mockShougang as any, hallName);
+    return transformMockToHallData(mockShougang as any, hallName);
+  }, [isMockHall, mode, initData?.halls]);
+
+  // API 数据异步加载（非 Mock 展馆）
+  useEffect(() => {
+    if (mode === "all" || isMockHall) {
+      if (isMockHall) setHallData(mockHallData);
+      else setHallData(null);
+      return;
     }
-    // 其他展馆 fallback: 使用首钢数据兜底
-    return transformMockToHallData(mockShougang as any, hallName || "展馆");
-  }, [mode, initData?.halls]);
+
+    const cached = hallDataCacheRef.current[mode];
+    if (cached) {
+      setHallData(cached);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchApi = async () => {
+      try {
+        const response = await screenApi.getSafetyCoordByHallId(mode);
+        const payload = (response as any)?.data ?? response;
+        let parsed: any = null;
+        if (payload?.dataJson) {
+          try { parsed = JSON.parse(payload.dataJson); } catch {}
+        }
+        const booths = (parsed?.booths ?? payload?.booths ?? []) as any[];
+        const imageSize = parsed?.image_size ?? payload?.image_size;
+        const imageWidth = Number(imageSize?.width) || 1000;
+        const imageHeight = Number(imageSize?.height) || 1000;
+        const currentHall = (initData?.halls ?? []).find((h) => h.hallId === mode);
+        const hallName = currentHall?.hallName || "";
+        const backgroundUrl = parsed?.image ? `/mock/${parsed.image}` : '';
+
+        const data = transformApiToHallData(booths, hallName, imageWidth, imageHeight, backgroundUrl);
+        hallDataCacheRef.current[mode] = data;
+        if (!cancelled) setHallData(data);
+      } catch (error) {
+        console.error("获取展馆坐标失败", error);
+        if (!cancelled) setHallData(null);
+      }
+    };
+
+    void fetchApi();
+    return () => { cancelled = true; };
+  }, [mode, isMockHall, mockHallData, initData?.halls]);
+
+
   const safetyInfoList = useMemo(
     () => safetyDetail?.safetyInfoList ?? [],
     [safetyDetail],
@@ -689,6 +743,15 @@ export default function CenterMap({
               ) : hallData ? (
                 <HallMap
                   hallData={hallData}
+                  getBoothColor={(booth, index) =>
+                    getColor(
+                      {
+                        booth_no: booth.boothNo || booth.id,
+                        raw_texts: [booth.boothNo || booth.id, booth.name],
+                      },
+                      index,
+                    )
+                  }
                   onBoothClick={handleBoothClick}
                 />
               ) : (

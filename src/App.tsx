@@ -1723,7 +1723,7 @@ export default function App() {
                           />
                           {/* 收起/展开 RightSidebar 的按钮 */}
                           <button
-                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            className="absolute bottom-4 right-7 z-40 flex h-8 w-8 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
                             onClick={() => setRightSidebarVisible((v) => !v)}
                             title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
                           >
@@ -1772,7 +1772,7 @@ export default function App() {
                             fillAvailableHeight
                           />
                           <button
-                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            className="absolute bottom-4 right-4 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
                             onClick={() => setRightSidebarVisible((v) => !v)}
                             title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
                           >
@@ -1806,7 +1806,7 @@ export default function App() {
                             fillAvailableHeight
                           />
                           <button
-                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            className="absolute bottom-4 right-4 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
                             onClick={() => setRightSidebarVisible((v) => !v)}
                             title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
                           >
