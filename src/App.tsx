@@ -324,6 +324,7 @@ export default function App() {
   const initialPrefs = useMemo(() => readPersistedPrefs(DEFAULT_EXHIBITION_ID), [DEFAULT_EXHIBITION_ID]);
   const [hallMode, setHallMode] = useState<ModuleKey>(initialPrefs?.hallMode ?? "ExhibitionOverview");
   const [selectedHallId, setSelectedHallId] = useState<string>(initialPrefs?.selectedHallId ?? "all");
+  const [rightSidebarVisible, setRightSidebarVisible] = useState(true);
   const [initData, setInitData] = useState<{
     exhibitionId: string;
     halls: Array<{ hallId: string; hallName: string }>;
@@ -1702,8 +1703,8 @@ export default function App() {
                         hallId={selectedHallId}
                         exhibitionId={initData.exhibitionId}
                       />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 overflow-hidden" style={{ gridTemplateRows: rightSidebarVisible ? '70% minmax(0,1fr)' : '100%' }}>
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden relative">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1720,16 +1721,26 @@ export default function App() {
                             galleryRows={galleryRows}
                             fillAvailableHeight
                           />
+                          {/* 收起/展开 RightSidebar 的按钮 */}
+                          <button
+                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            onClick={() => setRightSidebarVisible((v) => !v)}
+                            title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
+                          >
+                            {rightSidebarVisible ? '▼' : '▲'}
+                          </button>
                         </div>
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
-                          <ExhibitionRightSidebar
-                            boothRows={boothRows}
-                            orderCollect={orderCollectData}
-                            hallId={selectedHallId}
-                            loading={isModuleLoading && hallMode === "ExhibitionOverview"}
-                            variant="landscape"
-                          />
-                        </div>
+                        {rightSidebarVisible && (
+                          <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                            <ExhibitionRightSidebar
+                              boothRows={boothRows}
+                              orderCollect={orderCollectData}
+                              hallId={selectedHallId}
+                              loading={isModuleLoading && hallMode === "ExhibitionOverview"}
+                              variant="landscape"
+                            />
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -1737,8 +1748,8 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 overflow-hidden" style={{ gridTemplateRows: rightSidebarVisible ? '70% minmax(0,1fr)' : '100%' }}>
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden relative">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1760,10 +1771,19 @@ export default function App() {
                             compact={hallMode === "ConstructOverview"}
                             fillAvailableHeight
                           />
+                          <button
+                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            onClick={() => setRightSidebarVisible((v) => !v)}
+                            title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
+                          >
+                            {rightSidebarVisible ? '▼' : '▲'}
+                          </button>
                         </div>
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
-                          <ConstructRightSidebar {...constructRightSidebarProps} variant="landscape" />
-                        </div>
+                        {rightSidebarVisible && (
+                          <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                            <ConstructRightSidebar {...constructRightSidebarProps} variant="landscape" />
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -1771,8 +1791,8 @@ export default function App() {
                   {hallMode === "SafetyOverview" && (
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                      <div className="grid h-full min-h-0 min-w-0 grid-rows-[70%_minmax(0,1fr)] gap-[clamp(12px,1.1vw,18px)] overflow-hidden">
-                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden">
+                      <div className="grid h-full min-h-0 min-w-0 overflow-hidden" style={{ gridTemplateRows: rightSidebarVisible ? '70% minmax(0,1fr)' : '100%' }}>
+                        <div className="flex h-full min-h-0 min-w-0 overflow-hidden relative">
                           <CenterMap
                             mode={selectedHallId}
                             moduleMode={hallMode}
@@ -1785,10 +1805,19 @@ export default function App() {
                             compact={hallMode === "SafetyOverview"}
                             fillAvailableHeight
                           />
+                          <button
+                            className="absolute top-2 right-2 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
+                            onClick={() => setRightSidebarVisible((v) => !v)}
+                            title={rightSidebarVisible ? '收起下方面板' : '展开下方面板'}
+                          >
+                            {rightSidebarVisible ? '▼' : '▲'}
+                          </button>
                         </div>
-                        <div className="h-full min-h-0 min-w-0 overflow-hidden">
-                          <SafetyRightSidebar {...safetyRightSidebarProps} variant="landscape" />
-                        </div>
+                        {rightSidebarVisible && (
+                          <div className="h-full min-h-0 min-w-0 overflow-hidden">
+                            <SafetyRightSidebar {...safetyRightSidebarProps} variant="landscape" />
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
