@@ -1,9 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Empty, Image, Modal, message } from "antd";
-import * as echarts from "echarts";
 import { screenApi } from "../api";
 import XButton from "./Buttons";
 import HallOverviewMap from "./HallOverviewMap";
+import HallMap from "./HallMap";
+import type { Booth as HallBooth, HallData } from "./HallMap/types";
+import { transformMockToHallData } from "./HallMap/utils/transform";
 import ConstructCarousel, {
   type ConstructCarouselPicture,
 } from "./Safety/ConstructCarousel";
@@ -13,18 +15,10 @@ import { BoothModal as SafetyBoothModal } from "./Safety/modal/BoothModal";
 import { useBoothColorStrategy } from "../hooks/useBoothColorStrategy";
 import { useHallOverviewMap } from "../hooks/useHallOverviewMap";
 import { useHallSorter } from "../hooks/useHallSorter";
-type DemoBooth = {
-  booth_no: string | null;
-  exhibitor: string;
-  area: string | null;
-  raw_texts?: string[];
-  bbox: [number, number, number, number];
-  center: [number, number];
-  width: number;
-  height: number;
-  corners?: Array<[number, number]>;
-};
 
+// 导入 mock 数据
+import mockBeijing from "../../mock/北京方案展_export.json";
+import mockShougang from "../../mock/首钢会展中心4号馆1层_export.json";
 type HallMode = string;
 
 type BoothRow = {
@@ -211,127 +205,6 @@ type GalleryRow = {
   hallName?: string;
 };
 
-type SafetyCoordItem = {
-  booth_no?: string | null;
-  exhibitor?: string;
-  area?: string | null;
-  raw_texts?: string[];
-  bbox?: [number, number, number, number];
-  center?: [number, number];
-  width?: number;
-  height?: number;
-  corners?: Array<[number, number]>;
-};
-
-type SafetyCoordResponse = {
-  dataJson?: string;
-  image_size?: { width?: number; height?: number };
-  booths?: SafetyCoordItem[];
-  data?: {
-    dataJson?: string;
-    image_size?: { width?: number; height?: number };
-    booths?: SafetyCoordItem[];
-  };
-};
-
-const FLOOR_FILL = "rgba(8,22,44,0.9)";
-const FLOOR_STROKE = "rgba(111,181,255,0.6)";
-const MAP_MARGIN = 180;
-const MIN_ZOOM_VISIBLE_RATIO = 0.55;
-
-function normalizeSafetyCoordResponse(
-  response: SafetyCoordResponse | null | undefined,
-) {
-  const payload = response?.data ?? response;
-  let parsed: any = null;
-  if (payload?.dataJson) {
-    try {
-      parsed = JSON.parse(payload.dataJson);
-    } catch {
-      console.warn("[CenterMap] failed to parse safety coord dataJson, falling back to raw");
-      parsed = null;
-    }
-  }
-  const booths = (parsed?.booths ?? payload?.booths ?? []) as SafetyCoordItem[];
-  const imageSize = parsed?.image_size ?? payload?.image_size;
-  const imageWidth = Number(imageSize?.width);
-  const imageHeight = Number(imageSize?.height);
-  return {
-    imageWidth: Number.isFinite(imageWidth) ? imageWidth : null,
-    imageHeight: Number.isFinite(imageHeight) ? imageHeight : null,
-    booths,
-  };
-}
-
-function normalizeBooth(item: SafetyCoordItem): DemoBooth | null {
-  const bbox = item.bbox;
-  const corners = item.corners;
-  const center = item.center;
-  const width = Number(item.width ?? (bbox ? bbox[2] - bbox[0] : NaN));
-  const height = Number(item.height ?? (bbox ? bbox[3] - bbox[1] : NaN));
-
-  // Validate corners: >= 3 points, each with >= 2 finite coords
-  const validCorners = Array.isArray(corners) && corners.length >= 3 &&
-    corners.every((c) => Array.isArray(c) && c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]));
-
-  // Validate bbox: 4 finite items, center: 2 finite items, width/height finite > 0
-  const validBbox = Array.isArray(bbox) && bbox.length >= 4 &&
-    bbox.every((v) => Number.isFinite(v)) &&
-    Array.isArray(center) && center.length >= 2 &&
-    center.every((v) => Number.isFinite(v)) &&
-    Number.isFinite(width) && width > 0 &&
-    Number.isFinite(height) && height > 0;
-
-  if (!validCorners && !validBbox) return null;
-
-  // If corners are invalid but bbox is valid, clear corners to avoid bad data in series
-  const safeCorners = validCorners ? corners : undefined;
-
-  return {
-    booth_no: item.booth_no ?? null,
-    exhibitor: String(item.exhibitor ?? ""),
-    area: item.area ?? null,
-    raw_texts: item.raw_texts,
-    bbox: bbox ?? [0, 0, 0, 0],
-    center: center ?? [0, 0],
-    width: Number.isFinite(width) && width > 0 ? width : 0,
-    height: Number.isFinite(height) && height > 0 ? height : 0,
-    corners: safeCorners as any,
-  };
-}
-
-function getFontSizes(width: number, height: number) {
-  const safeHeight = Number.isFinite(height) ? height : 0;
-  const safeWidth = Number.isFinite(width) ? width : 0;
-  const sizeBase = Math.min(safeHeight * 0.28, safeWidth * 0.16);
-  const nameSize = Math.max(8, Math.min(sizeBase, 22));
-  const codeSize = Math.max(8, Math.min(nameSize * 0.7, 16));
-  return { codeSize, nameSize };
-}
-
-function wrapExhibitorName(name: string, width: number) {
-  const text = String(name || "").trim();
-  if (!text) return "";
-
-  const maxCharsPerLine = Math.max(4, Math.floor(width / 12));
-  if (text.length <= maxCharsPerLine) return text;
-
-  // 小尺寸时优先保持单行，避免文字被压成竖排
-  if (width < 72) {
-    return `${text.slice(0, Math.max(2, maxCharsPerLine - 1))}…`;
-  }
-
-  const secondLineLimit = Math.max(4, maxCharsPerLine - 1);
-  const firstLine = text.slice(0, maxCharsPerLine);
-  const remaining = text.slice(maxCharsPerLine).trim();
-  const secondLine =
-    remaining.length > secondLineLimit
-      ? `${remaining.slice(0, secondLineLimit)}…`
-      : remaining;
-
-  return secondLine ? `${firstLine}\n${secondLine}` : firstLine;
-}
-
 // removed in favor of typed enum helpers
 
 function DetailItem({
@@ -350,488 +223,6 @@ function DetailItem({
     </div>
   );
 }
-
-const DemoChart = memo(function DemoChart({
-  onSelect,
-  onBoothChange,
-  booths,
-  imageWidth,
-  imageHeight,
-  moduleMode,
-  getColor,
-}: {
-  onSelect: (item: {
-    code: string;
-    name: string;
-    area: string;
-    x: number;
-    y: number;
-    w: number;
-    h: number;
-  }) => void;
-  onBoothChange?: (boothId: string, boothName?: string) => void;
-  booths: DemoBooth[];
-  imageWidth: number | null;
-  imageHeight: number | null;
-  moduleMode: string;
-  getColor: (booth: DemoBooth, index: number) => string;
-}) {
-  const chartRef = useRef<HTMLDivElement | null>(null);
-  const chartInstance = useRef<echarts.EChartsType | null>(null);
-  const activeIndexRef = useRef(0);
-  const hasAppliedDefaultZoomRef = useRef(false);
-  const onSelectRef = useRef(onSelect);
-  const onBoothChangeRef = useRef(onBoothChange);
-  const getColorRef = useRef(getColor);
-  const pointsRef = useRef<any[]>([]);
-  const zoomLevelRef = useRef(1);
-  onSelectRef.current = onSelect;
-  onBoothChangeRef.current = onBoothChange;
-  getColorRef.current = getColor;
-  const points = useMemo(
-    () =>
-      booths.map((b, index) => ({
-        value: [b.center[0], b.center[1], b.width, b.height],
-        code: String(b.raw_texts?.[0] || b.booth_no || ""),
-        name: String(b.raw_texts?.[1] || b.exhibitor || ""),
-        area: String(b.area || ""),
-        color: getColor(b, index),
-        corners: b.corners,
-      })),
-    [booths, getColor],
-  );
-  pointsRef.current = points;
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const chart =
-      echarts.getInstanceByDom(chartRef.current) ??
-      echarts.init(chartRef.current, undefined, { renderer: "canvas" });
-    chartInstance.current = chart;
-    let disposed = false;
-    let resizeObserver: ResizeObserver | null = null;
-    let dataZoomRafId: number | null = null;
-    let resizeRafId: number | null = null;
-    let pendingDataZoom: (() => void) | null = null;
-    const prevDataIndexRef = { current: -1 };
-    const prevZoomLevelRef = { current: 1 };
-    const prevResizeDimsRef = { width: 0, height: 0 };
-
-    // --- Optimized hover: only downplay previous, highlight new ---
-    const focusPoint = (index: number) => {
-      const currentPoints = pointsRef.current;
-      if (!currentPoints.length || disposed || chart.isDisposed()) return;
-      const nextIndex =
-        ((index % currentPoints.length) + currentPoints.length) % currentPoints.length;
-      if (prevDataIndexRef.current === nextIndex) return; // same booth, skip
-      // Downplay only the previous highlighted item
-      if (prevDataIndexRef.current >= 0) {
-        chart.dispatchAction({ type: "downplay", seriesIndex: 0, dataIndex: prevDataIndexRef.current });
-      }
-      chart.dispatchAction({ type: "highlight", seriesIndex: 0, dataIndex: nextIndex });
-      prevDataIndexRef.current = nextIndex;
-      activeIndexRef.current = nextIndex;
-    };
-
-    // --- mouseout: only downplay current highlighted item ---
-    const handleMouseOut = () => {
-      if (prevDataIndexRef.current >= 0 && !disposed && !chart.isDisposed()) {
-        chart.dispatchAction({ type: "downplay", seriesIndex: 0, dataIndex: prevDataIndexRef.current });
-        prevDataIndexRef.current = -1;
-      }
-    };
-
-    if (!pointsRef.current.length) {
-      chart.clear();
-      chart.setOption({ backgroundColor: "transparent" }, true);
-      return () => {
-        disposed = true;
-        resizeObserver?.disconnect();
-        chart.off("click");
-        chart.off("mouseover");
-        chart.off("mouseout");
-        if (dataZoomRafId !== null) cancelAnimationFrame(dataZoomRafId);
-        if (resizeRafId !== null) cancelAnimationFrame(resizeRafId);
-      };
-    }
-
-    const baseWidth = Number.isFinite(imageWidth) ? imageWidth : 1;
-    const baseHeight = Number.isFinite(imageHeight) ? imageHeight : 1;
-    const containerWidth = chartRef.current.clientWidth || 1;
-    const containerHeight = chartRef.current.clientHeight || 1;
-    const baseRatio = baseWidth / baseHeight;
-    const containerRatio = containerWidth / containerHeight;
-    let gridWidth = containerWidth;
-    let gridHeight = containerHeight;
-    let gridLeft = 0;
-    let gridTop = 0;
-    if (containerRatio > baseRatio) {
-      gridHeight = containerHeight;
-      gridWidth = gridHeight * baseRatio;
-      gridLeft = (containerWidth - gridWidth) / 2;
-    } else {
-      gridWidth = containerWidth;
-      gridHeight = gridWidth / baseRatio;
-      gridTop = (containerHeight - gridHeight) / 2;
-    }
-    const gridRight = containerWidth - gridLeft - gridWidth;
-    const gridBottom = containerHeight - gridTop - gridHeight;
-    const coverScale = Math.max(
-      containerWidth / baseWidth,
-      containerHeight / baseHeight,
-    );
-    const visibleRatio = Math.max(
-      MIN_ZOOM_VISIBLE_RATIO,
-      Math.min(1, 1 / Math.max(coverScale, 1)) * 0.25,
-    );
-    const zoomStart = Math.max(0, ((1 - visibleRatio) / 2) * 100);
-    const zoomEnd = Math.min(100, zoomStart + visibleRatio * 100);
-
-    chart.setOption(
-      {
-        animation: false,
-        backgroundColor: "transparent",
-        grid: {
-          left: gridLeft,
-          right: gridRight,
-          top: gridTop,
-          bottom: gridBottom,
-          containLabel: false,
-        },
-        xAxis: {
-          min: 0,
-          max: baseWidth,
-          show: false,
-          type: "value",
-          splitLine: { show: false },
-          axisLine: { show: false },
-          axisTick: { show: false },
-        },
-        yAxis: {
-          min: 0,
-          max: baseHeight,
-          show: false,
-          inverse: true,
-          type: "value",
-          splitLine: { show: false },
-          axisLine: { show: false },
-          axisTick: { show: false },
-        },
-        dataZoom: [
-          {
-            type: "inside",
-            xAxisIndex: 0,
-            filterMode: "none",
-            zoomOnMouseWheel: true,
-            moveOnMouseMove: true,
-            preventDefaultMouseMove: true,
-            start: zoomStart,
-            end: zoomEnd,
-          },
-          {
-            type: "inside",
-            yAxisIndex: 0,
-            filterMode: "none",
-            zoomOnMouseWheel: true,
-            moveOnMouseMove: true,
-            preventDefaultMouseMove: true,
-            start: zoomStart,
-            end: zoomEnd,
-          },
-        ],
-        tooltip: {
-          trigger: "item",
-          backgroundColor: "rgba(7,18,34,0.96)",
-          borderColor: "transparent",
-          textStyle: { color: "#eaf6ff" },
-          formatter: (p: any) => {
-            const d = p?.data;
-            const v = d?.value;
-            if (!v) return "";
-            return [
-              `<b>${d?.code || "未编号"}</b>`,
-              `展商：${d?.name || ""}`,
-              `坐标：(${Math.round(v[0])}, ${Math.round(v[1])})`,
-              `尺寸：${Math.round(v[2])} × ${Math.round(v[3])}`,
-              d?.area ? `面积：${d.area}` : "",
-            ]
-              .filter(Boolean)
-              .join("<br/>");
-          },
-        },
-        series: [
-          {
-            type: "custom",
-            coordinateSystem: "cartesian2d",
-            cursor: "pointer",
-            data: [],
-            renderItem: (params: any, api: any) => {
-              const currentItem = pointsRef.current[params.dataIndex];
-              const code = String(currentItem?.code || "");
-              const name = String(currentItem?.name || "");
-              const color = String(currentItem?.color || "rgba(74, 163, 255, 0.28)");
-              const corners = currentItem?.corners;
-
-              const polygonPoints =
-                Array.isArray(corners) && corners.length >= 3
-                  ? corners
-                      .map((corner) => api.coord([Number(corner[0]), Number(corner[1])]))
-                      .filter((point: number[]) =>
-                        point.every((value) => Number.isFinite(value)),
-                      )
-                  : [];
-
-              const hasPolygon = polygonPoints.length >= 3;
-              const bboxBox = hasPolygon
-                ? null
-                : (() => {
-                    const x = Number(api.value(0));
-                    const y = Number(api.value(1));
-                    const w = Number(api.value(2));
-                    const h = Number(api.value(3));
-                    if (![x, y, w, h].every(Number.isFinite)) return null;
-                    const p1 = api.coord([x - w / 2, y - h / 2]);
-                    const p2 = api.coord([x + w / 2, y + h / 2]);
-                    if (![p1[0], p1[1], p2[0], p2[1]].every(Number.isFinite))
-                      return null;
-                    const width = p2[0] - p1[0];
-                    const height = p2[1] - p1[1];
-                    const x0 = p1[0];
-                    const y0 = p1[1];
-                    if (![x0, y0, width, height].every(Number.isFinite)) return null;
-                    return { x0, y0, width, height };
-                  })();
-
-              const x0 = hasPolygon ? Math.min(...polygonPoints.map((p) => p[0])) : bboxBox?.x0 ?? 0;
-              const y0 = hasPolygon ? Math.min(...polygonPoints.map((p) => p[1])) : bboxBox?.y0 ?? 0;
-              const width = hasPolygon
-                ? Math.max(...polygonPoints.map((p) => p[0])) - x0
-                : bboxBox?.width ?? 0;
-              const height = hasPolygon
-                ? Math.max(...polygonPoints.map((p) => p[1])) - y0
-                : bboxBox?.height ?? 0;
-              if (![x0, y0, width, height].every(Number.isFinite))
-                return { type: "group", children: [] };
-
-              const { codeSize, nameSize } = getFontSizes(width, height);
-              const zoomLevel = zoomLevelRef.current;
-              const isTinyZoom = zoomLevel >= MIN_ZOOM_VISIBLE_RATIO;
-              const shouldShowName = width > 16 && height > 12;
-              const shouldShowCode = width > 40 && height > 22;
-              const shouldWrapText = width > 92 && height > 34 && !isTinyZoom;
-              const nameText = shouldWrapText
-                ? wrapExhibitorName(name, width - 8)
-                : name;
-              const nameOverflow = isTinyZoom ? "truncate" : "break";
-              const codeBadgeWidth = Math.max(22, Math.min(width * 0.46, 48));
-              const codeBadgeHeight = Math.max(12, Math.min(height * 0.22, 18));
-              const codeBadgePadding = 3;
-              const children: any[] = [];
-
-              if (hasPolygon) {
-                children.push({
-                  type: "polygon",
-                  shape: { points: polygonPoints },
-                  style: {
-                    fill: color,
-                  },
-                });
-              } else {
-                children.push(
-                  {
-                    type: "rect",
-                    shape: { x: x0, y: y0, width, height },
-                    style: {
-                      fill: color,
-                    },
-                  },
-                );
-              }
-              if (shouldShowName) {
-                children.push({
-                  type: "text",
-                  style: {
-                    x: x0 + width / 2,
-                    y: y0 + height / 2,
-                    text: nameText,
-                    fill: "#f2f8ff",
-                    font: `700 ${nameSize}px sans-serif`,
-                    textAlign: "center",
-                    textVerticalAlign: "middle",
-                    width: Math.max(0, width - 16),
-                    height: Math.max(0, height - 16),
-                    lineHeight: Math.max(12, Math.round(nameSize * 1.18)),
-                    overflow: nameOverflow,
-                  },
-                });
-              }
-              if (shouldShowCode && !isTinyZoom) {
-                children.push({
-                  type: "rect",
-                  shape: {
-                    x: x0 + width - codeBadgeWidth - codeBadgePadding,
-                    y: y0 + codeBadgePadding,
-                    width: codeBadgeWidth,
-                    height: codeBadgeHeight,
-                  },
-                  style: {
-                    fill: "rgba(8, 22, 44, 0.72)",
-                    r: 4,
-                  },
-                });
-                children.push({
-                  type: "text",
-                  style: {
-                    x: x0 + width - codeBadgePadding - codeBadgeWidth / 2,
-                    y: y0 + codeBadgePadding + codeBadgeHeight / 2,
-                    text: code,
-                    fill: "#d6ebff",
-                    font: `${codeSize}px sans-serif`,
-                    textAlign: "center",
-                    textVerticalAlign: "middle",
-                    width: Math.max(0, codeBadgeWidth - 6),
-                    height: codeBadgeHeight,
-                    overflow: "truncate",
-                    ellipsis: "...",
-                  },
-                });
-              }
-              return { type: "group", children };
-            },
-          },
-        ],
-        graphic: [],
-      },
-      true,
-    );
-
-    const handleChartClick = (params: any) => {
-      if (params.componentType === "series" && params.seriesType === "custom") {
-        const currentPoints = pointsRef.current;
-        const clickedIndex = params.dataIndex;
-        const clickedBooth = currentPoints[clickedIndex];
-        if (!clickedBooth) return;
-        onSelectRef.current({
-          code: clickedBooth.code,
-          name: clickedBooth.name,
-          area: clickedBooth.area,
-          x: clickedBooth.value[0],
-          y: clickedBooth.value[1],
-          w: clickedBooth.value[2],
-          h: clickedBooth.value[3],
-        });
-        onBoothChangeRef.current?.(clickedBooth.code, clickedBooth.name);
-      }
-    };
-
-    // --- Optimized datazoom: rAF-merged, no getOption/refreshImmediately ---
-    const TEXT_LEVEL_THRESHOLD = MIN_ZOOM_VISIBLE_RATIO;
-    const handleDataZoom = (params: any) => {
-      // Compatible: batch[0] or direct params
-      const zoom = params?.batch?.[0] ?? params;
-      if (typeof zoom?.start !== "number" || typeof zoom?.end !== "number") return;
-      const newLevel = Math.max(0.01, (zoom.end - zoom.start) / 100);
-      zoomLevelRef.current = newLevel;
-
-      // Only update series when crossing text visibility threshold
-      const wasShowingText = prevZoomLevelRef.current >= TEXT_LEVEL_THRESHOLD;
-      const isShowingText = newLevel >= TEXT_LEVEL_THRESHOLD;
-      if (wasShowingText !== isShowingText) {
-        prevZoomLevelRef.current = newLevel;
-        pendingDataZoom = () => {
-          if (disposed || chart.isDisposed()) return;
-          chart.setOption({ series: [{ data: pointsRef.current }] }, false, true);
-        };
-        if (dataZoomRafId === null) {
-          dataZoomRafId = requestAnimationFrame(() => {
-            dataZoomRafId = null;
-            const fn = pendingDataZoom;
-            pendingDataZoom = null;
-            fn?.();
-          });
-        }
-      }
-    };
-
-    const handleMouseOver = (params: any) => {
-      if (params.componentType !== "series" || params.seriesType !== "custom")
-        return;
-      const hoveredIndex = params.dataIndex;
-      if (typeof hoveredIndex === "number") {
-        focusPoint(hoveredIndex);
-      }
-    };
-
-    chart.off("click");
-    chart.off("mouseover");
-    chart.off("mouseout");
-    chart.off("datazoom");
-    chart.on("click", handleChartClick);
-    chart.on("mouseover", handleMouseOver);
-    chart.on("mouseout", handleMouseOut);
-    chart.on("datazoom", handleDataZoom);
-
-    // --- Optimized ResizeObserver: separate rAF, skip no-change ---
-    prevResizeDimsRef.width = chartRef.current.clientWidth || 0;
-    prevResizeDimsRef.height = chartRef.current.clientHeight || 0;
-    resizeObserver = new ResizeObserver(() => {
-      if (disposed || chart.isDisposed()) return;
-      const w = chartRef.current?.clientWidth || 0;
-      const h = chartRef.current?.clientHeight || 0;
-      if (w <= 0 || h <= 0) return; // guard: skip when container has no size
-      if (w === prevResizeDimsRef.width && h === prevResizeDimsRef.height) return;
-      prevResizeDimsRef.width = w;
-      prevResizeDimsRef.height = h;
-      if (resizeRafId === null) {
-        resizeRafId = requestAnimationFrame(() => {
-          resizeRafId = null;
-          if (!disposed && !chart.isDisposed()) chart.resize();
-        });
-      }
-    });
-    resizeObserver.observe(chartRef.current);
-
-    return () => {
-      disposed = true;
-      if (dataZoomRafId !== null) {
-        cancelAnimationFrame(dataZoomRafId);
-        dataZoomRafId = null;
-      }
-      if (resizeRafId !== null) {
-        cancelAnimationFrame(resizeRafId);
-        resizeRafId = null;
-      }
-      resizeObserver?.disconnect();
-      chart.off("click", handleChartClick);
-      chart.off("mouseover", handleMouseOver);
-      chart.off("mouseout", handleMouseOut);
-      chart.off("datazoom", handleDataZoom);
-      if (!chart.isDisposed()) chart.dispose();
-    };
-  }, [imageWidth, imageHeight]);
-
-  useEffect(() => {
-    const chart = chartInstance.current;
-    if (!chart || chart.isDisposed()) return;
-    chart.setOption(
-      {
-        series: [
-          {
-            data: pointsRef.current,
-          },
-        ],
-      },
-      false,
-      true,
-    );
-  }, [points]);
-
-  return (
-    <div className="relative h-full w-full overflow-hidden">
-      <div ref={chartRef} className="absolute inset-0" />
-    </div>
-  );
-});
 
 export default function CenterMap({
   mode = "all",
@@ -886,21 +277,25 @@ export default function CenterMap({
     useState<ConstructDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [imageWidth, setImageWidth] = useState(3640);
-  const [imageHeight, setImageHeight] = useState(7070);
-  const [booths, setBooths] = useState<DemoBooth[]>([]);
   const [orderInfos, setOrderInfos] = useState<BoothOrderInfo[]>([]);
   const [constructLoading, setConstructLoading] = useState(false);
-  const safetyCoordCacheRef = useRef<
-    Record<
-      string,
-      {
-        imageWidth: number | null;
-        imageHeight: number | null;
-        booths: DemoBooth[];
-      }
-    >
-  >({});
+
+  // HallData: 根据 mode 映射到对应的 mock 数据
+  const hallData = useMemo<HallData | null>(() => {
+    if (mode === "all") return null;
+    const halls = initData?.halls ?? [];
+    // 第一个展馆对应 1号馆 = 北京方案展
+    // 第二个展馆对应 2号馆 = 首钢会展中心4号馆1层
+    const hallIndex = halls.findIndex((h) => h.hallId === mode);
+    if (hallIndex === 0) {
+      return transformMockToHallData(mockBeijing as any, halls[0]?.hallName || "1号馆");
+    }
+    if (hallIndex === 1) {
+      return transformMockToHallData(mockShougang as any, halls[1]?.hallName || "2号馆");
+    }
+    // 其他展馆暂时返回 null
+    return null;
+  }, [mode, initData?.halls]);
   const safetyInfoList = useMemo(
     () => safetyDetail?.safetyInfoList ?? [],
     [safetyDetail],
@@ -933,7 +328,7 @@ export default function CenterMap({
             dataStr: string;
             hallId?: string;
             hallName?: string;
-          } => Boolean(item.address),
+          } => Boolean(item?.address),
         ) ?? [],
     [safetyDetail],
   );
@@ -968,55 +363,6 @@ export default function CenterMap({
     setSafetyDetail(null);
     setDetailOpen(false);
   }, [mode, compact, moduleMode]);
-
-  useEffect(() => {
-    const fetchSafetyCoord = async () => {
-      if (mode === "all") {
-        setBooths([]);
-        return;
-      }
-
-      const hallId = mode;
-      if (!hallId) {
-        setBooths([]);
-        return;
-      }
-
-      const cached = safetyCoordCacheRef.current[hallId];
-      if (cached) {
-        setImageWidth(cached.imageWidth);
-        setImageHeight(cached.imageHeight);
-        setBooths(cached.booths);
-        return;
-      }
-
-      try {
-        const response = await screenApi.getSafetyCoordByHallId(hallId);
-        const normalized = normalizeSafetyCoordResponse(
-          response as SafetyCoordResponse,
-        );
-        const nextBooths = normalized.booths
-          .map(normalizeBooth)
-          .filter(Boolean) as DemoBooth[];
-        safetyCoordCacheRef.current[hallId] = {
-          imageWidth: normalized.imageWidth,
-          imageHeight: normalized.imageHeight,
-          booths: nextBooths,
-        };
-        setImageWidth(normalized.imageWidth);
-        setImageHeight(normalized.imageHeight);
-        setBooths(nextBooths);
-        //console.log('[CenterMap] safetyCoordCacheRef', JSON.stringify(safetyCoordCacheRef.current, null, 2));
-      } catch (error) {
-        console.error("获取安全坐标失败", error);
-        setBooths([]);
-        const details = error instanceof Error ? error.message : "未知错误";
-        message.error(`安全坐标加载失败：${details}`);
-      }
-    };
-
-    void fetchSafetyCoord();
-  }, [mode]);
 
   const detailRequestSeqRef = useRef(0);
   const handleSelect = useCallback(
@@ -1125,6 +471,24 @@ export default function CenterMap({
       }
     },
     [initData?.exhibitionId, moduleMode, mode],
+  );
+
+  // HallMap 展位点击回调
+  const handleBoothClick = useCallback(
+    (booth: HallBooth) => {
+      const code = booth.boothNo || booth.id;
+      handleSelect({
+        code,
+        name: booth.name,
+        area: booth.area || "",
+        x: booth.polygon[0]?.[0] ?? 0,
+        y: booth.polygon[0]?.[1] ?? 0,
+        w: booth.polygon[1]?.[0] ? booth.polygon[1][0] - booth.polygon[0][0] : 0,
+        h: booth.polygon[2]?.[1] ? booth.polygon[2][1] - booth.polygon[0][1] : 0,
+      });
+      onBoothChange?.(code, booth.name);
+    },
+    [handleSelect, onBoothChange],
   );
 
   useEffect(() => {
@@ -1319,15 +683,10 @@ export default function CenterMap({
                   activeHallId={mode}
                   onHallSelect={onModeChange}
                 />
-              ) : booths.length ? (
-                <DemoChart
-                  onSelect={handleSelect}
-                  onBoothChange={onBoothChange}
-                  booths={booths}
-                  imageWidth={imageWidth}
-                  imageHeight={imageHeight}
-                  moduleMode={moduleMode}
-                  getColor={getColor}
+              ) : hallData ? (
+                <HallMap
+                  hallData={hallData}
+                  onBoothClick={handleBoothClick}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
