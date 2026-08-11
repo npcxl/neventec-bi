@@ -14,8 +14,8 @@ const Button = ({ children, mode, active = false, onModeChange }: ButtonProps) =
   };
 
   const isAll = mode === "all";
-  const defaultImg = isAll ? "/img/全部展馆.png" : "/img/按钮-展馆-默认.png";
-  const activeImg = isAll ? "/img/全部展馆-选中.png" : "/img/按钮-展馆-选中.png";
+  const defaultImg = isAll ? "/img/all-halls.png" : "/img/btn-hall-default.png";
+  const activeImg = isAll ? "/img/all-halls-active.png" : "/img/btn-hall-active.png";
 
   return (
     <button

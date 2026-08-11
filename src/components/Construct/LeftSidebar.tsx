@@ -7,9 +7,9 @@ import { screenApi } from "../../api";
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-12 px-3 shrink-0">
-      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-3">{title}</span>
+    <div className="relative h-12  shrink-0">
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+        <span className="pl-6 pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
@@ -28,14 +28,14 @@ function ProgressRow({ item }: { item: { name: string; completion: number; comme
       className="grid flex-shrink-0 items-center gap-[10px] px-4 py-1"
       style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px', height: ROW_HEIGHT }}
     >
-      <span className="truncate text-xs text-[#93aed0]">{item.name || '-'}</span>
+      <span className="truncate text-[14px] text-[#93aed0]">{item.name || '-'}</span>
       <div className="progress-track h-[20px] overflow-hidden rounded">
         <div
           className="progress-fill h-full rounded"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-right text-xs tabular-nums text-[#dbeeff]">{pct}%</span>
+      <span className="text-right text-[14px] tabular-nums text-[#dbeeff]">{pct}%</span>
     </div>
   );
 }
@@ -217,7 +217,7 @@ export function ConstructLeftSidebar({
   }, [exhibitionProcessData]);
 
   return (
-    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 xl:gap-3 overflow-hidden">
+    <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 xl:gap-3 overflow-hidden" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
       {/* Progress overview — progress bars with page switching */}
       <section className="shrink-0 overflow-hidden">
         <PanelTitle title="搭建进程总览" />
@@ -233,8 +233,8 @@ export function ConstructLeftSidebar({
       {/* Process detail */}
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PanelTitle title="搭建进度明细" />
-        <div className="flex min-h-0 flex-1 flex-col px-3 pb-3 pt-1">
-          <div className="grid min-w-0 shrink-0 grid-cols-[20%_15%_40%_20%] gap-2 overflow-hidden px-3 py-1.5 text-xs text-[#93aed0] border-b border-[rgba(111,170,255,0.1)]">
+        <div className="flex min-h-0 flex-1 flex-col px-[16px] py-[8px] min-w-0">
+          <div className="grid min-w-0 shrink-0 grid-cols-[20%_15%_40%_20%] gap-2 overflow-hidden px-3 py-1.5 text-[14px] text-[#93aed0] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
             <span className="block truncate whitespace-nowrap text-center">展位号</span>
             <span className="block truncate whitespace-nowrap text-center">面积</span>
             <span className="block truncate whitespace-nowrap text-center">最新进程</span>
@@ -267,7 +267,7 @@ export function ConstructLeftSidebar({
                   return (
                     <div
                       onClick={() => handleRowClick(row)}
-                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[12px] leading-tight xl:gap-2 xl:px-3 xl:text-[12px] max-[768px]:text-[11px] max-[640px]:px-2 max-[640px]:text-[10px]${isSelected ? ' is-selected' : ''}`}
+                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[14px] leading-tight border-b border-dashed border-[#334155]${isSelected ? ' is-selected' : ''}`}
                     >
                       <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
                         <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">

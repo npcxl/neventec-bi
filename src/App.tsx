@@ -1,11 +1,13 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { Flex, Image } from "antd";
+import ScreenAdapter from "./components/ScreenAdapter";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { ExhibitionLeftSidebar } from "./components/Exhibition/LeftSidebar";
 import { ExhibitionRightSidebar } from "./components/Exhibition/RightSidebar";
 import { ConstructLeftSidebar } from "./components/Construct/LeftSidebar";
 import { ConstructRightSidebar } from "./components/Construct/RightSidebar";
 import { ConstructFloatCards } from "./components/Construct/ConstructFloatCards";
+import { SafetyFloatCards } from "./components/Safety/SafetyFloatCards";
 import { SafetyLeftSidebar } from "./components/Safety/LeftSidebar";
 import { SafetyRightSidebar } from "./components/Safety/RightSidebar";
 import CenterMap from "./components/CenterMap";
@@ -16,7 +18,7 @@ import Button2 from "./components/Button2";
 import ConstructCarousel from "./components/Construct/ConstructCarousel";
 import SafetyCarousel from "./components/Safety/ConstructCarousel";
 import { useSequentialApiPolling } from "./hooks/useSequentialApiPolling";
-import { dashboardLayoutConfig } from "./config/dashboardLayout.config";
+import { dashboardLayoutConfig, setOrientation, type DashboardOrientation } from "./config/dashboardLayout.config";
 
 const STORAGE_KEY_PREFIX = "db-demo:app-prefs:v3";
 type HallSummary = {
@@ -231,6 +233,7 @@ const MenuButtonGroup = memo(function MenuButtonGroup({
 
 const CurrentTimeButton = memo(function CurrentTimeButton() {
   const [currentTime, setCurrentTime] = useState(() => new Date());
+  const [layout, setLayout] = useState<DashboardOrientation>(dashboardLayoutConfig.orientation);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -239,16 +242,29 @@ const CurrentTimeButton = memo(function CurrentTimeButton() {
     return () => window.clearInterval(timer);
   }, []);
 
+  const handleLayoutChange = (value: DashboardOrientation) => {
+    setLayout(value);
+    setOrientation(value);
+    // 通知 App 重新读取布局配置
+    (window as any).__setLayoutVersion?.();
+  };
+
   return (
-    <div className="absolute right-2 top-[40px]">
-      <div className="text-[clamp(12px,0.9vw,14px)] text-[#dbeeff]">
-        <Button2 mode="refresh-current-time" onModeChange={() => setCurrentTime(new Date())}>
-          当前时间：{" "}
-          <span className="font-medium text-white">
-            {formatCurrentTime(currentTime)}
-          </span>
-        </Button2>
-      </div>
+    <div className="absolute right-2 top-[40px] z-30 flex items-center gap-2 text-[13px] text-[#dbeeff]">
+      <select
+        value={layout}
+        onChange={(e) => handleLayoutChange(e.target.value as DashboardOrientation)}
+        className="rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.85)] px-2 py-1 text-[13px] text-white outline-none cursor-pointer hover:border-[#2563EB]/70"
+      >
+        <option value="landscape">横版显示</option>
+        <option value="portrait">竖版显示</option>
+      </select>
+      <Button2 mode="refresh-current-time" onModeChange={() => setCurrentTime(new Date())}>
+        当前时间：{" "}
+        <span className="font-medium text-white">
+          {formatCurrentTime(currentTime)}
+        </span>
+      </Button2>
     </div>
   );
 });
@@ -1621,50 +1637,30 @@ export default function App() {
   //   };
   // }, [hallMode, selectedHallId, viewMode]);
 
-  const pagePadding = "px-[clamp(12px,1.4vw,24px)]";
-  const pageGap = "gap-[clamp(12px,1.1vw,20px)]";
-  const fontScaleClass = "text-[clamp(12px,0.78vw,16px)]";
+  const [layoutVersion, setLayoutVersion] = useState(0);
   const isLandscape = dashboardLayoutConfig.orientation === "landscape";
 
+  // 暴露全局方法给 CurrentTimeButton 调用
+  useEffect(() => {
+    (window as any).__setLayoutVersion = () => setLayoutVersion((n) => n + 1);
+    return () => { delete (window as any).__setLayoutVersion; };
+  }, []);
+
   return (
-    <div
-      className={`relative h-dvh w-screen overflow-hidden text-slate-100 ${fontScaleClass}`}
-      style={{ backgroundColor: "#020A25" }}
-    >
+    <ScreenAdapter>
       {isInitialLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(4,13,24,0.86)] backdrop-blur-sm">
           <Loader />
         </div>
       )}
-      {/* 内容区 - 包在边框内部 */}
-      <div className="relative h-full w-full overflow-hidden px-[clamp(12px,1.5vw,24px)] pt-0 pb-[30px]">
+      {/* 内容区 */}
+      <div className="relative h-full w-full overflow-hidden pt-0 pb-[30px] text-slate-100" style={{ fontSize: 16 }}>
         {/* 边框背景图 */}
-        <div aria-hidden className="pointer-events-none absolute bottom-[-260px] inset-0 z-20 bg-[url('/img/背景边框.png')] bg-[length:100%_60%] bg-center bg-no-repeat" />
+        <div aria-hidden className="pointer-events-none absolute bottom-[-150px] inset-0 z-20 bg-[url('/img/bg-border.png')] bg-[length:100%_74%] bg-center bg-no-repeat" />
         <Flex
           vertical
-          className={`relative z-10 mx-auto h-full w-full min-w-0 overflow-hidden pb-[clamp(12px,1.2vw,24px)] 2xl:max-w-[1920px]`}
+          className="relative z-10 mx-auto h-full w-full min-w-0 overflow-hidden pb-[18px]"
         >
-        <div className="pointer-events-none absolute left-0 top-[clamp(56px,4.8vw,72px)] z-0 hidden h-[calc(100%-128px)] w-auto overflow-hidden select-none xl:block 2xl:left-[-18px]">
-          <Image
-            src="/img/zuo@2x.png"
-            alt=""
-            preview={{ src: "/img/zuo@2x.png" }}
-            aria-hidden
-            className="h-full w-auto animate-float-slow opacity-85 xl:max-h-[calc(100vh-156px)]"
-          />
-        </div>
-        <div className="pointer-events-none absolute right-0 top-[clamp(56px,4.8vw,72px)] z-0 hidden h-[calc(100%-128px)] w-auto overflow-hidden select-none xl:block 2xl:right-[-18px]">
-          <Image
-            src="/img/you@2x.png"
-            alt=""
-            preview={{ src: "/img/you@2x.png" }}
-            aria-hidden
-            className="h-full w-auto animate-float-slow opacity-85 [animation-delay:1.2s] xl:max-h-[calc(100vh-156px)]"
-          />
-        </div>
-        {/* <div className="pointer-events-none absolute bottom-0 left-1/2 z-20 w-[calc(100%-16px)] max-w-none -translate-x-1/2 select-none sm:w-[calc(100%-24px)] lg:w-[calc(100%-32px)] xl:w-[calc(100%-40px)] 2xl:w-[calc(100%-56px)]">
-          <img src="/img/dibiao@2x.png" alt="" aria-hidden className="block h-auto w-full max-w-none opacity-95 drop-shadow-[0_0_18px_rgba(0,229,255,0.12)]" />
-        </div> */}
 
         <Flex
           vertical
@@ -1679,7 +1675,7 @@ export default function App() {
           ) : (
             <>
               <DashboardHeader title={expoName} />
-              {hallMode === "ConstructOverview" && selectedHallId !== "all" && (
+              {hallMode === "ConstructOverview" && selectedHallId !== "all" && isLandscape && (
                 <ConstructFloatCards />
               )}
               <MenuButtonGroup
@@ -1688,11 +1684,9 @@ export default function App() {
               />
               <CurrentTimeButton />
               {isLandscape ? (
-                /* ===== LANDSCAPE: 2-column layout =====
-                   Left: left sidebar (same width as portrait)
-                   Right: [top=center map (62%)] / [bottom=right sidebar (38%, scrollable)] */
+                /* ===== LANDSCAPE: 2-column layout ===== */
                 <main
-                  className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,1fr)] lg:grid-cols-[minmax(340px,26%)_minmax(0,1fr)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,1fr)]`}
+                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)] gap-[18px] overflow-hidden pl-[51px] pr-[18px] pb-[14px] pt-[10px]"
                 >
                   {hallMode === "ExhibitionOverview" && (
                     <>
@@ -1757,7 +1751,7 @@ export default function App() {
                             onBoothChange={(boothId) => setSelectedBoothId(boothId)}
                             initData={initData}
                             boothRows={boothRows}
-                            safetyRows={safetyRows}
+                            safetyRows={safetyRows}  
                             constructProcessRows={(Array.isArray(constructProcessData)
                               ? constructProcessData
                               : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
@@ -1825,7 +1819,7 @@ export default function App() {
               ) : (
                 /* ===== PORTRAIT: original 3-column layout ===== */
                 <main
-                  className={`grid min-h-0 flex-1 grid-cols-1 ${pageGap} overflow-hidden px-[clamp(10px,1vw,20px)] pb-[clamp(10px,1vw,18px)] pt-[clamp(8px,0.8vw,14px)] md:grid-cols-[minmax(320px,26%)_minmax(0,48%)_minmax(320px,26%)] lg:grid-cols-[minmax(340px,26%)_minmax(0,48%)_minmax(340px,26%)] 2xl:grid-cols-[minmax(360px,26%)_minmax(0,48%)_minmax(360px,26%)]`}
+                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)_448px]  overflow-hidden pl-[51px] pb-[14px] pt-[10px] pr-[49px]"
                 >
                   {hallMode === "ExhibitionOverview" && (
                     <>
@@ -1852,41 +1846,31 @@ export default function App() {
                   {hallMode === "ConstructOverview" && (
                     <>
                       <ConstructLeftSidebar {...constructLeftSidebarProps} />
-                      <Flex
-                        vertical
-                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                      >
-                        <div className="flex min-h-0 flex-[0.66] min-w-0">
-                          <CenterMap
-                            mode={selectedHallId}
-                            moduleMode={hallMode}
-                            onModeChange={setSelectedHallId}
-                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
-                            initData={initData}
-                            boothRows={boothRows}
-                            safetyRows={safetyRows}
-                            constructProcessRows={(Array.isArray(constructProcessData)
-                              ? constructProcessData
-                              : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
-                            ).map((item: any) => ({
-                              boothId: item.boothId ?? item.boothID ?? item.booth_id,
-                              boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
-                              boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
-                              progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
-                            }))}
-                            galleryRows={galleryRows}
-                            compact={hallMode === "ConstructOverview"}
-                          />
-                        </div>
-                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                            <ConstructCarousel
-                              pictures={constructCarouselPicturesMemo}
-                              loading={constructCarouselLoading}
-                            />
-                          </div>
-                        </section>
-                      </Flex>
+                      <div className="flex h-full min-h-0 min-w-0 overflow-hidden relative">
+                        <CenterMap
+                          mode={selectedHallId}
+                          moduleMode={hallMode}
+                          onModeChange={setSelectedHallId}
+                          onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                          initData={initData}
+                          boothRows={boothRows}
+                          safetyRows={safetyRows}
+                          constructProcessRows={(Array.isArray(constructProcessData)
+                            ? constructProcessData
+                            : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
+                          ).map((item: any) => ({
+                            boothId: item.boothId ?? item.boothID ?? item.booth_id,
+                            boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
+                            boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
+                            progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                          }))}
+                          galleryRows={galleryRows}
+                          compact={hallMode === "ConstructOverview"}
+                        />
+                        {selectedHallId !== "all" && (
+                          <ConstructFloatCards variant="portrait" />
+                        )}
+                      </div>
                       <ConstructRightSidebar {...constructRightSidebarProps} />
                     </>
                   )}
@@ -1894,32 +1878,22 @@ export default function App() {
                   {hallMode === "SafetyOverview" && (
                     <>
                       <SafetyLeftSidebar {...safetyLeftSidebarProps} />
-                      <Flex
-                        vertical
-                        className="min-h-0 min-w-0 gap-[clamp(12px,1.1vw,18px)] overflow-hidden"
-                      >
-                        <div className="flex min-h-0 flex-[0.66] min-w-0">
-                          <CenterMap
-                            mode={selectedHallId}
-                            moduleMode={hallMode}
-                            onModeChange={setSelectedHallId}
-                            onBoothChange={(boothId) => setSelectedBoothId(boothId)}
-                            initData={initData}
-                            boothRows={boothRows}
-                            safetyRows={safetyRows}
-                            galleryRows={galleryRows}
-                            compact={hallMode === "SafetyOverview"}
-                          />
-                        </div>
-                        <section className="flex min-h-0 flex-[0.34] min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(128,185,255,0.28)] bg-[linear-gradient(180deg,rgba(9,26,52,0.88),rgba(6,17,34,0.94))] shadow-[inset_0_0_24px_rgba(80,157,255,0.08)] backdrop-blur-sm">
-                          <div className="min-h-0 flex-1 overflow-hidden px-[clamp(12px,1vw,16px)] py-[clamp(12px,1vw,16px)]">
-                            <SafetyCarousel
-                              pictures={safetyCarouselPicturesMemo}
-                              loading={safetyCarouselLoading}
-                            />
-                          </div>
-                        </section>
-                      </Flex>
+                      <div className="flex h-full min-h-0 min-w-0 overflow-hidden relative">
+                        <CenterMap
+                          mode={selectedHallId}
+                          moduleMode={hallMode}
+                          onModeChange={setSelectedHallId}
+                          onBoothChange={(boothId) => setSelectedBoothId(boothId)}
+                          initData={initData}
+                          boothRows={boothRows}
+                          safetyRows={safetyRows}
+                          galleryRows={galleryRows}
+                          compact={hallMode === "SafetyOverview"}
+                        />
+                        {selectedHallId !== "all" && (
+                          <SafetyFloatCards variant="portrait" />
+                        )}
+                      </div>
                       <SafetyRightSidebar {...safetyRightSidebarProps} />
                     </>
                   )}
@@ -1930,6 +1904,6 @@ export default function App() {
         </Flex>
       </Flex>
       </div>
-    </div>
+    </ScreenAdapter>
   );
 }

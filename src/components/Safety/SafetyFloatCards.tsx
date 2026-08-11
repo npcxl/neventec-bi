@@ -1,6 +1,7 @@
 /* ============================================
    浮动玻璃感信息卡（安全风险预警 + 关键工序）
-   地图右上角悬浮，现场安全 + 已选展馆时显示
+   横版：地图右上角悬浮
+   竖版：absolute 覆盖在地图底部，上下两行
    ============================================ */
 
 import { Card, Flex, Typography } from 'antd';
@@ -70,7 +71,47 @@ function LegendItem({ color, label, icon }: { color: string; label: string; icon
   );
 }
 
-export function SafetyFloatCards() {
+export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrait' }) {
+  const isPortrait = variant === 'portrait';
+
+  if (isPortrait) {
+    return (
+      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-col gap-2 pointer-events-none">
+        {/* 第一行：安全风险预警 - 4个横向 */}
+        <Card
+          size="small"
+          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          styles={{
+            header: { display: 'none' },
+            body: bodyStyle,
+          }}
+        >
+          <Flex gap={20} align="center" wrap>
+            {RISK_LEGEND.map((item) => (
+              <LegendItem key={item.label} {...item} />
+            ))}
+          </Flex>
+        </Card>
+
+        {/* 第二行：关键工序 - 3个横向 */}
+        <Card
+          size="small"
+          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          styles={{
+            header: { display: 'none' },
+            body: bodyStyle,
+          }}
+        >
+          <Flex gap={20} align="center" wrap>
+            {PROCESS_LEGEND.map((item) => (
+              <LegendItem key={item.label} {...item} />
+            ))}
+          </Flex>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: 'fixed',

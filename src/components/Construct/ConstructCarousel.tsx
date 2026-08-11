@@ -23,6 +23,8 @@ type Props = {
   records?: ConstructTimelineItem[];
   title?: string;
   loading?: boolean;
+  /** 竖版模式：上下滚动 */
+  vertical?: boolean;
 };
 
 function ConstructCarousel({
@@ -30,6 +32,7 @@ function ConstructCarousel({
   records = [],
   title,
   loading = false,
+  vertical = false,
 }: Props) {
   const normalizedPictures = useMemo(
     () =>
@@ -61,6 +64,64 @@ function ConstructCarousel({
         暂无数据
       </div>
     );
+
+  // 竖版：自动垂直滚动（CSS animation）
+  if (vertical) {
+    const cardHeight = 192;
+    const totalHeight = normalizedPictures.length * cardHeight;
+    const duration = Math.max(12, normalizedPictures.length * 4);
+    const style = {
+      '--demo-br2-scroll-distance': `-${totalHeight}px`,
+      '--demo-br2-scroll-duration': `${duration}s`,
+    } as React.CSSProperties;
+
+    return (
+      <div className="relative h-full overflow-hidden rounded-xl bg-[rgba(8,23,42,0.72)]">
+        <div className="demo-br2-scroll-track flex flex-col gap-3 p-3" style={style}>
+          {normalizedPictures.map((item, index) => (
+            <div
+              key={`a-${index}-${item.address}`}
+              className="flex-shrink-0 overflow-hidden rounded-lg bg-[rgba(5,15,28,0.9)]"
+            >
+              <div className="relative flex items-center justify-center overflow-hidden bg-black/10">
+                <Image
+                  src={item.address}
+                  alt={item.dataStr || `图片-${index + 1}`}
+                  preview={{ src: item.address }}
+                  className="h-[150px] w-full object-cover"
+                />
+              </div>
+              <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg px-3">
+                <span className="text-[14px] font-semibold text-[#cffafe]">
+                  {item.boothNo} - {item.exhibitor}
+                </span>
+              </div>
+            </div>
+          ))}
+          {normalizedPictures.map((item, index) => (
+            <div
+              key={`b-${index}-${item.address}`}
+              className="flex-shrink-0 overflow-hidden rounded-lg bg-[rgba(5,15,28,0.9)]"
+            >
+              <div className="relative flex items-center justify-center overflow-hidden bg-black/10">
+                <Image
+                  src={item.address}
+                  alt={item.dataStr || `图片-${index + 1}`}
+                  preview={{ src: item.address }}
+                  className="h-[150px] w-full object-cover"
+                />
+              </div>
+              <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg px-3">
+                <span className="text-[14px] font-semibold text-[#cffafe]">
+                  {item.boothNo} - {item.exhibitor}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

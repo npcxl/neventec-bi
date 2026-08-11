@@ -25,16 +25,16 @@ function isReported(row: BoothRow) {
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-12 px-3">
-      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-3">{title}</span>
+    <div className="relative h-12">
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+        <span className="pl-[8px] pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
 }
 
 type OrderItem = { name: string; num: number };
-     
+
 function normalizeOrderCollect(data: unknown): OrderItem[] {
   if (Array.isArray(data)) return data as OrderItem[];
   if (data && typeof data === "object") {
@@ -93,20 +93,29 @@ export function ExhibitionRightSidebar({
           </div>
         ) : (
           <>
-            {/* 已缴费 / 未缴费 汇总 */}
-            <div className="flex items-center justify-between py-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm text-[rgba(255,255,255,0.8)]">已缴费</span>
-                <span className="text-sm font-medium text-[#63F222]">{paidCount}</span>
+            {/* 已缴费 / 未缴费 汇总 + 环形进度图（仅竖版显示） */}
+            {!isLandscape && (
+              <div className="flex items-center gap-3 py-1 relative">
+                <PieRing percent={Number(paidRate)} color2="#2563EB" color1="#7DE3F7" size={110} />
+                <div className="absolute top-[40px] left-[25px] flex flex-col items-center justify-center">
+                  <div className="text-[rgba(255, 255, 255, 0.80)];">
+                    <span className="text-[12px]">缴费完成率</span>
+                  </div>
+                  <div>
+                    <span className="text-[20px] bold-500"> {paidRate}%</span>
+                  </div>
+                </div>
+                <div className="gap-[16px] ml-[57px]">
+                  <div className="mb-4">
+                    <span className="text-[24px] bold-700"> {paidCount}</span> / <span>{totalBooth}  </span>
+                  </div>
+                  <div>
+                    <span className="text-[14px]">已缴费</span> <span className="text-[14px] text-[#63F222]">{paidCount}</span>
+                    <span className="ml-[42px] text-[14px]">未缴费</span> <span className="text-[14px] text-[#F5222D]">{unpaidCount}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm text-[rgba(255,255,255,0.8)]">未缴费</span>
-                <span className="text-sm font-medium text-[#F5222D]">{unpaidCount}</span>
-              </div>
-              <div className="text-sm text-[rgba(255,255,255,0.6)]">
-                共 {totalBooth} 个
-              </div>
-            </div>
+            )}
             <div className="mt-1 flex border-b border-[rgba(255,255,255,0.1)]">
               <button
                 className={`flex-1 pb-2 text-center text-sm transition-colors ${payMode === "paid" ? "text-[#93C5FD] border-b-2 border-[#93C5FD]" : "text-[#738AA9] border-b-2 border-transparent"}`}
@@ -121,22 +130,22 @@ export function ExhibitionRightSidebar({
                 未缴费 {unpaidCount}
               </button>
             </div>
-            <div className="mt-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-md bg-black/10">
-              <div className="grid flex-none grid-cols-[100px_minmax(0,1fr)] gap-4 px-4 py-2 text-xs text-[rgba(255,255,255,0.8)]">
+            <div className="mt-1 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg">
+              <div className="grid flex-none grid-cols-[100px_minmax(0,1fr)] gap-2 px-3 py-2 text-[14px] text-[rgba(255,255,255,0.8)] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
                 <span>展位号</span>
                 <span>参展商</span>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
                 <SeamlessVirtualList
                   data={displayRows}
-                  itemHeight={32}
+                  itemHeight={38}
                   height="100%"
                   speed={0.35}
                   overscan={8}
                   pauseOnHover={false}
                   className="h-full"
                   renderItem={(row) => (
-                    <div className="grid h-full grid-cols-[100px_minmax(0,1fr)] items-center gap-4 border-b border-dashed border-[rgba(255,255,255,0.08)] px-4 text-xs">
+                    <div className="grid h-full grid-cols-[100px_minmax(0,1fr)] items-center gap-2 border-b border-dashed border-[#334155] px-3 text-[14px] hover:bg-white/[0.08]">
                       <span className="truncate whitespace-nowrap text-white">{row.boothNo || "-"}</span>
                       <span className="truncate whitespace-nowrap text-white">{row.exhibitor || "-"}</span>
                     </div>
@@ -171,8 +180,8 @@ export function ExhibitionRightSidebar({
             style={{ width: `${reportRate}%` }}
           />
         </div>
-        <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-md bg-black/10">
-          <div className="grid flex-none grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-1.5 text-xs text-[rgba(255,255,255,0.8)]">
+        <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg">
+          <div className="grid flex-none grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-2 text-[14px] text-[rgba(255,255,255,0.8)] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
             <span>序号</span>
             <span>展位号</span>
             <span>参展商</span>
@@ -180,14 +189,14 @@ export function ExhibitionRightSidebar({
           <div className="min-h-0 flex-1 overflow-hidden">
             <SeamlessVirtualList
               data={unReportedRows}
-              itemHeight={32}
+              itemHeight={38}
               height="100%"
               speed={0.35}
               overscan={8}
               pauseOnHover={false}
               className="h-full"
               renderItem={(row, index) => (
-                <div className="grid h-full grid-cols-[44px_72px_minmax(0,1fr)] items-center gap-2 border-b border-dashed border-[rgba(255,255,255,0.08)] px-3 text-xs">
+                <div className="grid h-full grid-cols-[44px_72px_minmax(0,1fr)] items-center gap-2 border-b border-dashed border-[#334155] px-3 text-[14px] hover:bg-white/[0.08]">
                   <span className="text-white">{index + 1}</span>
                   <span className="truncate whitespace-nowrap text-white">{row.boothNo || "-"}</span>
                   <span className="truncate whitespace-nowrap text-white">{row.exhibitor || "-"}</span>
@@ -210,14 +219,17 @@ export function ExhibitionRightSidebar({
           return orderItems.map((item) => {
             const barWidth = (item.num / maxNum) * 100;
             return (
-              <div key={item.name} className="flex items-center gap-3">
+              <div
+                key={item.name}
+                className="flex items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md"
+              >
                 <div
-                  className="flex h-5 shrink-0 items-center justify-start rounded text-xs text-[rgba(255,255,255,0.8)]"
+                  className="flex h-5 shrink-0 items-center justify-start text-xs text-[rgba(255,255,255,0.8)]"
                   style={{ width: `${maxLabelLen * 18 + 8}px` }}
                 >
                   {item.name}
                 </div>
-                <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[rgba(16,45,129,0.08)]">
+                <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[url('/img/progress-track-bg.png')] bg-[length:100%_100%]">
                   <div
                     className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-700"
                     style={{ width: `${barWidth}%` }}
@@ -247,10 +259,10 @@ export function ExhibitionRightSidebar({
   ) : (
     /* PORTRAIT: original vertical stacking */
     <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.6rem,1vw,0.9rem)] xl:gap-3">
-      <div className="flex min-h-0 flex-[0.38] flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-[0.40] flex-col overflow-hidden">
         {expenseSection}
       </div>
-      <div className="flex min-h-0 flex-[0.24] flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-[0.28] flex-col overflow-hidden">
         {unreportedSection}
       </div>
       {ordersSection}
@@ -262,7 +274,7 @@ export function ExhibitionRightSidebar({
 function PieRing({
   percent,
   size = 80,
-  color1 = "#13B8D6", 
+  color1 = "#13B8D6",
   color2 = "#2563EB",
 }: {
   percent: number;

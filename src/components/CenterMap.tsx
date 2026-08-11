@@ -642,10 +642,32 @@ export default function CenterMap({
       <div className="relative z-10 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-[22px] ">
         <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[20px]">
           <div className="relative z-20 mb-3 flex shrink-0 flex-col items-center px-4 py-3 text-sm text-[#cfe5ff]">
-            <div className="relative min-w-0" style={{ width: 1200 }}>
+            <div className="relative flex w-full min-w-0 items-center gap-1">
+              <button
+                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs hover:bg-[rgba(37,99,235,0.5)] transition-colors"
+                onClick={() => {
+                  if (tabsScrollRef.current) {
+                    tabsScrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+                  }
+                }}
+                ref={(node) => {
+                  if (node && tabsScrollRef.current) {
+                    const container = tabsScrollRef.current;
+                    const update = () => {
+                      const maxScroll = container.scrollWidth - container.clientWidth;
+                      node.style.opacity = maxScroll > 0 && container.scrollLeft > 5 ? '1' : '0.3';
+                    };
+                    update();
+                    container.addEventListener('scroll', update);
+                    return () => container.removeEventListener('scroll', update);
+                  }
+                }}
+              >
+                ‹
+              </button>
               <div
                 ref={tabsScrollRef}
-                className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-1"
+                className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto pb-1"
                 style={{ scrollbarWidth: 'none' }}
               >
                 <div
@@ -677,31 +699,7 @@ export default function CenterMap({
                 ))}
               </div>
               <button
-                className="absolute -left-3 top-[15px] -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs"
-                style={{ opacity: 1 }}
-                onClick={() => {
-                  if (tabsScrollRef.current) {
-                    tabsScrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-                  }
-                }}
-                ref={(node) => {
-                  if (node && tabsScrollRef.current) {
-                    const container = tabsScrollRef.current;
-                    const update = () => {
-                      const maxScroll = container.scrollWidth - container.clientWidth;
-                      node.style.opacity = maxScroll > 0 && container.scrollLeft > 5 ? '1' : '0';
-                    };
-                    update();
-                    container.addEventListener('scroll', update);
-                    return () => container.removeEventListener('scroll', update);
-                  }
-                }}
-              >
-                ‹
-              </button>
-              <button
-                className="absolute -right-2 top-[15px] -translate-y-1/2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs"
-                style={{ opacity: 1 }}
+                className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(37,99,235,0.3)] text-white text-xs hover:bg-[rgba(37,99,235,0.5)] transition-colors"
                 onClick={() => {
                   if (tabsScrollRef.current) {
                     tabsScrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
@@ -712,7 +710,7 @@ export default function CenterMap({
                     const container = tabsScrollRef.current;
                     const update = () => {
                       const maxScroll = container.scrollWidth - container.clientWidth;
-                      node.style.opacity = maxScroll > 0 && container.scrollLeft < maxScroll - 5 ? '1' : '0';
+                      node.style.opacity = maxScroll > 0 && container.scrollLeft < maxScroll - 5 ? '1' : '0.3';
                     };
                     update();
                     container.addEventListener('scroll', update);
@@ -724,7 +722,7 @@ export default function CenterMap({
               </button>
             </div>
             <img
-              src="/img/展馆按钮底部线条.png"
+              src="/img/hall-tab-line.png"
               alt=""
               className="w-full h-auto mt-1"
             />

@@ -19,7 +19,7 @@ type HallOverviewMapProps = {
   onHallSelect?: (hallId: string) => void;
 };
 
-const CARD_WIDTH = 220;
+const CARD_WIDTH = 278;
 const GAP = 20;
 
 const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onHallSelect }: HallOverviewMapProps) {
@@ -104,24 +104,28 @@ const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onH
             key={hall.hallId}
             type="button"
             onClick={() => handleHallSelect(hall.hallId)}
-            className={`group relative overflow-hidden   bg-[url('/img/底框背景.png')] bg-[length:100%_100%] bg-center bg-no-repeat text-left transition-transform duration-200 hover:-translate-y-1 hover:shadow-[0_0_24px_rgba(56,189,248,0.25)] ${activeHallId === hall.hallId ? 'border-cyan-300/60 shadow-[0_0_20px_rgba(56,189,248,0.2)]' : 'border-transparent shadow-[0_0_12px_rgba(0,229,255,0.06)]'} ${pendingHallId === hall.hallId ? 'scale-[0.99]' : ''}`}
+            className={`group relative overflow-hidden   bg-[url('/img/bg-card.png')] bg-[length:100%_100%] bg-center bg-no-repeat text-left transition-transform duration-200 hover:-translate-y-1  ${activeHallId === hall.hallId ? 'border-cyan-300/60 shadow-[0_0_20px_rgba(56,189,248,0.2)]' : 'border-transparent shadow-[0_0_12px_rgba(0,229,255,0.06)]'} ${pendingHallId === hall.hallId ? 'scale-[0.99]' : ''}`}
             style={{ width: CARD_WIDTH, minHeight: 160 }}
           >
             <div className="relative flex h-full flex-col justify-between p-4">
               <div className="line-clamp-2 text-lg font-semibold text-slate-50">{hall.hallName}</div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-200/80">
+
                 <div className="rounded-xl bg-white/5 px-2.5 py-2">
                   <div className="text-cyan-100/60">展位</div>
                   <div className="mt-0.5 text-base font-semibold text-slate-50">{hall.boothCount}</div>
                 </div>
+
                 <div className="rounded-xl bg-white/5 px-2.5 py-2">
                   <div className="text-cyan-100/60">特装</div>
                   <div className="mt-0.5 text-base font-semibold text-slate-50">{hall.specialAreaCount}</div>
                 </div>
+
                 <div className="rounded-xl bg-white/5 px-2.5 py-2">
                   <div className="text-cyan-100/60">标展</div>
                   <div className="mt-0.5 text-base font-semibold text-slate-50">{hall.standardAreaCount}</div>
                 </div>
+                
               </div>
             </div>
           </button>

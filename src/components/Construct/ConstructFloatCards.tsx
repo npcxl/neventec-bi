@@ -1,9 +1,10 @@
 /* ============================================
    浮动玻璃感信息卡（施工进程 + 搭建进度图例）
-   地图右上角悬浮，搭建信息 + 已选展馆时显示
+   横版：地图右上角悬浮
+   竖版：absolute 覆盖在地图底部，上下两行
    ============================================ */
 
-import { Card, Steps, Tag, Flex, Typography } from 'antd';
+import { Card, Steps, Flex, Typography } from 'antd';
 
 const { Text } = Typography;
 
@@ -28,7 +29,77 @@ const glassCardStyle: React.CSSProperties = {
   backdropFilter: 'blur(8px)',
 };
 
-export function ConstructFloatCards() {
+export function ConstructFloatCards({ variant }: { variant?: 'landscape' | 'portrait' }) {
+  const isPortrait = variant === 'portrait';
+
+  if (isPortrait) {
+    return (
+      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-col gap-2 pointer-events-none">
+        {/* 第一行：施工进程 - 4个步骤横向 */}
+        <Card
+          size="small"
+          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          styles={{
+            header: { display: 'none' },
+            body: {
+              padding: '8px 14px 10px',
+              background: 'transparent',
+            },
+          }}
+        >
+          <Steps
+            direction="horizontal"
+            size="small"
+            current={-1}
+            items={PROCESS_STEPS.map((step) => ({
+              title: <Text style={{ color: '#fff', fontSize: 11 }}>{step.title}</Text>,
+            }))}
+            styles={{
+              itemIcon: {
+                color: '#fff',
+                borderColor: '#fff',
+                background: 'rgba(255,255,255,0.12)',
+              },
+              itemContent: {
+                color: '#fff',
+              },
+            }}
+          />
+        </Card>
+
+        {/* 第二行：搭建进度图例 - 4个横向 */}
+        <Card
+          size="small"
+          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          styles={{
+            header: { display: 'none' },
+            body: {
+              padding: '10px 14px',
+              background: 'transparent',
+              display: 'flex',
+              justifyContent: 'center',
+            },
+          }}
+        >
+          <Flex gap={20} align="center" wrap>
+            {PROGRESS_LEGEND.map((item) => (
+              <Flex key={item.label} align="center" gap={8}>
+                <span style={{
+                  width: 10,
+                  height: 10,
+                  flexShrink: 0,
+                  borderRadius: 2,
+                  backgroundColor: item.color,
+                }} />
+                <Text style={{ color: '#fff', fontSize: 12 }}>{item.label}</Text>
+              </Flex>
+            ))}
+          </Flex>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: 'fixed',

@@ -154,7 +154,7 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
     ctx.clearRect(0, 0, cw, ch);
 
     // 背景
-    ctx.fillStyle = 'rgba(8,22,44,1)';
+    ctx.fillStyle = '#020A25';
     ctx.fillRect(0, 0, cw, ch);
 
     ctx.save();
@@ -319,15 +319,26 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hallData]);
 
-  // ========== 屏幕坐标 → 世界坐标 ==========
-  const screenToWorld = useCallback((screenX: number, screenY: number) => {
+  // ========== Canvas 坐标转换（适配全局 transform:scale） ==========
+  // 全局 ScreenAdapter 的 scale 导致 getBoundingClientRect 返回缩放后的像素，
+  // 需要转换为 Canvas 设计稿坐标
+  function getCanvasPoint(canvas: HTMLCanvasElement, clientX: number, clientY: number) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (clientX - rect.left) * (canvas.clientWidth / rect.width),
+      y: (clientY - rect.top) * (canvas.clientHeight / rect.height),
+    };
+  }
+
+  /** 屏幕坐标 → 世界坐标 */
+  const screenToWorld = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
+    const pt = getCanvasPoint(canvas, clientX, clientY);
     const { scale, offsetX, offsetY } = cameraRef.current;
     return {
-      x: (screenX - rect.left - offsetX) / scale,
-      y: (screenY - rect.top - offsetY) / scale,
+      x: (pt.x - offsetX) / scale,
+      y: (pt.y - offsetY) / scale,
     };
   }, []);
 
@@ -335,7 +346,6 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
   const hitTest = useCallback(
     (worldX: number, worldY: number): Booth | null => {
       const booths = hallDataRef.current.booths;
-      // 从后往前遍历，优先命中上层展位
       for (let i = booths.length - 1; i >= 0; i--) {
         if (pointInPolygon(worldX, worldY, booths[i].polygon)) {
           return booths[i];
@@ -356,8 +366,13 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (isDraggingRef.current) {
-        const dx = e.clientX - lastMouseRef.current.x;
-        const dy = e.clientY - lastMouseRef.current.y;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const ratioX = canvas.clientWidth / rect.width;
+        const ratioY = canvas.clientHeight / rect.height;
+        const dx = (e.clientX - lastMouseRef.current.x) * ratioX;
+        const dy = (e.clientY - lastMouseRef.current.y) * ratioY;
         lastMouseRef.current = { x: e.clientX, y: e.clientY };
         cameraRef.current.offsetX += dx;
         cameraRef.current.offsetY += dy;
@@ -379,7 +394,6 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
 
       const dx = Math.abs(e.clientX - lastMouseRef.current.x);
       const dy = Math.abs(e.clientY - lastMouseRef.current.y);
-      // 拖动距离很小视为点击
       if (dx < 3 && dy < 3) {
         const world = screenToWorld(e.clientX, e.clientY);
         const hit = hitTest(world.x, world.y);
@@ -391,22 +405,19 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
     [screenToWorld, hitTest],
   );
 
-  // ========== 鼠标滚轮缩放（原生事件，绕过 React passive wheel） ==========
+  // ========== 鼠标滚轮缩放 ==========
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-
-      const mouseScreenX = e.clientX - rect.left;
-      const mouseScreenY = e.clientY - rect.top;
+      const pt = getCanvasPoint(canvas, e.clientX, e.clientY);
 
       const { scale, offsetX, offsetY } = cameraRef.current;
 
-      const worldX = (mouseScreenX - offsetX) / scale;
-      const worldY = (mouseScreenY - offsetY) / scale;
+      const worldX = (pt.x - offsetX) / scale;
+      const worldY = (pt.y - offsetY) / scale;
 
       const zoomFactor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
       const minScale = minScaleRef.current; // 动态最小缩放
@@ -419,8 +430,8 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
         return;
       }
 
-      const newOffsetX = mouseScreenX - worldX * newScale;
-      const newOffsetY = mouseScreenY - worldY * newScale;
+      const newOffsetX = pt.x - worldX * newScale;
+      const newOffsetY = pt.y - worldY * newScale;
 
       cameraRef.current = { scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY };
       draw();
@@ -500,7 +511,7 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
     <div
       ref={containerRef}
       className="relative h-full w-full overflow-hidden select-none"
-      style={{ background: 'rgba(8,22,44,0.9)', cursor: isDraggingRef.current ? 'grabbing' : 'grab' }}
+      style={{ background: '#020A25', cursor: isDraggingRef.current ? 'grabbing' : 'grab' }}
     >
       <canvas
         ref={canvasRef}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ConstructOverviewChart } from './ConstructOverviewChart';
+import { ConstructProgressPie } from './ConstructProgressPie';
 import ConstructCarousel from './ConstructCarousel';
 
 const MOCK_CONSTRUCT_PICTURES = [
@@ -25,9 +25,9 @@ const MOCK_CONSTRUCT_PICTURES = [
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-12 px-3 shrink-0">
-      <div className="flex h-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-3">{title}</span>
+    <div className="relative h-12  shrink-0">
+      <div className="flex h-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
@@ -51,10 +51,6 @@ type ConstructRightSidebarProps = {
   constructCarouselLoading?: boolean;
   loading?: boolean;
 };
-
-/* ============================================
-   状态配置
-   ============================================ */
 
 const STATUS_CONFIG: { code: string; names: string[]; label: string; color: string }[] = [
   { code: '11', names: ['搭建正常'], label: '搭建正常', color: '#2563EB' },
@@ -84,10 +80,6 @@ function extractStatusData(rawData: any): StatusEntry[] {
   });
 }
 
-/* ============================================
-   右侧色标（仅颜色点 + 名称，不含数量）
-   ============================================ */
-
 function StatusLegend({ entries }: { entries: StatusEntry[] }) {
   return (
     <div className="flex shrink-0 flex-col gap-2.5 py-2">
@@ -106,10 +98,6 @@ function StatusLegend({ entries }: { entries: StatusEntry[] }) {
     </div>
   );
 }
-
-/* ============================================
-   主组件
-   ============================================ */
 
 export function ConstructRightSidebar({
   constructOverviewData,
@@ -139,24 +127,22 @@ export function ConstructRightSidebar({
         className="grid min-h-0 flex-1 items-center overflow-hidden"
         style={{ gridTemplateColumns: 'minmax(0,1fr) auto', columnGap: 16 }}
       >
-        <div className="h-full min-h-0 min-w-0">
-          <ConstructOverviewChart entries={entries} />
-        </div>
+        <ConstructProgressPie entries={entries} />
         <StatusLegend entries={entries} />
       </div>
     </section>
   );
 
-  const carouselSection = (
+  const carouselSection = (vertical?: boolean) => (
     <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-      <div className="shrink-0 w-1/2">
+      <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>
       <div className="min-h-0 min-w-0 flex-1 overflow-hidden p-3">
         <ConstructCarousel
           pictures={displayPictures}
           loading={constructCarouselLoading}
-          title={undefined}
+          vertical={vertical}
         />
       </div>
     </section>
@@ -166,15 +152,19 @@ export function ConstructRightSidebar({
     return (
       <aside className="grid h-full min-h-0 w-full min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-3 overflow-hidden">
         {overviewSection}
-        {carouselSection}
+        {carouselSection()}
       </aside>
     );
   }
 
   return (
-    <aside className="flex h-full min-h-0 flex-col gap-3">
-      {overviewSection}
-      {carouselSection}
+    <aside className="flex h-full min-h-0 flex-col gap-3" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
+      <div className="flex-[0.33] min-h-0">
+        {overviewSection}
+      </div>
+      <div className="flex-[0.67] min-h-0">
+        {carouselSection(true)}
+      </div>
     </aside>
   );
 }

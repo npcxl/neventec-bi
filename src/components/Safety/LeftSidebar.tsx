@@ -68,9 +68,9 @@ type SafetyRecord = {
 
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-12 px-3">
-      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-10 pb-3">{title}</span>
+    <div className="relative h-12">
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
@@ -320,7 +320,7 @@ export function SafetyLeftSidebar({
   };
 
   return (
-    <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.2rem,0.55vw,0.8rem)] px-0 sm:px-0 xl:gap-3">
+    <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.2rem,0.55vw,0.8rem)] px-0 sm:px-0 xl:gap-3" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
       <section className="relative flex-none overflow-hidden" style={{ height: 260 }}>
         <PanelTitle title="查处违规汇总" />
         <div className="flex flex-col h-[212px] p-1">
@@ -352,9 +352,9 @@ export function SafetyLeftSidebar({
       <section className="relative flex min-h-0 flex-[1.55] overflow-hidden">
         <div className="flex h-full min-h-0 w-full flex-col">
           <PanelTitle title="现场违规记录" />
-          <div className="flex min-h-0 flex-1 flex-col  pb-0.5 pt-0.5 sm:px-[clamp(10px,0.9vw,14px)] sm:pb-[clamp(10px,0.9vw,14px)] sm:pt-[clamp(8px,0.8vw,12px)]">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden text-[clamp(8px,0.68vw,12px)] text-[#93aed0] sm:text-[clamp(10px,0.75vw,12px)]">
-              <div className="flex shrink-0 min-w-0 items-center gap-0.25 py-0.75 sm:gap-2 ">
+          <div className="flex min-h-0 flex-1 flex-col px-[16px] py-[8px]" style={{ width: 448 }}>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden text-[14px] text-[#93aed0]">
+              <div className="flex shrink-0 min-w-0 items-center gap-2 mb-1.5 py-2 text-[14px] bg-[url('/img/bg-list.png')] bg-[length:100%_100%] px-3">
                 <span className="flex-[0.68] min-w-0 whitespace-normal break-words leading-tight">
                   展位号
                 </span>
@@ -363,9 +363,6 @@ export function SafetyLeftSidebar({
                 </span>
                 <span className="flex-[1.16] min-w-0 whitespace-normal break-words leading-tight">
                   违规内容
-                </span>
-                <span className="flex-[0.76] min-w-0 whitespace-normal break-words leading-tight">
-                  风险评估
                 </span>
                 <span className="flex-[1] min-w-0 whitespace-normal break-words leading-tight">
                   整改措施
@@ -377,7 +374,7 @@ export function SafetyLeftSidebar({
               <div className="min-h-0 flex-1 overflow-hidden">
                 <SeamlessVirtualList
                   data={visibleSafetyRows}
-                  itemHeight={80}
+                  itemHeight={42}
                   height="100%"
                   speed={0.35}
                   overscan={8}
@@ -390,30 +387,28 @@ export function SafetyLeftSidebar({
                     return (
                     <div
                       onClick={() => handleRowClick(row)}
-                      className={`flex h-full min-w-0 items-start gap-0.25 px-0.5 text-[9px] leading-tight sm:items-center sm:gap-2 sm:px-3 sm:text-[10px] cursor-pointer ${
-                        index % 2 === 1 ? "bg-white/[0.04]" : ""
-                      } hover:bg-white/[0.07] ${isSelected ? 'bg-white/[0.12]' : ''}`}
+                      className={`flex h-full min-w-0 items-center gap-2 px-3 text-[14px] cursor-pointer border-b border-dashed border-[#334155] hover:bg-white/[0.08] ${isSelected ? 'bg-white/[0.12]' : ''}`}
                     >
                       <span
-                        className="flex-[0.68] min-w-0 break-words text-[#dbeeff]"
+                        className="flex-[0.68] min-w-0 truncate whitespace-nowrap text-white"
                         title={row.boothNo || "-"}
                       >
                         {row.boothNo || "-"}
                       </span>
 
                       <span
-                        className="flex-[0.98] min-w-0 break-words text-[#dbeeff]"
+                        className="flex-[0.98] min-w-0 truncate whitespace-nowrap text-white"
                         title={row.company || row.constructionCompany || "-"}
                       >
                         {row.company || row.constructionCompany || "-"}
                       </span>
 
                       <span
-                        className="flex-[1.16] min-w-0 break-words"
+                        className="flex-[1.16] min-w-0 truncate whitespace-nowrap"
                         style={{
                           color:
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||
-                            "#dbeeff",
+                            "#fff",
                         }}
                         title={row.recordContent || "-"}
                       >
@@ -421,23 +416,11 @@ export function SafetyLeftSidebar({
                       </span>
 
                       <span
-                        className="flex-[0.76] min-w-0 break-words"
+                        className="flex-[1] min-w-0 truncate whitespace-nowrap"
                         style={{
                           color:
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||
-                            "#dbeeff",
-                        }}
-                        title={row.riskAssessment || "-"}
-                      >
-                        {row.riskAssessment || "-"}
-                      </span>
-
-                      <span
-                        className="flex-[1] min-w-0 break-words"
-                        style={{
-                          color:
-                            rectifyCheckStatusColor(row.rectifyCheckStatus) ||
-                            "#dbeeff",
+                            "#fff",
                         }}
                         title={row.safetyStatus || "-"}
                       >
@@ -445,7 +428,7 @@ export function SafetyLeftSidebar({
                       </span>
 
                       <span
-                        className="flex-[0.72] min-w-0 break-words"
+                        className="flex-[0.72] min-w-0 truncate whitespace-nowrap"
                         style={{
                           color:
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||

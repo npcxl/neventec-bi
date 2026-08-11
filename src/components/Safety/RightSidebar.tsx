@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Spin } from "antd";
-import * as echarts from "echarts";
+import Highcharts from 'highcharts/esm/highcharts.src.js';
 import SafetyCarousel from "./ConstructCarousel";
 import { SafetyFloatCards } from "./SafetyFloatCards";
 
@@ -50,74 +50,21 @@ type RiskRow = {
   highRisk?: number;
 };
 
-type ViolationRecordRow = {
-  safetyLines?: Array<{
-    recordTypeContent?: string;
-    recordGroupContent?: string;
-    recordContent?: string;
-  }>;
-};
-
-type RectificationRow = {
-  name?: string;
-  num?: number;
-  hallId?: string;
-  hallName?: string;
-};
-
 function PanelTitle({ title }: { title: string }) {
   return (
-    <div className="relative h-12 px-3">
-      <div className="flex h-full w-full items-center bg-[url('/img/小标题.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-8 pb-3">{title}</span>
+    <div className="relative h-12 ">
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
 }
 
-function useChart() {
-  const elRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<echarts.EChartsType | null>(null);
-  const roRef = useRef<ResizeObserver | null>(null);
-
-  const setRef = useCallback((node: HTMLDivElement | null) => {
-    elRef.current = node;
-  }, []);
-
-  useEffect(() => {
-    if (!elRef.current) return;
-
-    const chart =
-      echarts.getInstanceByDom(elRef.current) ?? echarts.init(elRef.current);
-    chartRef.current = chart;
-
-    const onResize = () => {
-      if (!chart.isDisposed()) chart.resize();
-    };
-
-    // ResizeObserver for container size changes (layout switch)
-    if (elRef.current) {
-      const ro = new ResizeObserver(onResize);
-      ro.observe(elRef.current);
-      roRef.current = ro;
-    }
-
-    // Also keep window.resize for font scaling etc.
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      window.removeEventListener("resize", onResize);
-      if (roRef.current) {
-        roRef.current.disconnect();
-        roRef.current = null;
-      }
-      chartRef.current = null;
-      if (!chart.isDisposed()) chart.dispose();
-    };
-  }, []);
-
-  return [setRef, chartRef] as const;
-}
+const RISK_COLORS = {
+  highRisk: "#F5222D",
+  mediumRisk: "#FA8C16",
+  lowRisk: "#2563EB",
+};
 
 export function SafetyRightSidebar({
   violationTypeData,
@@ -130,47 +77,17 @@ export function SafetyRightSidebar({
   showFloatCards = false,
 }: SafetyRightSidebarProps) {
   const isLandscape = variant === "landscape";
+  const isPortrait = !isLandscape;
+
   const riskRows: RiskRow[] = Array.isArray(violationTypeData)
     ? violationTypeData
     : (violationTypeData?.data ??
       violationTypeData?.list ??
       violationTypeData?.rows ??
       []);
-  const recordRows: ViolationRecordRow[] = Array.isArray(violationRecordData)
-    ? violationRecordData
-    : (violationRecordData?.data ?? violationRecordData?.list ?? []);
-  const rectRows: RectificationRow[] = Array.isArray(rectificationSituationData)
-    ? rectificationSituationData
-    : (rectificationSituationData?.data ??
-      rectificationSituationData?.list ??
-      []);
 
-  const { type, status, riskDates, lowRiskData, mediumRiskData, highRiskData } =
+  const { riskDates, lowRiskData, mediumRiskData, highRiskData } =
     useMemo(() => {
-      const nextType = recordRows.reduce(
-        (acc, row) => {
-          (row.safetyLines || []).forEach((line) => {
-            const key =
-              line.recordTypeContent ||
-              line.recordGroupContent ||
-              line.recordContent ||
-              "未知";
-            acc[key] = (acc[key] || 0) + 1;
-          });
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
-
-      const nextStatus = rectRows.reduce(
-        (acc, row) => {
-          const key = row.name || "未知";
-          acc[key] = (acc[key] || 0) + Number(row.num || 0);
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
-
       const sortedRiskRows = [...riskRows].sort((a, b) =>
         String(a.checkDate ?? "").localeCompare(String(b.checkDate ?? "")),
       );
@@ -192,38 +109,19 @@ export function SafetyRightSidebar({
       const values = Array.from(groupedRisk.values());
 
       return {
-        type: nextType,
-        status: nextStatus,
         riskDates: nextRiskDates,
         lowRiskData: values.map((row) => row.lowRisk),
         mediumRiskData: values.map((row) => row.mediumRisk),
         highRiskData: values.map((row) => row.highRisk),
       };
-    }, [recordRows, rectRows, riskRows]);
+    }, [riskRows]);
 
-  const typeMemoKey = useMemo(
-    () =>
-      Object.entries(type)
-        .map(([name, value]) => `${name}:${value}`)
-        .join("|"),
-    [type],
-  );
-  const statusMemoKey = useMemo(
-    () =>
-      Object.entries(status)
-        .map(([name, value]) => `${name}:${value}`)
-        .join("|"),
-    [status],
-  );
-  const riskMemoKey = useMemo(
-    () =>
-      `${riskDates.join("|")}|${lowRiskData.join(",")}|${mediumRiskData.join(",")}|${highRiskData.join(",")}`,
-    [riskDates, lowRiskData, mediumRiskData, highRiskData],
-  );
+  // 轮播偏移
   const [riskOffset, setRiskOffset] = useState(0);
   const [isRiskPaused, setIsRiskPaused] = useState(false);
-  const riskWindow = 6;
-  const riskSlice = (arr: number[] | string[]) => {
+  const riskWindow = isLandscape ? 6 : 3;
+
+  const riskSlice = <T,>(arr: T[]): T[] => {
     if (!arr.length) return [];
     const start = riskOffset % arr.length;
     const out = arr.slice(start, start + riskWindow);
@@ -231,121 +129,131 @@ export function SafetyRightSidebar({
       ? [...out, ...arr.slice(0, riskWindow - out.length)]
       : out;
   };
-  const riskShownDates = riskSlice(riskDates);
-  const riskShownLow = riskSlice(lowRiskData);
-  const riskShownMedium = riskSlice(mediumRiskData);
-  const riskShownHigh = riskSlice(highRiskData);
-  const [riskRef, riskChartRef] = useChart();
-  const riskTooltipTimerRef = useRef<number | null>(null);
-  const clearRiskTooltipTimer = () => {
-    if (riskTooltipTimerRef.current !== null) {
-      window.clearInterval(riskTooltipTimerRef.current);
-      riskTooltipTimerRef.current = null;
-    }
-  };
 
-  const showRiskTooltipAt = (chart: echarts.EChartsType, index: number) => {
-    if (!riskShownDates.length) return;
-    const nextIndex =
-      ((index % riskShownDates.length) + riskShownDates.length) %
-      riskShownDates.length;
-    chart.dispatchAction({ type: "showTip", seriesIndex: 0, dataIndex: nextIndex });
-  };
+  const riskShownDates = riskSlice(riskDates) as string[];
+  const riskShownLow = riskSlice(lowRiskData) as number[];
+  const riskShownMedium = riskSlice(mediumRiskData) as number[];
+  const riskShownHigh = riskSlice(highRiskData) as number[];
 
+  // 轮播定时器
   useEffect(() => {
-    clearRiskTooltipTimer();
     if (riskDates.length <= riskWindow || isRiskPaused) return;
     const timer = window.setInterval(() => {
       setRiskOffset((prev) => (prev + 1) % Math.max(1, riskDates.length));
     }, 4500);
-    riskTooltipTimerRef.current = timer;
-    return () => clearRiskTooltipTimer();
+    return () => window.clearInterval(timer);
   }, [riskDates.length, isRiskPaused, riskWindow]);
 
-  useEffect(() => {
-    const chart = riskChartRef.current;
-    if (!chart || riskShownDates.length === 0) return;
-    showRiskTooltipAt(chart, 1);
-  }, [riskMemoKey, riskOffset]);
+  // Highcharts 图表
+  const riskRef = useRef<HTMLDivElement | null>(null);
+  const hcRef = useRef<Highcharts.Chart | null>(null);
 
-  useEffect(() => () => clearRiskTooltipTimer(), []);
-
-  useEffect(() => {
-    const chart = riskChartRef.current;
-    if (!chart) return;
-    chart.setOption({
-      animation: true,
-      animationDuration: 500,
-      animationEasing: "cubicOut",
-      backgroundColor: "transparent",
-      grid: { left: 50, right: 18, top: 20, bottom: 28 },
-      tooltip: {
-        trigger: "axis",
-        axisPointer: { type: "shadow" },
-        backgroundColor: "rgba(7,18,34,0.96)",
-        borderColor: "rgba(41, 124, 30, 0.96)",
-        textStyle: { color: "#eaf6ff" },
-        extraCssText: "z-index:99;",
-        z: 99,
-        appendToBody: true,
+  const hcOptions = useMemo(() => {
+    const categories = riskShownDates.map((d) => d.slice(5)); // MM-DD
+    // 横版用 column（竖的柱状图），竖版也用 column
+    const chartType = 'column' as const;
+    return {
+      chart: {
+        type: chartType,
+        backgroundColor: 'transparent',
+        style: { fontFamily: 'inherit' },
+        spacing: isPortrait ? [2, 8, 2, 4] : [4, 8, 4, 4],
+        height: 230,
       },
+      title: { text: '' },
+      credits: { enabled: false },
       xAxis: {
-        type: "category",
-        data: riskShownDates,
-        axisLabel: {
-          color: "#9ec6ef",
-          rotate: 0,
-          fontSize: 12,
-          margin: 12,
-          formatter: (value: string) => value.slice(5),
+        categories,
+        labels: {
+          style: { color: '#9ec6ef', fontSize: '11px' },
         },
-        axisLine: { lineStyle: { color: "rgba(145,171,205,0.35)" } },
+        lineColor: 'rgba(145,171,205,0.35)',
+        tickColor: 'rgba(145,171,205,0.35)',
       },
       yAxis: {
-        type: "value",
-        axisLabel: { color: "#7f9cbc" },
-        splitLine: { lineStyle: { color: "rgba(145,171,205,0.12)" } },
+        min: 0,
+        title: { text: '' },
+        labels: {
+          style: { color: '#7f9cbc', fontSize: '10px' },
+        },
+        gridLineColor: 'rgba(145,171,205,0.12)',
+      },
+      legend: {
+        reversed: true,
+        itemStyle: { color: '#cfe5ff', fontSize: '11px' },
+        itemHoverStyle: { color: '#fff' },
+      },
+      plotOptions: {
+        [chartType]: {
+          stacking: 'normal' as const,
+          dataLabels: {
+            enabled: true,
+            formatter: function (this: any) {
+              if (this.y === 0 || this.y == null) return '';
+              return String(this.y);
+            },
+            style: {
+              color: '#fff',
+              fontSize: '13px',
+              textOutline: 'none',
+              fontWeight: 'bold',
+            },
+          },
+        },
+        series: {
+          states: {
+            inactive: { opacity: 1 },
+          },
+        },
+      },
+      tooltip: {
+        shared: true,
+        backgroundColor: 'rgba(7,18,34,0.96)',
+        borderColor: 'rgba(37,99,235,0.6)',
+        style: { color: '#eaf6ff', fontSize: '12px' },
       },
       series: [
         {
-          name: "低风险",
-          type: "bar",
-          stack: "risk",
-          data: riskShownLow,
-          barWidth: 16,
-          itemStyle: { color: "#67b8ff" },
-          emphasis: { focus: "series" },
-        },
-        {
-          name: "中风险",
-          type: "bar",
-          stack: "risk",
-          data: riskShownMedium,
-          barWidth: 16,
-          itemStyle: { color: "#ffd066" },
-          emphasis: { focus: "series" },
-        },
-        {
-          name: "高风险",
-          type: "bar",
-          stack: "risk",
+          name: '高风险',
+          type: chartType,
           data: riskShownHigh,
-          barWidth: 16,
-          itemStyle: { color: "#ff5e5e" },
-          emphasis: { focus: "series" },
+          color: RISK_COLORS.highRisk,
+        },
+        {
+          name: '较大风险',
+          type: chartType,
+          data: riskShownMedium,
+          color: RISK_COLORS.mediumRisk,
+        },
+        {
+          name: '一般风险',
+          type: chartType,
+          data: riskShownLow,
+          color: RISK_COLORS.lowRisk,
         },
       ],
-    });
-    showRiskTooltipAt(chart, 1);
-  }, [
-    riskMemoKey,
-    riskOffset,
-    riskShownDates,
-    riskShownLow,
-    riskShownMedium,
-    riskShownHigh,
-  ]);
+    } as Highcharts.Options;
+  }, [riskShownDates, riskShownHigh, riskShownMedium, riskShownLow, isLandscape, isPortrait]);
 
+  useEffect(() => {
+    const el = riskRef.current;
+    if (!el) return;
+
+    if (!hcRef.current) {
+      hcRef.current = Highcharts.chart(el, hcOptions);
+    } else {
+      hcRef.current.update(hcOptions, true, true);
+    }
+  }, [hcOptions]);
+
+  useEffect(() => {
+    return () => {
+      if (hcRef.current) {
+        hcRef.current.destroy();
+        hcRef.current = null;
+      }
+    };
+  }, []);
 
   const riskSection = (
     <section
@@ -354,31 +262,29 @@ export function SafetyRightSidebar({
       onMouseEnter={() => setIsRiskPaused(true)}
       onMouseLeave={() => setIsRiskPaused(false)}
     >
-      <div className="shrink-0 w-1/2">
+      <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
         <PanelTitle title="违规风险等级" />
       </div>
       <div className="min-h-0 flex-1 p-2.5">
         {loading ? (
           <div className="flex h-full items-center justify-center rounded-xl" />
         ) : (
-          <div
-            ref={riskRef}
-            className="h-full w-full rounded-xl p-2"
-          />
+          <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
         )}
       </div>
     </section>
   );
 
-  const carouselSection = (
+  const carouselSection = (vertical?: boolean) => (
     <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
-      <div className="shrink-0 w-1/2">
+      <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>
       <div className="min-h-0 flex-1 overflow-hidden p-2.5">
         <SafetyCarousel
           pictures={safetyCarouselPictures.length > 0 ? safetyCarouselPictures : MOCK_SAFETY_PICTURES}
           loading={safetyCarouselLoading}
+          vertical={vertical}
         />
       </div>
     </section>
@@ -393,7 +299,7 @@ export function SafetyRightSidebar({
             <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
               <div className="flex items-center gap-3 text-sm text-[#dbeeff]">
                 <span className="inline-flex">
-                  <Spin size="large" tip="正在加载安全信息..." />
+                  <Spin size="large" />
                 </span>
                 <span>正在加载安全信息...</span>
               </div>
@@ -401,26 +307,29 @@ export function SafetyRightSidebar({
           </div>
         )}
         {riskSection}
-        {carouselSection}
+        {carouselSection()}
       </div>
     </aside>
   ) : (
-    <aside className="relative flex h-full min-h-0 flex-col p-2">
+    <aside className="relative flex h-full min-h-0 flex-col p-2 gap-2" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
       {loading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-[#07111d]/60 backdrop-blur-sm">
           <div className="rounded-xl border border-white/10 bg-[#081726]/90 px-4 py-3 shadow-[0_12px_40px_rgba(0,0,0,0.35)]">
             <div className="flex items-center gap-3 text-sm text-[#dbeeff]">
               <span className="inline-flex">
-                <Spin size="large" tip="正在加载安全信息..." />
+                <Spin size="large" />
               </span>
               <span>正在加载安全信息...</span>
             </div>
           </div>
         </div>
       )}
-      {riskSection}
-      <div className="mt-2" />
-      {carouselSection}
+      <div className="flex-[0.33] min-h-0">
+        {riskSection}
+      </div>
+      <div className="flex-[0.67] min-h-0">
+        {carouselSection(true)}
+      </div>
     </aside>
   );
 }
