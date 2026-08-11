@@ -24,8 +24,8 @@ function ProgressRow({ item }: { item: { name: string; completion: number; comme
   const total = item.completion + item.commence;
   const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
   return (
-    <div className="flex flex-shrink-0 items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
-      <span className="truncate text-[14px] text-[rgba(255,255,255,0.8)] shrink-0" style={{ width: 88 }}>{item.name || '-'}</span>
+    <div className="flex flex-shrink-0 items-center gap-3 px-3 py-1.5 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
+      <span className="truncate text-[14px] text-[rgba(255,255,255,0.8)]" style={{ maxWidth: 88, minWidth: 0 }}>{item.name || '-'}</span>
       <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[url('/img/progress-track-bg.png')] bg-[length:100%_100%]">
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-700"
