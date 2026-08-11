@@ -1686,7 +1686,7 @@ export default function App() {
               {isLandscape ? (
                 /* ===== LANDSCAPE: 2-column layout ===== */
                 <main
-                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)] gap-[18px] overflow-hidden pl-[51px] pr-[18px] pb-[14px] pt-[10px]"
+                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)] gap-[18px] overflow-hidden pl-[51px] pr-[18px] pb-[40px] pt-[10px]"
                 >
                   {hallMode === "ExhibitionOverview" && (
                     <>
@@ -1819,7 +1819,7 @@ export default function App() {
               ) : (
                 /* ===== PORTRAIT: original 3-column layout ===== */
                 <main
-                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)_448px]  overflow-hidden pl-[51px] pb-[14px] pt-[10px] pr-[49px]"
+                  className="grid min-h-0 flex-1 grid-cols-[448px_minmax(0,1fr)_448px]  overflow-hidden pl-[51px] pb-[40px] pt-[10px] pr-[49px]"
                 >
                   {hallMode === "ExhibitionOverview" && (
                     <>

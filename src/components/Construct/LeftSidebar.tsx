@@ -24,18 +24,15 @@ function ProgressRow({ item }: { item: { name: string; completion: number; comme
   const total = item.completion + item.commence;
   const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
   return (
-    <div
-      className="grid flex-shrink-0 items-center gap-[10px] px-4 py-1"
-      style={{ gridTemplateColumns: '88px minmax(0,1fr) 44px', height: ROW_HEIGHT }}
-    >
-      <span className="truncate text-[14px] text-[#93aed0]">{item.name || '-'}</span>
-      <div className="progress-track h-[20px] overflow-hidden rounded">
+    <div className="flex flex-shrink-0 items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
+      <span className="truncate text-[14px] text-[rgba(255,255,255,0.8)] shrink-0" style={{ width: 88 }}>{item.name || '-'}</span>
+      <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[url('/img/progress-track-bg.png')] bg-[length:100%_100%]">
         <div
-          className="progress-fill h-full rounded"
+          className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-right text-[14px] tabular-nums text-[#dbeeff]">{pct}%</span>
+      <span className="text-[14px] tabular-nums text-white shrink-0">{pct}%</span>
     </div>
   );
 }
@@ -98,7 +95,7 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
 
   if (!needsScroll) {
     return (
-      <div className="px-4 pb-3 pt-1">
+      <div className="flex flex-col gap-3 px-4 pb-3 pt-1">
         {items.map((item, i) => (
           <ProgressRow key={`${item.name}-${i}`} item={item} />
         ))}
@@ -107,12 +104,12 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
   }
 
   return (
-    <div className="overflow-hidden px-0" style={{ height: VISIBLE_COUNT * ROW_HEIGHT }}>
+    <div className="overflow-hidden px-4" style={{ height: VISIBLE_COUNT * (ROW_HEIGHT + 12) }}>
       <div
         ref={listRef}
-        className="transition-none"
+        className="transition-none flex flex-col gap-3"
         style={{
-          transform: isScrolling ? `translateY(-${ROW_HEIGHT}px)` : 'translateY(0)',
+          transform: isScrolling ? `translateY(-${ROW_HEIGHT + 12}px)` : 'translateY(0)',
           transition: isScrolling ? `transform ${ANIMATION_DURATION}ms cubic-bezier(0.4,0,0.2,1)` : 'none',
           willChange: 'transform',
         }}
