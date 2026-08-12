@@ -5,7 +5,7 @@ import XButton from "./Buttons";
 import HallOverviewMap from "./HallOverviewMap";
 import HallMap from "./HallMap";
 import type { Booth as HallBooth, HallData } from "./HallMap/types";
-import { transformMockToHallData, transformApiToHallData } from "./HallMap/utils/transform";
+import { transformApiToHallData } from "./HallMap/utils/transform";
 import ConstructCarousel, {
   type ConstructCarouselPicture,
 } from "./Safety/ConstructCarousel";
@@ -16,9 +16,6 @@ import { useBoothColorStrategy } from "../hooks/useBoothColorStrategy";
 import { useHallOverviewMap } from "../hooks/useHallOverviewMap";
 import { useHallSorter } from "../hooks/useHallSorter";
 
-// 导入 mock 数据
-import mockBeijing from "../../mock/北京方案展_export.json";
-import mockShougang from "../../mock/首钢会展中心4号馆1层_export.json";
 type HallMode = string;
 
 type BoothRow = {
@@ -280,39 +277,13 @@ export default function CenterMap({
   const [orderInfos, setOrderInfos] = useState<BoothOrderInfo[]>([]);
   const [constructLoading, setConstructLoading] = useState(false);
 
-  // HallData: 根据 mode 映射到对应的数据
-  // 1号馆/2号馆使用 Mock 数据，其他展馆使用 API 数据
+  // HallData: 所有展馆走 API 接口
   const [hallData, setHallData] = useState<HallData | null>(null);
   const hallDataCacheRef = useRef<Record<string, HallData>>({});
 
-  // 判断是否使用 Mock 数据的展馆
-  const isMockHall = useMemo(() => {
-    if (mode === "all") return false;
-    const halls = initData?.halls ?? [];
-    const currentHall = halls.find((h) => h.hallId === mode);
-    const hallName = currentHall?.hallName || "";
-    return hallName.includes("方案展") || hallName.includes("1号") ||
-      hallName.includes("4号馆") || hallName.includes("首钢") || hallName.includes("2号");
-  }, [mode, initData?.halls]);
-
-  // Mock 数据直接同步计算
-  const mockHallData = useMemo<HallData | null>(() => {
-    if (!isMockHall || mode === "all") return null;
-    const halls = initData?.halls ?? [];
-    const currentHall = halls.find((h) => h.hallId === mode);
-    const hallName = currentHall?.hallName || "";
-
-    if (hallName.includes("方案展") || hallName.includes("1号")) {
-      return transformMockToHallData(mockBeijing as any, hallName);
-    }
-    return transformMockToHallData(mockShougang as any, hallName);
-  }, [isMockHall, mode, initData?.halls]);
-
-  // API 数据异步加载（非 Mock 展馆）
   useEffect(() => {
-    if (mode === "all" || isMockHall) {
-      if (isMockHall) setHallData(mockHallData);
-      else setHallData(null);
+    if (mode === "all") {
+      setHallData(null);
       return;
     }
 
@@ -327,17 +298,18 @@ export default function CenterMap({
       try {
         const response = await screenApi.getSafetyCoordByHallId(mode);
         const payload = (response as any)?.data ?? response;
+        // 底图 URL 从 API 返回的 address 字段获取
+        const backgroundUrl = payload?.address ?? '';
         let parsed: any = null;
         if (payload?.dataJson) {
           try { parsed = JSON.parse(payload.dataJson); } catch {}
         }
-        const booths = (parsed?.booths ?? payload?.booths ?? []) as any[];
-        const imageSize = parsed?.image_size ?? payload?.image_size;
+        const booths = (parsed?.booths ?? []) as any[];
+        const imageSize = parsed?.image_size;
         const imageWidth = Number(imageSize?.width) || 1000;
         const imageHeight = Number(imageSize?.height) || 1000;
         const currentHall = (initData?.halls ?? []).find((h) => h.hallId === mode);
         const hallName = currentHall?.hallName || "";
-        const backgroundUrl = parsed?.image ? `/mock/${parsed.image}` : '';
 
         const data = transformApiToHallData(booths, hallName, imageWidth, imageHeight, backgroundUrl);
         hallDataCacheRef.current[mode] = data;
@@ -350,7 +322,7 @@ export default function CenterMap({
 
     void fetchApi();
     return () => { cancelled = true; };
-  }, [mode, isMockHall, mockHallData, initData?.halls]);
+  }, [mode, initData?.halls]);
 
 
   const safetyInfoList = useMemo(

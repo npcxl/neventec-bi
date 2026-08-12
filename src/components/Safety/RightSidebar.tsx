@@ -119,7 +119,7 @@ export function SafetyRightSidebar({
   // 轮播偏移
   const [riskOffset, setRiskOffset] = useState(0);
   const [isRiskPaused, setIsRiskPaused] = useState(false);
-  const riskWindow = isLandscape ? 6 : 3;
+  const riskWindow = isLandscape ? 6 : 6;
 
   const riskSlice = <T,>(arr: T[]): T[] => {
     if (!arr.length) return [];
