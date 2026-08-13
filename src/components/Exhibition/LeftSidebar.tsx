@@ -101,7 +101,7 @@ export function ExhibitionLeftSidebar({
       {/* ===== 项目运营总览 ===== */}
       <section className="relative flex-none overflow-hidden" style={{ height: 207 }}>
         <PanelTitle title="项目运营总览" />
-        <div className="relative flex-1 flex flex-col gap-2 p-1" style={{ height: 159 }}>
+        <div className="relative flex-1 flex flex-col  p-1" style={{ height: 159 }}>
           {loading ? (
             <div className="flex h-full items-center justify-center rounded-xl">
               <Spin size="large" />

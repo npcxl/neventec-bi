@@ -268,6 +268,10 @@ export function SafetyRightSidebar({
       <div className="min-h-0 flex-1 p-2.5">
         {loading ? (
           <div className="flex h-full items-center justify-center rounded-xl" />
+        ) : riskDates.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
+            暂无数据
+          </div>
         ) : (
           <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
         )}
@@ -276,13 +280,13 @@ export function SafetyRightSidebar({
   );
 
   const carouselSection = (vertical?: boolean) => (
-    <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
+    <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex h-full min-h-0 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
       <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>
-      <div className="min-h-0 flex-1 overflow-hidden p-2.5">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <SafetyCarousel
-          pictures={safetyCarouselPictures.length > 0 ? safetyCarouselPictures : MOCK_SAFETY_PICTURES}
+          pictures={safetyCarouselPictures}
           loading={safetyCarouselLoading}
           vertical={vertical}
         />
@@ -324,10 +328,10 @@ export function SafetyRightSidebar({
           </div>
         </div>
       )}
-      <div className="flex-[0.33] min-h-0">
+      <div className="flex-[0.33] min-h-0 flex flex-col">
         {riskSection}
       </div>
-      <div className="flex-[0.67] min-h-0">
+      <div className="flex-[0.67] min-h-0 flex flex-col">
         {carouselSection(true)}
       </div>
     </aside>

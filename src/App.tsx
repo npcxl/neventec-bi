@@ -215,7 +215,7 @@ const MenuButtonGroup = memo(function MenuButtonGroup({
     <Flex
       wrap
       gap="small"
-      className="absolute left-2 top-[40px] overflow-x-auto"
+      className="absolute left-6 top-[40px] overflow-x-auto"
     >
       {items.map((item) => (
         <Button2
@@ -250,7 +250,7 @@ const CurrentTimeButton = memo(function CurrentTimeButton() {
   };
 
   return (
-    <div className="absolute right-2 top-[40px] z-30 flex items-center gap-2 text-[13px] text-[#dbeeff]">
+    <div className="absolute right-6 top-[40px] z-30 flex items-center gap-2 text-[13px] text-[#dbeeff]">
       <select
         value={layout}
         onChange={(e) => handleLayoutChange(e.target.value as DashboardOrientation)}
@@ -1640,28 +1640,26 @@ export default function App() {
   const [layoutVersion, setLayoutVersion] = useState(0);
   const isLandscape = dashboardLayoutConfig.orientation === "landscape";
 
-  // 暴露全局方法给 CurrentTimeButton 调用
+  // 暴露全局方法
   useEffect(() => {
     (window as any).__setLayoutVersion = () => setLayoutVersion((n) => n + 1);
     return () => { delete (window as any).__setLayoutVersion; };
   }, []);
 
   return (
+
     <ScreenAdapter>
       {isInitialLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(4,13,24,0.86)] backdrop-blur-sm">
           <Loader />
         </div>
       )}
-      {/* 内容区 */}
       <div className="relative h-full w-full overflow-hidden pt-0 pb-[30px] text-slate-100" style={{ fontSize: 16 }}>
-        {/* 边框背景图 */}
         <div aria-hidden className="pointer-events-none absolute bottom-[-150px] inset-0 z-20 bg-[url('/img/bg-border.png')] bg-[length:100%_74%] bg-center bg-no-repeat" />
         <Flex
           vertical
           className="relative z-10 mx-auto h-full w-full min-w-0 overflow-hidden pb-[18px]"
         >
-
         <Flex
           vertical
           className="relative z-10 h-full w-full min-h-0 container-bg"
@@ -1905,5 +1903,9 @@ export default function App() {
       </Flex>
       </div>
     </ScreenAdapter>
+    
+    
   );
+
+   
 }

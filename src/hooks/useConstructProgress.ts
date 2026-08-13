@@ -154,6 +154,7 @@ export function useConstructProgress({
         progressIcon: progressMeta.icon,
         latestLine: row.lines?.[0]?.content ?? row.content ?? row.progressValue ?? '-',
         area: Number(row.area ?? row.squareMeter ?? row.sqm ?? 0),
+        mainStructureMaterial: row.mainStructureMaterial ?? '-',
       };
     });
 

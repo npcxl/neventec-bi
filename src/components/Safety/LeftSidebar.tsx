@@ -323,6 +323,11 @@ export function SafetyLeftSidebar({
     <aside className="flex h-full min-h-0 flex-col gap-[clamp(0.2rem,0.55vw,0.8rem)] px-0 sm:px-0 xl:gap-3" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
       <section className="relative flex-none overflow-hidden" style={{ height: 260 }}>
         <PanelTitle title="查处违规汇总" />
+        {rectifiedCount + pendingCount + unRectifiedCount + cancelledCount + refusedCount === 0 ? (
+          <div className="flex flex-1 items-center justify-center text-sm text-[rgba(255,255,255,0.4)] h-[212px]">
+            暂无数据
+          </div>
+        ) : (
         <div className="flex flex-col h-[212px] p-1">
           <div className="relative flex-1 min-h-0 min-w-0">
             <div ref={pieRef} className="absolute inset-0" />
@@ -347,6 +352,7 @@ export function SafetyLeftSidebar({
             ))}
           </div>
         </div>
+        )}
       </section>
 
       <section className="relative flex min-h-0 flex-[1.55] overflow-hidden">
@@ -372,6 +378,11 @@ export function SafetyLeftSidebar({
                 </span>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
+                {visibleSafetyRows.length === 0 ? (
+                  <div className="flex h-20 items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
+                    暂无数据
+                  </div>
+                ) : (
                 <SeamlessVirtualList
                   data={visibleSafetyRows}
                   itemHeight={42}
@@ -442,6 +453,7 @@ export function SafetyLeftSidebar({
                     );
                   }}
                 />
+                )}
               </div>
             </div>
           </div>

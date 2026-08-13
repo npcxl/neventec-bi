@@ -40,11 +40,12 @@ export function ConstructProgressPie({ entries }: ConstructProgressPieProps) {
       },
       plotOptions: {
         pie: {
+          size: '55%',
           allowPointSelect: true,
           cursor: 'pointer',
           borderColor: 'rgba(9,26,52,0.6)',
           borderWidth: 1.5,
-          showInLegend: true,
+          showInLegend: false,
           dataLabels: {
             enabled: true,
             distance: 20,

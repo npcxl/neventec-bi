@@ -20,6 +20,13 @@ const SCROLL_INTERVAL = 5000;
 const ANIMATION_DURATION = 500;
 const ROW_HEIGHT = 34; // py-1(4px) + bar 20px + py-1(4px) + gap
 
+const MAIN_STRUCTURE_MATERIAL: Record<string, string> = {
+  WOODINESS: "木质",
+  PROXIMATEMATTER: "型材",
+  SPACERACK: "太空架",
+  ORDINARYTRUSS: "普通桁架",
+};
+
 function ProgressRow({ item }: { item: { name: string; completion: number; commence: number } }) {
   const total = item.completion + item.commence;
   const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
@@ -231,9 +238,10 @@ export function ConstructLeftSidebar({
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PanelTitle title="搭建进度明细" />
         <div className="flex min-h-0 flex-1 flex-col px-[16px] py-[8px] min-w-0">
-          <div className="grid min-w-0 shrink-0 grid-cols-[20%_15%_40%_20%] gap-2 overflow-hidden px-3 py-1.5 text-[14px] text-[#93aed0] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
+          <div className="grid min-w-0 shrink-0 grid-cols-[16%_12%_20%_28%_24%] gap-2 overflow-hidden px-3 py-1.5 text-[14px] text-[#93aed0] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
             <span className="block truncate whitespace-nowrap text-center">展位号</span>
             <span className="block truncate whitespace-nowrap text-center">面积</span>
+            <span className="block truncate whitespace-nowrap text-center">主体结构</span>
             <span className="block truncate whitespace-nowrap text-center">最新进程</span>
             <span className="block truncate whitespace-nowrap text-center">展位进度</span>
           </div>
@@ -264,7 +272,7 @@ export function ConstructLeftSidebar({
                   return (
                     <div
                       onClick={() => handleRowClick(row)}
-                      className={`progress-detail-row grid h-full grid-cols-[20%_15%_40%_20%] items-center gap-2 px-3 text-[14px] leading-tight border-b border-dashed border-[#334155]${isSelected ? ' is-selected' : ''}`}
+                      className={`progress-detail-row grid h-full grid-cols-[16%_12%_20%_28%_24%] items-center gap-2 px-3 text-[14px] leading-tight border-b border-dashed border-[#334155]${isSelected ? ' is-selected' : ''}`}
                     >
                       <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
                         <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">
@@ -275,6 +283,9 @@ export function ConstructLeftSidebar({
                         <span className="truncate text-center tabular-nums text-[#dbeeff]">
                           {row.area || "-"}
                         </span>
+                      </div>
+                      <div className="min-w-0 truncate text-center text-[#d8efff]">
+                        {MAIN_STRUCTURE_MATERIAL[row.mainStructureMaterial] ?? row.mainStructureMaterial ?? "-"}
                       </div>
                       <div className="min-w-0 truncate text-center text-[#d8efff]">
                         {row.latestLine || "-"}

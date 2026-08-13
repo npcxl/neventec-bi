@@ -713,7 +713,7 @@ export default function CenterMap({
               ) : hallData ? (
                 <HallMap
                   hallData={hallData}
-                  getBoothColor={(booth, index) =>
+                  getBoothColor={moduleMode !== "ExhibitionOverview" ? (booth, index) =>
                     getColor(
                       {
                         booth_no: booth.boothNo || booth.id,
@@ -721,7 +721,7 @@ export default function CenterMap({
                       },
                       index,
                     )
-                  }
+                  : undefined}
                   onBoothClick={handleBoothClick}
                 />
               ) : (

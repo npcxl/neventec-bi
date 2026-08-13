@@ -57,6 +57,7 @@ const STATUS_CONFIG: { code: string; names: string[]; label: string; color: stri
   { code: '14', names: ['搭建完成'], label: '搭建完成', color: '#63F222' },
   { code: '12', names: ['进度缓慢', '搭建缓慢'], label: '搭建缓慢', color: '#FA8C16' },
   { code: '13', names: ['严重滞后'], label: '严重滞后', color: '#F5222D' },
+  { code: '10', names: ['暂未入场(空地)', '暂未入场'], label: '未进场', color: '#6B7C93' },
 ];
 
 type StatusEntry = { label: string; color: string; count: number };
@@ -92,7 +93,7 @@ function StatusLegend({ entries }: { entries: StatusEntry[] }) {
             className="h-2 w-2 shrink-0 rounded-full"
             style={{ backgroundColor: entry.color }}
           />
-          <span className="whitespace-nowrap text-white/80">{entry.label}</span>
+          <span className="whitespace-nowrap text-white">{entry.label}</span>
         </div>
       ))}
     </div>
@@ -108,10 +109,7 @@ export function ConstructRightSidebar({
 }: ConstructRightSidebarProps) {
   const isLandscape = variant === "landscape";
 
-  const displayPictures =
-    constructCarouselPictures.length > 0
-      ? constructCarouselPictures
-      : MOCK_CONSTRUCT_PICTURES;
+  const displayPictures = constructCarouselPictures;
 
   const entries = useMemo(
     () => extractStatusData(constructOverviewData),
@@ -123,13 +121,19 @@ export function ConstructRightSidebar({
       <div className="shrink-0">
         <PanelTitle title="搭建进度统计" />
       </div>
-      <div
-        className="grid min-h-0 flex-1 items-center overflow-hidden"
-        style={{ gridTemplateColumns: 'minmax(0,1fr) auto', columnGap: 16 }}
-      >
-        <ConstructProgressPie entries={entries} />
-        <StatusLegend entries={entries} />
-      </div>
+      {entries.every((e) => e.count === 0) ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
+          暂无数据
+        </div>
+      ) : (
+        <div
+          className="grid min-h-0 flex-1 items-center overflow-hidden"
+          style={{ gridTemplateColumns: 'minmax(0,1fr) auto', columnGap: 16 }}
+        >
+          <ConstructProgressPie entries={entries} />
+          <StatusLegend entries={entries} />
+        </div>
+      )}
     </section>
   );
 
@@ -138,7 +142,7 @@ export function ConstructRightSidebar({
       <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>
-      <div className="min-h-0 min-w-0 flex-1 overflow-hidden p-3">
+      <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
         <ConstructCarousel
           pictures={displayPictures}
           loading={constructCarouselLoading}

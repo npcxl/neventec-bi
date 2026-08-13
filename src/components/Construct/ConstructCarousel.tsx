@@ -53,15 +53,15 @@ function ConstructCarousel({
 
   if (loading)
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(8,23,42,0.6)] text-sm text-[#93aed0]">
+      <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
         图片加载中...
       </div>
     );
 
   if (normalizedPictures.length === 0 && records.length === 0)
     return (
-      <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-white/10 bg-[rgba(8,23,42,0.6)] text-sm text-[#93aed0]">
-        暂无数据
+      <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
+        暂无图片
       </div>
     );
 
