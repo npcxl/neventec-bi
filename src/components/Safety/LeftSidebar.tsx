@@ -243,25 +243,25 @@ export function SafetyLeftSidebar({
     }],
   } as Highcharts.Options), [rectifiedCount, pendingCount, unRectifiedCount, refusedCount, cancelledCount]);
 
+  // 切换场馆（hallId 变化）或选项变化时，销毁旧实例并重建，避免 Highcharts
+  // 实例在容器未卸载的情况下 update 失败导致图表消失（刷新/切页才恢复的问题）
   useEffect(() => {
     const el = pieRef.current;
     if (!el) return;
 
-    if (!hcRef.current) {
-      hcRef.current = Highcharts.chart(el, hcOptions);
-    } else {
-      hcRef.current.update(hcOptions, true, true);
+    if (hcRef.current) {
+      hcRef.current.destroy();
+      hcRef.current = null;
     }
-  }, [hcOptions]);
+    hcRef.current = Highcharts.chart(el, hcOptions);
 
-  useEffect(() => {
     return () => {
       if (hcRef.current) {
         hcRef.current.destroy();
         hcRef.current = null;
       }
     };
-  }, []);
+  }, [hcOptions, hallId]);
 
   useEffect(() => {
     const el = listScrollRef.current;

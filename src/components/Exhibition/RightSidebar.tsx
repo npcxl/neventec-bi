@@ -27,7 +27,7 @@ function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12">
       <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-[8px] pb-3 text-[18px]">{title}</span>
+        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
@@ -102,7 +102,7 @@ export function ExhibitionRightSidebar({
                     <span className="text-[12px]">缴费完成率</span>
                   </div>
                   <div>
-                    <span className="text-[20px] bold-500"> {paidRate}%</span>
+                    <span className="text-[16px] bold-500"> {paidRate}%</span>
                   </div>
                 </div>
                 <div className="gap-[16px] ml-[57px]">

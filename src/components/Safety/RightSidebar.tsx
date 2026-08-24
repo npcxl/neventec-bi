@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Spin } from "antd";
 import Highcharts from 'highcharts/esm/highcharts.src.js';
 import SafetyCarousel from "./ConstructCarousel";
@@ -116,42 +116,18 @@ export function SafetyRightSidebar({
       };
     }, [riskRows]);
 
-  // 轮播偏移
-  const [riskOffset, setRiskOffset] = useState(0);
-  const [isRiskPaused, setIsRiskPaused] = useState(false);
-  const riskWindow = isLandscape ? 6 : 6;
-
-  const riskSlice = <T,>(arr: T[]): T[] => {
-    if (!arr.length) return [];
-    const start = riskOffset % arr.length;
-    const out = arr.slice(start, start + riskWindow);
-    return out.length < riskWindow
-      ? [...out, ...arr.slice(0, riskWindow - out.length)]
-      : out;
-  };
-
-  const riskShownDates = riskSlice(riskDates) as string[];
-  const riskShownLow = riskSlice(lowRiskData) as number[];
-  const riskShownMedium = riskSlice(mediumRiskData) as number[];
-  const riskShownHigh = riskSlice(highRiskData) as number[];
-
-  // 轮播定时器
-  useEffect(() => {
-    if (riskDates.length <= riskWindow || isRiskPaused) return;
-    const timer = window.setInterval(() => {
-      setRiskOffset((prev) => (prev + 1) % Math.max(1, riskDates.length));
-    }, 4500);
-    return () => window.clearInterval(timer);
-  }, [riskDates.length, isRiskPaused, riskWindow]);
-
+  // 展示全部日期，不补位、不轮播
   // Highcharts 图表
   const riskRef = useRef<HTMLDivElement | null>(null);
   const hcRef = useRef<Highcharts.Chart | null>(null);
 
   const hcOptions = useMemo(() => {
-    const categories = riskShownDates.map((d) => d.slice(5)); // MM-DD
+    const categories = riskDates.map((d) => d.slice(5)); // MM-DD
     // 横版用 column（竖的柱状图），竖版也用 column
     const chartType = 'column' as const;
+    // 最多显示 6 个分类，超出时自动横向滚动（轮播平移，无滚动条）
+    const VISIBLE_COUNT = 6;
+    const exceedLimit = categories.length > VISIBLE_COUNT;
     return {
       chart: {
         type: chartType,
@@ -159,11 +135,14 @@ export function SafetyRightSidebar({
         style: { fontFamily: 'inherit' },
         spacing: isPortrait ? [2, 8, 2, 4] : [4, 8, 4, 4],
         height: 230,
+        animation: { duration: 600 },
       },
       title: { text: '' },
       credits: { enabled: false },
       xAxis: {
         categories,
+        min: 0,
+        max: Math.min(categories.length - 1, VISIBLE_COUNT - 1),
         labels: {
           style: { color: '#9ec6ef', fontSize: '11px' },
         },
@@ -216,51 +195,63 @@ export function SafetyRightSidebar({
         {
           name: '高风险',
           type: chartType,
-          data: riskShownHigh,
+          data: highRiskData,
           color: RISK_COLORS.highRisk,
         },
         {
           name: '较大风险',
           type: chartType,
-          data: riskShownMedium,
+          data: mediumRiskData,
           color: RISK_COLORS.mediumRisk,
         },
         {
           name: '一般风险',
           type: chartType,
-          data: riskShownLow,
+          data: lowRiskData,
           color: RISK_COLORS.lowRisk,
         },
       ],
     } as Highcharts.Options;
-  }, [riskShownDates, riskShownHigh, riskShownMedium, riskShownLow, isLandscape, isPortrait]);
+  }, [riskDates, highRiskData, mediumRiskData, lowRiskData, isLandscape, isPortrait]);
 
   useEffect(() => {
     const el = riskRef.current;
     if (!el) return;
 
-    if (!hcRef.current) {
-      hcRef.current = Highcharts.chart(el, hcOptions);
-    } else {
-      hcRef.current.update(hcOptions, true, true);
+    if (hcRef.current) {
+      hcRef.current.destroy();
+      hcRef.current = null;
     }
-  }, [hcOptions]);
+    hcRef.current = Highcharts.chart(el, hcOptions);
 
-  useEffect(() => {
     return () => {
       if (hcRef.current) {
         hcRef.current.destroy();
         hcRef.current = null;
       }
     };
-  }, []);
+  }, [hcOptions]);
+
+  // 超出 6 个分类时自动横向轮播（无滚动条）
+  useEffect(() => {
+    const total = riskDates.length;
+    const windowSize = 6;
+    if (total <= windowSize) return;
+    const maxStart = total - windowSize;
+    let start = 0;
+    const id = window.setInterval(() => {
+      start += 1;
+      if (start > maxStart) start = 0;
+      const axis = hcRef.current?.xAxis?.[0];
+      if (axis) axis.update({ min: start, max: start + windowSize - 1 });
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [riskDates]);
 
   const riskSection = (
     <section
       className={isLandscape ? "flex flex-col overflow-hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}
       style={isLandscape ? { height: 268 } : undefined}
-      onMouseEnter={() => setIsRiskPaused(true)}
-      onMouseLeave={() => setIsRiskPaused(false)}
     >
       <div className={isLandscape ? "shrink-0 w-full" : "shrink-0 w-full"}>
         <PanelTitle title="违规风险等级" />

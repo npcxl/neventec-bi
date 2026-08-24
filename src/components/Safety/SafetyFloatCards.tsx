@@ -11,7 +11,7 @@ const { Text } = Typography;
 const RISK_LEGEND = [
   { color: '#2563EB', label: '一般风险' },
   { color: '#FA8C16', label: '较大风险' },
-  { color: '#F5222D', label: '严重风险' },
+  { color: '#F5222D', label: '重大风险' },
 
 ];
 
@@ -54,7 +54,7 @@ const bodyStyle: React.CSSProperties = {
 
 function LegendItem({ color, label, icon }: { color: string; label: string; icon?: string }) {
   return (
-    <Flex align="center" gap={10} style={{ flex: 1, minWidth: 0 }}>
+    <Flex align="center" gap={8} style={{ flexShrink: 0, paddingRight: 20 }}>
       {icon ? (
         <span style={{ color, fontSize: 14, width: 14, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
       ) : (
@@ -78,43 +78,67 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
 
   if (isPortrait) {
     return (
-      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-col gap-2 pointer-events-none">
-        {/* 第一行：安全风险预警 - 横向 */}
+      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-row gap-3 pointer-events-none">
+        {/* 卡片 1：安全风险预警 */}
         <Card
           size="small"
-          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          style={{
+            ...glassCardStyle,
+            flex: 1,
+            minWidth: 0,
+            height: 64,
+            pointerEvents: 'auto',
+          }}
           styles={{
             header: { display: 'none' },
-            body: { ...bodyStyle, justifyContent: 'flex-start', padding: '8px 14px' },
+            body: {
+              height: '100%',
+              boxSizing: 'border-box',
+              padding: '8px 14px 10px',
+              background: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              overflow: 'hidden',
+            },
           }}
         >
-          <Flex gap={24} align="center" wrap style={{ width: '100%' }}>
-            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>安全风险预警：</Text>
+          <Flex align="center" gap={0} wrap={false} style={{ minWidth: 0, width: '100%' }}>
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0, marginRight: 20 }}>安全风险预警：</Text>
             {RISK_LEGEND.map((item) => (
               <LegendItem key={item.label} {...item} />
             ))}
           </Flex>
         </Card>
 
-        {/* 第二行：关键工序 - 横向 */}
+        {/* 卡片 2：关键工序 */}
         <Card
           size="small"
-          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          style={{
+            ...glassCardStyle,
+            flex: 1,
+            minWidth: 0,
+            height: 64,
+            pointerEvents: 'auto',
+          }}
           styles={{
             header: { display: 'none' },
-            body: { ...bodyStyle, justifyContent: 'flex-start', padding: '8px 14px' },
+            body: {
+              height: '100%',
+              boxSizing: 'border-box',
+              padding: '8px 14px 10px',
+              background: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              overflow: 'hidden',
+            },
           }}
         >
-          <Flex gap={24} align="center" wrap style={{ width: '100%' }}>
-            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>关键工序：</Text>
-            {PROCESS_LEGEND.slice(0, 2).map((item) => (
+          <div className="construct-steps-scroll" style={{ display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0, marginRight: 20 }}>关键工序：</Text>
+            {PROCESS_LEGEND.map((item) => (
               <LegendItem key={item.label} {...item} />
             ))}
-            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>图例：</Text>
-            {PROCESS_LEGEND.slice(2).map((item) => (
-              <LegendItem key={item.label} {...item} />
-            ))}
-          </Flex>
+          </div>
         </Card>
       </div>
     );
@@ -128,40 +152,54 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
       zIndex: 9999,
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 10,
     }}>
-      {/* 卡片 1：安全风险预警 */}
+      {/* 卡片 1：安全风险预警 - 横向单行 */}
       <Card
         size="small"
         title={
           <span style={cardTitleStyle}>安全风险预警：</span>
         }
-        style={glassCardStyle}
+        style={{ ...glassCardStyle, width: 260 }}
         styles={{
           header: headerStyle,
-          body: bodyStyle,
+          body: {
+            ...bodyStyle,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            flexWrap: 'wrap',
+            padding: '8px 14px 10px',
+          },
         }}
       >
-        <Flex vertical gap={14} align="center">
+        <Flex align="center" gap={12} wrap>
           {RISK_LEGEND.map((item) => (
             <LegendItem key={item.label} {...item} />
           ))}
         </Flex>
       </Card>
 
-      {/* 卡片 2：关键工序 */}
+      {/* 卡片 2：关键工序 - 横向单行 */}
       <Card
         size="small"
         title={
           <span style={cardTitleStyle}>关键工序：</span>
         }
-        style={glassCardStyle}
+        style={{ ...glassCardStyle, width: 260 }}
         styles={{
           header: headerStyle,
-          body: bodyStyle,
+          body: {
+            ...bodyStyle,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            flexWrap: 'wrap',
+            padding: '8px 14px 10px',
+          },
         }}
       >
-        <Flex vertical gap={14} align="center">
+        <Flex align="center" gap={12} wrap>
           {PROCESS_LEGEND.map((item) => (
             <LegendItem key={item.label} {...item} />
           ))}

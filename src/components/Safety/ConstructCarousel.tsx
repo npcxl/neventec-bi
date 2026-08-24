@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react";
 import { Image } from "antd";
 import { useWindowedCarousel, CARD_WIDTH } from "../../hooks/useWindowedCarousel";
+import { thumbUrl, fullUrl } from "../../utils/image";
 
 export type ConstructCarouselPicture = {
   address: string;
@@ -53,6 +54,28 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
     );
   }
 
+  const renderPictureCard = (item: ConstructCarouselPicture, index: number, keyPrefix: string) => (
+    <div
+      key={`${keyPrefix}-${index}-${item.address}`}
+      className="flex-shrink-0"
+    >
+      <div className="relative overflow-hidden rounded-xl">
+        <Image
+          src={thumbUrl(item.address, 400, 300)}
+          alt={item.dataStr || `图片-${index + 1}`}
+          preview={{ src: fullUrl(item.address) }}
+          classNames={{ root: "block w-full" }}
+          className="h-[150px] w-full object-cover"
+        />
+        <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 py-3 backdrop-blur-md">
+          <span className="truncate text-[14px] font-semibold text-[#cffafe]">
+            {item.boothNo} - {item.exhibitor}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   // 竖版：自动垂直滚动（CSS animation）
   if (vertical) {
     const cardHeight = 162; // 150px 图片 + 12px gap
@@ -64,48 +87,14 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
     } as React.CSSProperties;
 
     return (
-      <div className="relative h-full overflow-hidden rounded-xl bg-[rgba(8,23,42,0.72)]">
-        <div className="demo-br2-scroll-track flex flex-col gap-3 p-3" style={style}>
-          {normalizedPictures.map((item, index) => (
-            <div
-              key={`a-${index}-${item.address}`}
-              className="flex-shrink-0"
-            >
-              <div className="relative overflow-hidden rounded-xl">
-                <Image
-                  src={item.address}
-                  alt={item.dataStr || `图片-${index + 1}`}
-                  preview={{ src: item.address }}
-                  className="h-[150px] w-full object-cover"
-                />
-                <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
-                  <span className="truncate text-[14px] font-semibold text-[#cffafe]">
-                    {item.boothNo} - {item.exhibitor}
-                  </span>
-                </div>
-              </div>
+      <div className="demo-br2-scroll relative h-full overflow-hidden">
+        <div className="flex h-full min-h-0 flex-col gap-2 p-3">
+          <div className="flex h-full min-h-0 flex-col overflow-hidden">
+            <div className="demo-br2-scroll-track flex flex-col gap-3" style={style}>
+              {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'a'))}
+              {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'b'))}
             </div>
-          ))}
-          {normalizedPictures.map((item, index) => (
-            <div
-              key={`b-${index}-${item.address}`}
-              className="flex-shrink-0"
-            >
-              <div className="relative overflow-hidden rounded-xl">
-                <Image
-                  src={item.address}
-                  alt={item.dataStr || `图片-${index + 1}`}
-                  preview={{ src: item.address }}
-                  className="h-[150px] w-full object-cover"
-                />
-                <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
-                  <span className="truncate text-[14px] font-semibold text-[#cffafe]">
-                    {item.boothNo} - {item.exhibitor}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
       </div>
     );
@@ -128,10 +117,11 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
               >
                 <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl">
                   <Image
-                    src={item.address}
+                    src={thumbUrl(item.address, 400, 300)}
                     alt={item.dataStr || `图片-${realIndex + 1}`}
-                    preview={{ src: item.address }}
+                    preview={{ src: fullUrl(item.address) }}
                     loading={isEager ? "eager" : "lazy"}
+                    classNames={{ root: "block w-full" }}
                     className="h-[150px] w-full object-cover"
                   />
                   <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">

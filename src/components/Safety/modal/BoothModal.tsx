@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Image } from "antd";
+import { thumbUrl, fullUrl } from "../../../utils/image";
 import "./index.css";
 
 /* ============================================
@@ -39,17 +40,134 @@ export type SafetyDetailData = {
    整改状态颜色
    ============================================ */
 const RECTIFY_COLORS: Record<string, string> = {
-  "整改合格": "#63F222",
+  // 枚举 code
+  WAIT_RECTIFY: "#FA8C16",
+  CANCEL: "#6B7C93",
+  RECTIFYED: "#63F222",
+  NOTONTIME: "#F5222D",
+  RECTIFY_PART: "#2563EB",
+  NOT_RECTIFY: "#FF7A45",
+  REFUSE_RECTIFY: "#F5222D",
+  // 中文文案（兜底）
   "待整改": "#FA8C16",
-  "整改不合格": "#F5222D",
-  "拒不整改": "#2563EB",
   "已作废": "#6B7C93",
   "作废": "#6B7C93",
+  "已整改": "#63F222",
+  "未按时完成": "#F5222D",
+  "部分整改": "#2563EB",
+  "未整改": "#FF7A45",
+  "拒不整改": "#F5222D",
+  "整改合格": "#63F222",
+  "整改不合格": "#F5222D",
 };
 
 function rectifyColor(status?: string) {
   if (!status) return "rgba(255,255,255,0.6)";
   return RECTIFY_COLORS[status] || "rgba(255,255,255,0.6)";
+}
+
+/* 整改状态枚举 code -> 中文文案（后端返回英文 code 时翻译显示） */
+const RECTIFY_LABELS: Record<string, string> = {
+  WAIT_RECTIFY: "待整改",
+  CANCEL: "已作废",
+  RECTIFYED: "已整改",
+  NOTONTIME: "未按时完成",
+  RECTIFY_PART: "部分整改",
+  NOT_RECTIFY: "未整改",
+  REFUSE_RECTIFY: "拒不整改",
+};
+
+function rectifyLabel(status?: string) {
+  if (!status) return "-";
+  return RECTIFY_LABELS[status] ?? status;
+}
+
+/* 责任主体枚举 code -> 中文文案 */
+const DUTY_ENTITY_LABELS: Record<string, string> = {
+  EXHIBIT: "搭建商",
+  EXHIBITOR: "参展商",
+};
+
+function dutyEntityLabel(value?: string) {
+  if (!value) return "-";
+  return DUTY_ENTITY_LABELS[value] ?? value;
+}
+
+/* ============================================
+   违规状态映射（safetyStatus）
+   枚举：WAIT_RECTIFY(待整改) / CANCEL(已作废) / NOT_RECTIFY(整改不合格)
+        / RECTIFYED(整改合格) / REFUSE_RECTIFY(拒不整改)
+   ============================================ */
+const SAFETY_STATUS_COLORS: Record<string, string> = {
+  // code
+  WAIT_RECTIFY: "#FA8C16",
+  CANCEL: "#6B7C93",
+  NOT_RECTIFY: "#F5222D",
+  RECTIFYED: "#63F222",
+  REFUSE_RECTIFY: "#F5222D",
+  // 中文兜底
+  "待整改": "#FA8C16",
+  "已作废": "#6B7C93",
+  "整改不合格": "#F5222D",
+  "整改合格": "#63F222",
+  "拒不整改": "#F5222D",
+};
+
+const SAFETY_STATUS_LABELS: Record<string, string> = {
+  WAIT_RECTIFY: "待整改",
+  CANCEL: "已作废",
+  NOT_RECTIFY: "整改不合格",
+  RECTIFYED: "整改合格",
+  REFUSE_RECTIFY: "拒不整改",
+};
+
+function safetyStatusColor(status?: string) {
+  if (!status) return "rgba(255,255,255,0.6)";
+  return SAFETY_STATUS_COLORS[status] || "rgba(255,255,255,0.6)";
+}
+
+function safetyStatusLabel(status?: string) {
+  if (!status) return "-";
+  return SAFETY_STATUS_LABELS[status] ?? status;
+}
+
+/* ============================================
+   风险评估映射（riskAssessment）
+   枚举：HIGHRISK(高风险) 等；同时兼容后端返回的中文（高/中/低、严重/较大/一般）
+   ============================================ */
+const RISK_COLORS: Record<string, string> = {
+  // 枚举 code
+  HIGHRISK: "#F5222D",
+  MIDRISK: "#FA8C16",
+  LOWRISK: "#63F222",
+  // 与现场安全悬浮卡片（RISK_LEGEND）保持一致的三级风险文案
+  "重大风险": "#F5222D",
+  "较大风险": "#FA8C16",
+  "一般风险": "#2563EB",
+  // 其它兼容写法兜底
+  "高风险": "#F5222D",
+  "中风险": "#FA8C16",
+  "低风险": "#63F222",
+  "严重风险": "#F5222D",
+  "高": "#F5222D",
+  "中": "#FA8C16",
+  "低": "#63F222",
+};
+
+const RISK_LABELS: Record<string, string> = {
+  HIGHRISK: "高风险",
+  MIDRISK: "中风险",
+  LOWRISK: "一般风险",
+};
+
+function riskColor(value?: string) {
+  if (!value) return "rgba(255,255,255,0.6)";
+  return RISK_COLORS[value] || "rgba(255,255,255,0.6)";
+}
+
+function riskLabel(value?: string) {
+  if (!value) return "-";
+  return RISK_LABELS[value] ?? value;
 }
 
 /* ============================================
@@ -129,10 +247,10 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
   const fields: FieldDef[] = [
     { label: "展位号", value: data.boothNo || "-" },
     { label: "施工单位", value: data.company || data.constructionCompany || "-" },
-    { label: "责任主体", value: data.dutyEntity || "-" },
-    { label: "风险评估", value: data.riskAssessment || "-", valueStyle: { color: rectifyColor(data.riskAssessment) } },
-    { label: "整改状态", value: data.rectifyCheckStatus || "-", valueStyle: { color: rColor } },
-    { label: "整改措施", value: data.safetyStatus || "-" },
+    { label: "责任主体", value: dutyEntityLabel(data.dutyEntity) },
+    { label: "风险评级", value: riskLabel(data.riskAssessment), valueStyle: { color: riskColor(data.riskAssessment) } },
+    { label: "整改状态", value: rectifyLabel(data.rectifyCheckStatus), valueStyle: { color: rColor } },
+    { label: "违规状态", value: safetyStatusLabel(data.safetyStatus), valueStyle: { color: safetyStatusColor(data.safetyStatus) } },
     { label: "检查时间", value: data.targetCheckTime || "-", nowrap: true, title: data.targetCheckTime || "-" },
     { label: "联系方式", value: data.contactWay || "-" },
     { label: "展位类型", value: data.excompanytype || "-" },
@@ -161,7 +279,7 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
           </h2>
           <div className="flex h-[22px] items-center justify-between text-sm font-medium leading-[22px]">
             <span className="pr-4 text-white/60">展位号：{data.boothNo || "-"}</span>
-            <span className="px-4" style={{ color: rColor }}>{data.rectifyCheckStatus || "-"}</span>
+            <span className="px-4" style={{ color: rColor }}>{rectifyLabel(data.rectifyCheckStatus)}</span>
           </div>
           <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
         </header>
@@ -211,11 +329,7 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
               <div className="flex flex-col gap-2 px-6 pb-4">
                 {data.safetyInfoList.map((info, idx) => {
                   const risk = info.riskAssessment || "";
-                  const riskColor = risk.includes("严重")
-                    ? "#F5222D"
-                    : risk.includes("较大") || risk.includes("重大")
-                      ? "#FA8C16"
-                      : "#2563EB";
+                  const riskColorFn = riskColor(risk);
                   const firstImage = info.imageAddress?.find((img) => img.address)?.address;
                   return (
                     <div
@@ -226,11 +340,12 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
                       <div className="shrink-0">
                         {firstImage ? (
                           <Image
-                            src={firstImage}
+                            src={thumbUrl(firstImage, 240, 180)}
                             alt={`巡检图片${idx + 1}`}
                             width={120}
                             height={90}
                             className="rounded border border-[rgba(96,165,250,0.28)] object-cover"
+                            preview={{ src: fullUrl(firstImage) }}
                           />
                         ) : (
                           <div
@@ -245,13 +360,13 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
                         {/* 顶部：整改状态 + 风险（幽灵样式） */}
                         <div className="flex flex-wrap items-center gap-2">
                           {info.safetyStatus && (
-                            <span className="construct-ghost-tag font-medium" style={{ color: "#60A5FA" }}>
-                              {info.safetyStatus}
+                            <span className="construct-ghost-tag font-medium" style={{ color: safetyStatusColor(info.safetyStatus) }}>
+                              {safetyStatusLabel(info.safetyStatus)}
                             </span>
                           )}
                           {info.riskAssessment && (
-                            <span className="construct-ghost-tag" style={{ color: riskColor }}>
-                              {info.riskAssessment}
+                            <span className="construct-ghost-tag" style={{ color: riskColorFn }}>
+                              {riskLabel(info.riskAssessment)}
                             </span>
                           )}
                         </div>
@@ -272,11 +387,12 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
                             {info.imageAddress.map((img, i) => img.address && (
                               <Image
                                 key={`${idx}-${i}-${img.address}`}
-                                src={img.address}
+                                src={thumbUrl(img.address, 128, 96)}
                                 alt={`巡检图片${i + 1}`}
                                 width={64}
                                 height={48}
                                 className="shrink-0 rounded border border-[rgba(96,165,250,0.28)] object-cover"
+                                preview={{ src: fullUrl(img.address) }}
                               />
                             ))}
                           </div>

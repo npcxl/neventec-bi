@@ -18,7 +18,7 @@ type SafetyRecordRow = {
 const SAFETY_RISK_COLORS = {
   low: '#2563EB',     // 一般风险 - 蓝
   medium: '#FA8C16',  // 较大风险 - 橙
-  high: '#F5222D',    // 严重风险 - 红
+  high: '#F5222D',    // 重大风险 - 红
 };
 
 type ConstructProgressRow = {

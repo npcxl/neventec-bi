@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 import { Image } from "antd";
+import { thumbUrl, fullUrl } from "../../../utils/image";
 import "./index.css";
 
 /* ============================================
@@ -168,16 +169,16 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
       { label: "施工单位", value: data.constructionCompany || "-" },
       { label: "商品是否入场", value: label(EXHIBITS_ADMISSION, data.exhibitsAdmission) },
       { label: "是否包含吊点", value: label(LIFT_POINT, data.liftingPoint) },
-      { label: "搭建进程", value: pLabel, valueStyle: { color: pColor } },
+      { label: "搭建进度", value: pLabel, valueStyle: { color: pColor } },
       {
-        label: "搭建进度",
+        label: "搭建进程",
         value: data.progressPercentage != null ? `${data.progressPercentage}%` : "-",
       },
     ],
   };
 }
 
-/* ============================================
+/* ============================================ss
    字段行组件
    ============================================ */
 function FieldRow({ field }: { field: FieldDef }) {
@@ -327,13 +328,13 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                       {inspectionImages.map((url, idx) => (
                         <Image
                           key={`${url}-${idx}`}
-                          src={url}
+                          src={thumbUrl(url, 300, 220)}
                           alt={`巡查图片${idx + 1}`}
                           width={150}
                           height={110}
                           loading="lazy"
                           className="h-[110px] w-[150px] shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                          preview={{ zIndex: 2000 }}
+                          preview={{ src: fullUrl(url), zIndex: 2000 }}
                         />
                       ))}
                     </Image.PreviewGroup>
@@ -391,13 +392,13 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                             {h.imageUrl && (
                               <Image.PreviewGroup>
                                 <Image
-                                  src={h.imageUrl}
+                                  src={thumbUrl(h.imageUrl, 300, 220)}
                                   alt={`第${nth}次巡查图片`}
                                   loading="lazy"
                                   width={150}
                                   height={110}
                                   className="mt-2 h-[110px] w-[150px] rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                                  preview={{ zIndex: 2000 }}
+                                  preview={{ src: fullUrl(h.imageUrl), zIndex: 2000 }}
                                 />
                               </Image.PreviewGroup>
                             )}

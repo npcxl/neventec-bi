@@ -116,7 +116,7 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         if (!cancelled) {
           bgImageRef.current = img;
           fitToCenter();
-          // 图片加载完成后触发重绘（尺寸同步 effect 会处理首次绘制）
+          draw();
         }
       })
       .catch(() => {});
@@ -224,9 +224,9 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
       const codeFontSize = Math.max(8, Math.min(24, Math.min(bw * 0.16, bh * 0.28)));
       const nameFontSize = Math.max(7, Math.min(20, codeFontSize * 0.78));
 
-      // 显示等级（展位号不在地图上显示，保留 booth.id 用于点击/hover 逻辑）
+      // 显示等级（底图不叠加任何文字：展位号与企业名称都不显示，仅保留色块与点击/hover 逻辑）
       const showCode = false;
-      const showName = bw >= 48 && bh >= 30;
+      const showName = false;
 
       // 名称最大行数
       const maxNameLines = bh >= 100 ? 3 : bh >= 48 ? 2 : 1;
@@ -286,11 +286,16 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         const bx = Math.max(...xs) * scale + offsetX;
         const by = Math.min(...ys) * scale + offsetY;
         const size = Math.max(8, Math.min(15, Math.min(bw, bh) * 0.14));
-        const badgeW = Math.round(size * 2);
         const badgeH = Math.round(size * 1.8);
-        const corner = Math.round(Math.max(2, size * 0.4));
+        const padX = Math.round(size * 0.55);
 
         ctx.save();
+        // 文字宽度自适应，宽高按内容而定
+        ctx.font = `700 ${Math.round(size * 1.1)}px sans-serif`;
+        const text = String(badge);
+        const badgeW = Math.ceil(ctx.measureText(text).width) + padX * 2;
+        const corner = Math.round(Math.max(2, size * 0.4));
+
         // 圆角矩形：左上、左下、右下圆角，右上直角贴合展位角
         const x0 = bx - badgeW;
         const y0 = by;
@@ -306,11 +311,10 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fill();
         // 序号文字
-        ctx.font = `700 ${Math.round(badgeH * 0.6)}px sans-serif`;
-        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(badge), x0 + badgeW / 2, y0 + badgeH / 2 + 1);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(text, x0 + badgeW / 2, y0 + badgeH / 2 + 1);
         ctx.restore();
       }
     }

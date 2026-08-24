@@ -19,6 +19,7 @@ const PROGRESS_LEGEND = [
   { color: '#FA8C16', label: '进度缓慢' },
   { color: '#F5222D', label: '严重滞后' },
   { color: '#63F222', label: '搭建完成' },
+  { color: '#ccc', label: '未进场' },
 ];
 
 const glassCardStyle: React.CSSProperties = {
@@ -35,11 +36,13 @@ function normalizeSteps(raw: unknown): ConstructProcessStep[] {
     ? raw
     : Array.isArray((raw as any).data)
       ? (raw as any).data
-      : Array.isArray((raw as any).rows)
-        ? (raw as any).rows
-        : Array.isArray((raw as any).list)
-          ? (raw as any).list
-          : [];
+      : Array.isArray((raw as any).categoryList)
+        ? (raw as any).categoryList
+        : Array.isArray((raw as any).rows)
+          ? (raw as any).rows
+          : Array.isArray((raw as any).list)
+            ? (raw as any).list
+            : [];
   return arr
     .map((item: any) => {
       if (typeof item === 'string') return { title: item };
@@ -63,20 +66,32 @@ export function ConstructFloatCards({
 
   if (isPortrait) {
     return (
-      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-col gap-2 pointer-events-none">
+      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-row items-start gap-2 pointer-events-none">
         {/* 第一行：施工进程 - 横向步骤，超出左右滚动 */}
         <Card
         size="small"
-        style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+        style={{
+          ...glassCardStyle,
+          width: 'auto',
+          height: 64,
+          flex: 1,
+          minWidth: 0,
+          pointerEvents: 'auto',
+        }}
         styles={{
           header: { display: 'none' },
           body: {
+            height: '100%',
+            boxSizing: 'border-box',
             padding: '8px 14px 10px',
             background: 'transparent',
+            display: 'flex',
+            alignItems: 'center',
+            overflow: 'hidden',
           },
         }}
         >
-        <Flex align="center" gap={12}>
+        <Flex align="center" gap={12} style={{ minWidth: 0 }}>
           <Text style={{ color: '#7fc6ff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>搭建进程：</Text>
           <div className="construct-steps-scroll" style={{ maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0 }}>
             <Steps
@@ -118,14 +133,23 @@ export function ConstructFloatCards({
         {/* 第二行：搭建进度图例 - 4个横向 */}
         <Card
           size="small"
-          style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
+          style={{
+            ...glassCardStyle,
+            width: 'calc(50% - 4px)',
+            height: 64,
+            pointerEvents: 'auto',
+          }}
           styles={{
             header: { display: 'none' },
             body: {
+              height: '100%',
+              boxSizing: 'border-box',
               padding: '10px 14px',
               background: 'transparent',
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'flex-start',
+              overflow: 'hidden',
             },
           }}
         >
@@ -227,7 +251,7 @@ export function ConstructFloatCards({
             搭建进度
           </Text>
         }
-        style={glassCardStyle}
+        style={{ ...glassCardStyle, width: 220 }}
         styles={{
           header: {
             borderBottom: '1px solid rgba(128,185,255,0.12)',

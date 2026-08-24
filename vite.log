@@ -1,0 +1,13 @@
+
+> db-demo@0.0.108 dev
+> vite
+
+[2m18:36:32[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+Port 9527 is in use, trying another one...
+
+  [32m[1mVITE[22m v6.4.2[39m  [2mready in [0m[1m2315[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://10.12.1.216:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.30.160.1:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.112.1:[1m9528[22m/[39m

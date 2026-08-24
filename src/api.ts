@@ -344,6 +344,12 @@ export const screenApi = {
   //3.7.1 获取指定展馆展会进程情况（完成率）
   getExhibitionProcessByHallId: (exhibitionId: string, hallId: string, allPeriod = false, signal?: AbortSignal) =>
     request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId, allPeriod }, signal }),
+  //3.7.2 搭建进程总览专用（返回格式同之前：[{name,completion,commence,...}]），支持 hallId/boothId/allPeriod
+  getExhibitionProcessDetail: (exhibitionId: string, opts?: { hallId?: string; boothId?: string; allPeriod?: boolean }, signal?: AbortSignal) =>
+    request<any>('a/api/inspection/record/summary/getExhibitionProcessDetail', {
+      query: { exhibitionId, ...(opts?.hallId ? { hallId: opts.hallId } : {}), ...(opts?.boothId ? { boothId: opts.boothId } : {}), ...(opts?.allPeriod != null ? { allPeriod: opts.allPeriod } : {}) },
+      signal,
+    }),
 
   //3.8 获取展位详情
   getBoothDetail: (exhibitionId: string, hallId: string, boothId: string, signal?: AbortSignal) =>

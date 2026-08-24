@@ -368,7 +368,7 @@ export default function App() {
   const [hallMode, setHallMode] = useState<ModuleKey>(initialPrefs?.hallMode ?? "ExhibitionOverview");
   const [selectedHallId, setSelectedHallId] = useState<string>(initialPrefs?.selectedHallId ?? "all");
   //搭建进程总览：allPeriod=true 查询所有阶段，false 仅当前阶段
-  const [allPeriod, setAllPeriod] = useState(true);
+  const [allPeriod, setAllPeriod] = useState(false);
   //搭建进程总览 切换全部/当前时的刷新状态，用于重新渲染 + 视觉反馈
   const [exhibitionProcessLoading, setExhibitionProcessLoading] = useState(false);
   const handleAllPeriodChange = useCallback((v: boolean) => {
@@ -789,7 +789,7 @@ export default function App() {
                   "getConstructProcess",
                   "getMaterialStatistics",
                   "getBoothProcess",
-                  "getExhibitionProcess",
+                  "getExhibitionProcessDetail",
                   "getCurrentStageConstructProcess",
                 ]
               : [
@@ -797,7 +797,7 @@ export default function App() {
                   "getConstructProcessByHallId",
                   "getMaterialStatistics",
                   "getBoothProcessByHallId",
-                  "getExhibitionProcessByHallId",
+                  "getExhibitionProcessDetail",
                   "getCurrentStageConstructProcess",
                 ];
           logRequestGroup("ConstructOverview", requestLabels);
@@ -820,10 +820,17 @@ export default function App() {
                   screenApi.getCurrentStageConstructProcess(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
                 ];
           // Background: exhibitionProcess only (boothProgressPicture is handled by ConstructCarousel effect)
-          const backgroundRequests =
-            selectedHallId === "all"
-              ? [screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, allPeriod, controller.signal)]
-              : [screenApi.getExhibitionProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, allPeriod, controller.signal)];
+          const backgroundRequests = [
+            screenApi.getExhibitionProcessDetail(
+              DEFAULT_EXHIBITION_ID,
+              {
+                hallId: selectedHallId === "all" ? undefined : selectedHallId,
+                boothId: selectedBoothId || undefined,
+                allPeriod,
+              },
+              controller.signal,
+            ),
+          ];
 
           const criticalResult = await withTimeout(
             Promise.all(criticalRequests),
@@ -1111,19 +1118,15 @@ export default function App() {
     const controller = new AbortController();
     const loadExhibitionProcess = async () => {
       try {
-        const res =
-          selectedHallId === "all"
-            ? await screenApi.getExhibitionProcess(
-                DEFAULT_EXHIBITION_ID,
-                allPeriod,
-                controller.signal,
-              )
-            : await screenApi.getExhibitionProcessByHallId(
-                DEFAULT_EXHIBITION_ID,
-                selectedHallId,
-                allPeriod,
-                controller.signal,
-              );
+        const res = await screenApi.getExhibitionProcessDetail(
+          DEFAULT_EXHIBITION_ID,
+          {
+            hallId: selectedHallId === "all" ? undefined : selectedHallId,
+            boothId: selectedBoothId || undefined,
+            allPeriod,
+          },
+          controller.signal,
+        );
         if (!cancelled) {
           const payload = res?.data ?? res ?? null;
           setExhibitionProcessData(payload);
@@ -1218,7 +1221,7 @@ export default function App() {
   };
   const safetyCollectRows = Array.isArray(safetyCollect)
     ? safetyCollect
-    : (safetyCollect?.data ?? safetyCollect?.list ?? []);
+    : (safetyCollect?.data ?? safetyCollect?.list ?? (safetyCollect && typeof safetyCollect === "object" ? [safetyCollect] : []));
   const safetyLeftSidebarProps = {
     galleryRows,
     safetyRows,
@@ -1423,19 +1426,15 @@ export default function App() {
         {
           key: "exhibitionProcess",
           run: async (signal: AbortSignal) => {
-            const res =
-              selectedHallId === "all"
-                ? await screenApi.getExhibitionProcess(
-                    DEFAULT_EXHIBITION_ID,
-                    allPeriod,
-                    signal,
-                  )
-                : await screenApi.getExhibitionProcessByHallId(
-                    DEFAULT_EXHIBITION_ID,
-                    selectedHallId,
-                    allPeriod,
-                    signal,
-                  );
+            const res = await screenApi.getExhibitionProcessDetail(
+              DEFAULT_EXHIBITION_ID,
+              {
+                hallId: selectedHallId === "all" ? undefined : selectedHallId,
+                boothId: selectedBoothId || undefined,
+                allPeriod,
+              },
+              signal,
+            );
             setExhibitionProcessData(safeData<any>(res, null));
           },
         },
