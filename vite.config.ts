@@ -35,7 +35,7 @@ function versionPlugin(): Plugin {
   return {
     name: 'version-bump-and-write',
     apply: 'build',
-    buildStart() {
+    buildStart() {   
       const pkg = readPkg();
       const currentVersion = pkg.version ?? '0.0.0';
       const nextVersion = bumpVersion(currentVersion);
@@ -67,6 +67,7 @@ export default defineConfig({
     proxy: {
       '/ehs-api': {
         target: 'https://glsz.s.369zhan.com',
+       // target:'http://admin.saas.jiuxiang.tech',
         //rewrite: (path) => path.replace(/^\/ehs-api/, ''),
         changeOrigin: true,
         secure: false,

@@ -6,8 +6,8 @@ type HallItem = {
 };
 
 type HallSortKey =
-  | { type: 'number'; value: number }
-  | { type: 'alpha'; value: string };
+  | { type: 'number'; value: number; floor?: number }
+  | { type: 'alpha'; value: string; floor?: number };
 
 const hallSuffix = '(馆|展馆|展厅|厅)';
 
@@ -59,6 +59,19 @@ function chineseToNumber(text: string): number | null {
 
 function parseHallSortKey(hallName: string): HallSortKey | null {
   const name = hallName.trim();
+
+  // 带楼层的：2-1F号馆、4-2F号馆、2-2F号馆（主馆号-楼层F）
+  const floorMatch = name.match(
+    new RegExp(`^(\\d+)\\s*-\\s*(\\d+)\\s*F\\s*号?\\s*${hallSuffix}$`),
+  );
+
+  if (floorMatch) {
+    return {
+      type: 'number',
+      value: Number(floorMatch[1]),
+      floor: Number(floorMatch[2]),
+    };
+  }
 
   // 数字：1号馆、1馆、1号展厅、1展厅、1号厅
   const numberMatch = name.match(
@@ -130,7 +143,13 @@ function sortHallList(halls: HallItem[]) {
 
     // 数字排序：5号展厅、6号展厅、7号展厅、8号展厅
     if (ak.type === 'number' && bk.type === 'number') {
-      return ak.value - bk.value;
+      if (ak.value !== bk.value) {
+        return ak.value - bk.value;
+      }
+      // 同主号：无楼层的排前面，有楼层的按楼层升序
+      const af = ak.floor ?? 0;
+      const bf = bk.floor ?? 0;
+      return af - bf;
     }
 
     // 字母排序：A馆、B馆、C馆、AA馆

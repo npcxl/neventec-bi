@@ -3,6 +3,15 @@ import { Image } from "antd";
 import "./index.css";
 
 /* ============================================
+   展期枚举映射
+   ============================================ */
+const EXHIBITION_PERIOD_MAP: Record<string, string> = {
+  BEGINSHOW: "开展期",
+  PREPARESHOW: "布展期",
+  ENDSHOW: "撤展期",
+};
+
+/* ============================================
    图片项（对齐 API 返回的 constructProgressImages 等）
    ============================================ */
 export type ConstructImageItem = {
@@ -22,6 +31,20 @@ export type ConstructLineItem = {
   configLineId?: number;
 };
 
+/** 历史进程（时间线）单项 */
+export type ConstructHistoryProcess = {
+  recordId?: number;
+  recordDate?: string;
+  progressStatus?: string;
+  progressPercentage?: number;
+  boothAdmission?: string;
+  exhibitsAdmission?: string;
+  constructionStatus?: string;
+  phaseTimeName?: string;
+  roleName?: string;
+  imageUrl?: string;
+};
+
 /* ============================================
    搭建详情 — 对齐 API getConstructProcessByHallInfo 返回的单条数据
    ============================================ */
@@ -35,6 +58,7 @@ export type ConstructDetailData = {
   complexEngineering?: string;
   liftingPoint?: string;
   mainStructureMaterial?: string;
+  exhibitsAdmission?: string;
   exhibitionPeriod?: string;
   area?: number;
   hallId?: string;
@@ -44,12 +68,14 @@ export type ConstructDetailData = {
   content?: string;
   recordTimes?: number;
   progressStatus?: string;
+  progressPercentage?: number;
   constructExampleImages?: ConstructImageItem[];
   recordImages?: ConstructImageItem[];
   constructProgressImages?: ConstructImageItem[];
   exhibitEntryImages?: ConstructImageItem[];
   imageList?: string[];
   lines?: ConstructLineItem[];
+  historyProcess?: ConstructHistoryProcess[];
 };
 
 /* ============================================
@@ -88,8 +114,21 @@ const MATERIAL: Record<string, string> = {
   ORDINARYTRUSS: "普通桁架",
 };
 
+const EXHIBITS_ADMISSION: Record<string, string> = {
+  EXHIBITS_ENTERED: "展品已入场",
+  EXHIBITS_NOT_ADMITTED: "展品未入场",
+};
+
 function label(map: Record<string, string>, v?: string) {
   return (v && map[v]) || v || "-";
+}
+
+/** 历史进程日期格式化："2026-08-12 16:17:25" → "08-12 16:17:25" */
+function formatHistoryDate(date?: string): string {
+  if (!date) return "-";
+  // 取 MM-DD HH:mm:ss
+  const m = date.match(/^\d{4}-(\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/);
+  return m ? m[1] : date;
 }
 
 function progressColor(status?: string) {
@@ -103,24 +142,6 @@ function progressColor(status?: string) {
 }
 
 /* ============================================
-   收集所有图片地址
-   ============================================ */
-function collectImages(data: ConstructDetailData): string[] {
-  const urls: string[] = [];
-  const pushImages = (arr?: ConstructImageItem[]) => {
-    arr?.forEach((img) => { if (img.address) urls.push(img.address); });
-  };
-  pushImages(data.constructExampleImages);
-  pushImages(data.constructProgressImages);
-  pushImages(data.recordImages);
-  pushImages(data.exhibitEntryImages);
-  if (Array.isArray(data.imageList)) {
-    data.imageList.forEach((u) => { if (u) urls.push(u); });
-  }
-  return [...new Set(urls)];
-}
-
-/* ============================================
    字段定义（便于统一渲染）
    ============================================ */
 type FieldDef = {
@@ -131,21 +152,29 @@ type FieldDef = {
   valueStyle?: React.CSSProperties;
 };
 
-function buildFields(data: ConstructDetailData, pLabel: string, pColor: string): FieldDef[] {
-  return [
-    { label: "展位号", value: data.boothNumber || "-" },
-    { label: "参展商", value: data.exhibitor || "-" },
-    { label: "施工单位", value: data.constructionCompany || "-" },
-    { label: "展位面积", value: data.area != null ? `${data.area}㎡` : "-" },
-    { label: "展位类型", value: label(EXCOMPANY_TYPE, data.excompanytype) },
-    { label: "关键工序", value: label(COMPLEX_ENG, data.complexEngineering) },
-    { label: "吊点", value: label(LIFT_POINT, data.liftingPoint) },
-    { label: "主体材质", value: label(MATERIAL, data.mainStructureMaterial) },
-    { label: "搭建进度", value: pLabel, valueStyle: { color: pColor } },
-    { label: "记录时间", value: data.recordDate || "-", nowrap: true, title: data.recordDate || "-" },
-    { label: "记录人", value: data.recordBy || "-" },
-    { label: "巡检次数", value: data.recordTimes != null ? `${data.recordTimes} 次` : "-" },
-  ];
+function buildFields(data: ConstructDetailData, pLabel: string, pColor: string): {
+  left: FieldDef[];
+  right: FieldDef[];
+} {
+  return {
+    left: [
+      { label: "参展商", value: data.exhibitor || "-" },
+      { label: "展位类型", value: label(EXCOMPANY_TYPE, data.excompanytype) },
+      { label: "关键工序", value: label(COMPLEX_ENG, data.complexEngineering) },
+      { label: "主体结构材质", value: label(MATERIAL, data.mainStructureMaterial) },
+      { label: "记录时间", value: data.recordDate || "-", nowrap: true, title: data.recordDate || "-" },
+    ],
+    right: [
+      { label: "施工单位", value: data.constructionCompany || "-" },
+      { label: "商品是否入场", value: label(EXHIBITS_ADMISSION, data.exhibitsAdmission) },
+      { label: "是否包含吊点", value: label(LIFT_POINT, data.liftingPoint) },
+      { label: "搭建进程", value: pLabel, valueStyle: { color: pColor } },
+      {
+        label: "搭建进度",
+        value: data.progressPercentage != null ? `${data.progressPercentage}%` : "-",
+      },
+    ],
+  };
 }
 
 /* ============================================
@@ -153,7 +182,7 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
    ============================================ */
 function FieldRow({ field }: { field: FieldDef }) {
   return (
-    <div className="grid min-w-0 grid-cols-[72px_14px_minmax(0,1fr)] items-start leading-[22px] text-sm">
+    <div className="grid min-w-0 grid-cols-[96px_14px_minmax(0,1fr)] items-start leading-[22px] text-sm">
       <span className="whitespace-nowrap text-white/60">{field.label}</span>
       <span className="whitespace-nowrap text-center text-white/60">：</span>
       {field.nowrap ? (
@@ -220,9 +249,13 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
 
   const pLabel = label(PROGRESS_STATUS, data.progressStatus);
   const pColor = progressColor(data.progressStatus);
-  const images = collectImages(data);
-  const lines = data.lines ?? [];
   const fields = buildFields(data, pLabel, pColor);
+  // 历史进程：按时间倒序，全部展示
+  const history = (data.historyProcess ?? [])
+    .slice()
+    .sort((a, b) => String(b.recordDate ?? "").localeCompare(String(a.recordDate ?? "")));
+  // 展位巡查记录 - 图片列表（取 data.imageList）
+  const inspectionImages = Array.isArray(data.imageList) ? data.imageList : [];
 
   return (
     <div
@@ -237,86 +270,155 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
         aria-labelledby="booth-modal-title"
       >
         {/* Header */}
-        <header className="relative w-full px-5 pb-4 pt-[18px]">
-          <h2 className="mb-2 h-7 text-xl font-medium leading-7 text-white" id="booth-modal-title">
-            搭建信息详情
-          </h2>
-          <div className="flex h-[22px] items-center justify-between text-sm font-medium leading-[22px]">
-            <span className="pr-4 text-white/60">{""}</span>
-            <span className="px-4" style={{ color: pColor }}>{pLabel}</span>
+        <header className="relative z-10 w-full shrink-0 px-5 pb-4 pt-[18px] bg-[rgba(14,23,54,0.9)]">
+          <div className="flex items-center justify-between">
+            <div className="h-7 text-xl font-medium leading-7 text-white" id="booth-modal-title">
+              展位搭建信息详情
+            </div>
+            <div>
+             阶段： {data?.exhibitionPeriod ? EXHIBITION_PERIOD_MAP[data.exhibitionPeriod] ?? data.exhibitionPeriod : ""}
+            </div>
           </div>
-          <div className="construct-divider" />
+          <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
         </header>
 
         {/* Scrollable Content */}
         <div className="construct-scroll-area min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
 
-          {/* 展位信息 */}
+          {/* 展位巡查记录 */}
           <section aria-labelledby="booth-info-title">
-            <SectionHeading title="展位信息" />
-            <div className="relative w-full px-9 pb-4">
-              <div className="grid min-w-0 grid-cols-2 items-start gap-x-8 gap-y-2.5 pb-4">
-                {fields.map((field, idx) => (
-                  <FieldRow key={idx} field={field} />
-                ))}
-              </div>
-              <div className="construct-divider" />
-            </div>
-          </section>
-
-          {/* 搭建进度时间线 */}
-          <section aria-labelledby="timeline-title">
             <SectionHeading
-              title="搭建进度时间线"
+              title="展位巡查记录"
               right={
                 <span className="ml-auto text-sm leading-[22px] text-white/60">
-                  共 <strong className="font-normal text-white">{lines.length}</strong> 条
+                  共 <strong className="font-normal text-white">{inspectionImages.length}</strong> 张图片
                 </span>
               }
             />
-            <div className="construct-timeline-body">
-              {lines.length > 0 ? (
-                lines.map((line, idx) => (
-                  <div className="construct-timeline-row" key={line.id ?? idx}>
-                    <span className="construct-timeline-dot" />
-                    <span>{line.content || "-"}</span>
+            <div className="relative w-full px-9 pb-4">
+              {/* 顶部信息：左 第X次巡查：进度名，右 百分比 */}
+              {history.length > 0 && (
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="text-white">
+                    第{history.length}次巡查：
+                    <span style={{ color: progressColor(history[0].progressStatus) }}>
+                      {label(PROGRESS_STATUS, history[0].progressStatus)}
+                    </span>
+                  </span>
+                  {history[0].progressPercentage != null && (
+                    <span className="text-white text-[13px]">{history[0].progressPercentage}%</span>
+                  )}
+                </div>
+              )}
+              {/* 进度条单独占一行，整行显示 */}
+              {history.length > 0 && history[0].progressPercentage != null && (
+                <div className="mb-5 h-2 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.12)]">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-500"
+                    style={{ width: `${history[0].progressPercentage}%` }}
+                  />
+                </div>
+              )}
+              {/* 一行横向滚动图片 */}
+              {inspectionImages.length > 0 && (
+                <div className="construct-history-scroll mb-4 overflow-x-auto pb-2">
+                  <div className="inline-flex gap-2">
+                    <Image.PreviewGroup>
+                      {inspectionImages.map((url, idx) => (
+                        <Image
+                          key={`${url}-${idx}`}
+                          src={url}
+                          alt={`巡查图片${idx + 1}`}
+                          width={150}
+                          height={110}
+                          loading="lazy"
+                          className="h-[110px] w-[150px] shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
+                          preview={{ zIndex: 2000 }}
+                        />
+                      ))}
+                    </Image.PreviewGroup>
                   </div>
-                ))
+                </div>
+              )}
+              {/* 字段信息：左列 + 右列 固定两列 */}
+              <div className="grid min-w-0 grid-cols-2 gap-x-8 gap-y-2.5 pb-4">
+                <div className="flex flex-col gap-y-2.5">
+                  {fields.left.map((field, idx) => (
+                    <FieldRow key={idx} field={field} />
+                  ))}
+                </div>
+                <div className="flex flex-col gap-y-2.5">
+                  {fields.right.map((field, idx) => (
+                    <FieldRow key={idx} field={field} />
+                  ))}
+                </div>
+              </div>
+              <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
+            </div>
+          </section>
+
+          {/* 历史进程（左右交替布局，倒序） */}
+          <section aria-labelledby="timeline-title">
+            <SectionHeading
+              title="历史进程"
+              right={
+                <span className="ml-auto text-sm leading-[22px] text-white/60">
+                  共 <strong className="font-normal text-white">{history.length}</strong> 条
+                </span>
+              }
+            />
+            <div className="px-9 pb-6">
+              {history.length > 0 ? (
+                <div className="construct-history-scroll overflow-x-auto pb-2">
+                  <div className="inline-flex items-stretch">
+                    {history.map((h, idx) => {
+                      const nth = history.length - idx;
+                      const isLast = idx === history.length - 1;
+                      return (
+                        <div key={h.recordId ?? idx} className="flex shrink-0 items-stretch">
+                          {/* 单条历史进程：日期 → 圆点 → 图片 → 第X次巡查：进度名 */}
+                          <div className="flex flex-col items-center">
+                            {/* 上方：日期 */}
+                            <div className="text-[15px] leading-5 text-white">
+                              {formatHistoryDate(h.recordDate)}
+                            </div>
+                            {/* 圆点 + 右侧连接线（除最后一个） */}
+                            <div className="mt-2 flex items-center">
+                              <span className="h-2 w-2 rounded-full bg-white/70" />
+                              {!isLast && <span className="h-px w-[166px] bg-white/20" />}
+                            </div>
+                            {/* 图片 */}
+                            {h.imageUrl && (
+                              <Image.PreviewGroup>
+                                <Image
+                                  src={h.imageUrl}
+                                  alt={`第${nth}次巡查图片`}
+                                  loading="lazy"
+                                  width={150}
+                                  height={110}
+                                  className="mt-2 h-[110px] w-[150px] rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
+                                  preview={{ zIndex: 2000 }}
+                                />
+                              </Image.PreviewGroup>
+                            )}
+                            {/* 下方：第X次巡查：进度名 */}
+                            <div className="mt-2 text-[15px] leading-5 text-center text-white">
+                              <span>第{nth}次巡查：</span>
+                              <span>{label(PROGRESS_STATUS, h.progressStatus)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               ) : (
                 <div className="flex h-20 items-center justify-center text-sm text-white/40">
-                  暂无进度记录
+                  暂无历史进程
                 </div>
               )}
             </div>
           </section>
-
-          {/* 现场图片 */}
-          {images.length > 0 && (
-            <section aria-labelledby="images-title">
-              <SectionHeading
-                title="现场图片"
-                right={
-                  <span className="ml-3 text-sm leading-[22px] text-white/60">
-                    共 <strong className="font-normal text-white">{images.length}</strong> 张
-                  </span>
-                }
-              />
-              <div className="construct-image-scroll">
-                <div className="inline-flex gap-2 pb-1">
-                  {images.map((url, idx) => (
-                    <Image
-                      key={`${url}-${idx}`}
-                      src={url}
-                      alt={`搭建图片${idx + 1}`}
-                      width={168}
-                      height={96}
-                      className="shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
 
         </div>
 

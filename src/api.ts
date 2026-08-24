@@ -1,3 +1,5 @@
+import { get } from "node:http";
+
 const API_BASE_URL = import.meta.env.VITE_EHS_API_BASE_URL ?? '/ehs-api';
 
 function normalizeApiBaseUrl(baseUrl: string) {
@@ -68,7 +70,7 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   for (let attempt = 0; attempt <= retryCount; attempt += 1) {
     if (options.signal?.aborted) {
       throw new Error(`网络请求已中止：${url}`);
-    }
+    } 
 
     try {
       const response = await fetch(url, {
@@ -281,11 +283,12 @@ export const screenApi = {
   //第三部分 搭建信息概览=================================================
 
   // 3.1 搭建情况总览
-  getConstructOverview: (exhibitionId: string, signal?: AbortSignal) =>
-    request<any>('a/api/booth/progress/summary/getConstructOverview', { query: { exhibitionId }, signal }),
+  //allPeriod=true 查询全部阶段数据；不传或false 仅当前阶段数据
+  getConstructOverview: (exhibitionId: string, allPeriod = false, signal?: AbortSignal) =>
+    request<any>('a/api/booth/progress/summary/getConstructOverview', { query: { exhibitionId, allPeriod }, signal }),
   //3.1.1 获取指定展馆搭建情况总览
-  getConstructOverviewByHallId: (exhibitionId: string, hallId: string, signal?: AbortSignal) =>
-    request<any>('a/api/booth/progress/summary/getConstructOverview', { query: { exhibitionId, hallId }, signal }),
+  getConstructOverviewByHallId: (exhibitionId: string, hallId: string, allPeriod = false, signal?: AbortSignal) =>
+    request<any>('a/api/booth/progress/summary/getConstructOverview', { query: { exhibitionId, hallId, allPeriod }, signal }),
 
 
   // 3.2 搭建进程明细
@@ -335,12 +338,12 @@ export const screenApi = {
     request<BoothProgressItem[]>('a/api/inspection/record/summary/getBoothProgress', { query: { exhibitionId, hallId }, signal }),
 
 
-  // 3.7 展会进程情况（完成率）  
-  getExhibitionProcess: (exhibitionId: string, signal?: AbortSignal) =>
-    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId }, signal }),
+  // 3.7 展会进程情况（完成率）
+  getExhibitionProcess: (exhibitionId: string, allPeriod = false, signal?: AbortSignal) =>
+    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, allPeriod }, signal }),
   //3.7.1 获取指定展馆展会进程情况（完成率）
-  getExhibitionProcessByHallId: (exhibitionId: string, hallId: string, signal?: AbortSignal) =>
-    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId }, signal }),
+  getExhibitionProcessByHallId: (exhibitionId: string, hallId: string, allPeriod = false, signal?: AbortSignal) =>
+    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId, allPeriod }, signal }),
 
   //3.8 获取展位详情
   getBoothDetail: (exhibitionId: string, hallId: string, boothId: string, signal?: AbortSignal) =>
@@ -359,6 +362,10 @@ export const screenApi = {
   //获取展厅的可视化/a/api/safety/coord/ByHallId 定。
   getSafetyCoordByHallId: (hallId: string, signal?: AbortSignal) =>
     request<any>('a/api/safety/coord/ByHallId', { query: { hallId }, signal }),
+
+  //获取当前阶段的搭建进程（与 getExhibitionProcess 同路径，返回 data: [{name,completion,commence,...}]）
+  getCurrentStageConstructProcess: (exhibitionId: string, hallId?: string, signal?: AbortSignal) =>
+    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId }, signal }),
 
 };
 

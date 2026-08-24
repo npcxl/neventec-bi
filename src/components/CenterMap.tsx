@@ -41,6 +41,7 @@ type BoothOrderInfo = {
 
 type BoothDetail = {
   exhibitor?: string;
+  boothNo?: string;
   contactname?: string;
   phone?: string;
   contactWay?: string;
@@ -134,6 +135,17 @@ type ConstructDetail = {
     configLineId?: number;
   }>;
   imageList?: string[];
+  historyProcess?: Array<{
+    recordId?: number;
+    recordDate?: string;
+    progressStatus?: string;
+    progressPercentage?: number;
+    boothAdmission?: string;
+    constructionStatus?: string;
+    phaseTimeName?: string;
+    roleName?: string;
+    imageUrl?: string;
+  }>;
 };
 
 type ConstructEnumField =
@@ -233,11 +245,14 @@ export default function CenterMap({
   galleryRows = [],
   compact = false,
   fillAvailableHeight = false,
+  onDetailChange,
+  currentStageSteps,
 }: {
   mode?: HallMode;
   moduleMode?: "ExhibitionOverview" | "ConstructOverview" | "SafetyOverview";
   onModeChange?: (mode: HallMode) => void;
   onBoothChange?: (boothId: string, boothName?: string) => void;
+  onDetailChange?: (open: boolean) => void;
   initData?: {
     exhibitionId: string;
     halls: Array<{ hallId: string; hallName: string }>;
@@ -258,6 +273,8 @@ export default function CenterMap({
   galleryRows?: GalleryRow[];
   compact?: boolean;
   fillAvailableHeight?: boolean;
+  /** 当前阶段搭建进程步骤（getCurrentStageConstructProcess 返回，用于匹配明细最新进程显示序号徽章） */
+  currentStageSteps?: Array<{ name?: string; title?: string }> | null;
 }) {
   const [selected, setSelected] = useState<{
     code: string;
@@ -274,6 +291,11 @@ export default function CenterMap({
     useState<ConstructDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // 弹窗打开/关闭时通知父级（用于隐藏被遮挡的浮动卡片）
+  useEffect(() => {
+    onDetailChange?.(detailOpen);
+  }, [detailOpen, onDetailChange]);
   const [orderInfos, setOrderInfos] = useState<BoothOrderInfo[]>([]);
   const [constructLoading, setConstructLoading] = useState(false);
 
@@ -369,6 +391,27 @@ export default function CenterMap({
     () => constructProcessRows,
     [constructProcessRows],
   );
+  // 明细"最新进程"文本与当前阶段步骤名做包含匹配，
+  // 生成 展位号 → 步骤序号(1-based) 的映射，用于在展位右上角绘制序号徽章
+  const boothBadges = useMemo(() => {
+    const steps = Array.isArray(currentStageSteps) ? currentStageSteps : [];
+    const badges: Record<string, number> = {};
+    if (steps.length === 0 || progressRows.length === 0) return badges;
+    for (let i = 0; i < steps.length; i += 1) {
+      const stepName = String(steps[i]?.name ?? steps[i]?.title ?? '').trim();
+      if (!stepName) continue;
+      progressRows.forEach((row: any) => {
+        const line = String(
+          row.latestLine ?? row.content ?? row.progressValue ?? row.lines?.[0]?.content ?? '',
+        );
+        const boothNo = row.boothNo ?? row.boothNumber ?? row.booth_id ?? row.boothId;
+        if (boothNo && line.includes(stepName)) {
+          badges[String(boothNo)] = i + 1;
+        }
+      });
+    }
+    return badges;
+  }, [currentStageSteps, progressRows]);
   const safetyColorRows = useMemo(
     () =>
       safetyRows.map((row) => ({
@@ -457,7 +500,12 @@ export default function CenterMap({
 
         setDetailOpen(true);
         if (moduleMode === "SafetyOverview") {
-          setSafetyDetail(item as SafetyDetail);
+          // 字段映射：兼容 booth_no / boothNumber / boothNo 多种字段名
+          const safetyItem = item as SafetyDetail;
+          setSafetyDetail({
+            ...safetyItem,
+            boothNo: safetyItem?.boothNo ?? (item as any)?.booth_no ?? (item as any)?.boothNumber ?? boothId,
+          });
           setConstructDetail(null);
           setBoothDetail(null);
           setOrderInfos([]);
@@ -519,62 +567,6 @@ export default function CenterMap({
     },
     [handleSelect, onBoothChange],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    const fetchSafetyDetail = async () => {
-      const boothNo = selected?.code?.trim();
-      const exhibitionId = initData?.exhibitionId?.trim();
-      const hallId = mode === "all" ? "" : mode;
-
-      try {
-        if (moduleMode !== "SafetyOverview") {
-          setSafetyDetail(null);
-          return;
-        }
-
-        if (!boothNo || !exhibitionId || !hallId) {
-          setSafetyDetail(null);
-          return;
-        }
-
-        const response = await screenApi.getSafetyScreenBooth(
-          exhibitionId,
-          hallId,
-          boothNo,
-          controller.signal,
-        );
-        if (cancelled || controller.signal.aborted) return;
-        const rawData = response as any;
-        const payload = rawData?.data;
-        const item = Array.isArray(payload)
-          ? payload[0]
-          : (payload?.[0] ?? payload ?? rawData);
-        if (
-          !item ||
-          (typeof item === "object" &&
-            !Array.isArray(item) &&
-            !Object.keys(item).length)
-        ) {
-          setSafetyDetail(null);
-          return;
-        }
-        setSafetyDetail(item as SafetyDetail);
-      } catch (error) {
-        if (cancelled || controller.signal.aborted) return;
-        console.error("获取现场安全详情失败", error);
-        setSafetyDetail(null);
-      }
-    };
-
-    void fetchSafetyDetail();
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [initData?.exhibitionId, moduleMode, mode, selected?.code]);
 
   useEffect(() => {
     if (!compact) return;
@@ -723,6 +715,7 @@ export default function CenterMap({
                     )
                   : undefined}
                   onBoothClick={handleBoothClick}
+                  boothBadges={moduleMode === "ConstructOverview" ? boothBadges : undefined}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
@@ -751,6 +744,7 @@ export default function CenterMap({
                 expoName: boothDetail?.expoName,
                 hallName: boothDetail?.hallName,
                 exhibitor: boothDetail?.exhibitor,
+                boothNo: boothDetail?.boothNo,
                 contactname: boothDetail?.contactname,
                 phone: boothDetail?.phone,
                 contactWay: boothDetail?.contactWay,

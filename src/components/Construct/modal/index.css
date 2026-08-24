@@ -8,22 +8,6 @@
    - 时间线圆点发光效果
    ============================================ */
 
-/* ---- 分割线（渐变，Tailwind 不直接支持） ---- */
-.construct-divider {
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: 0;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(37, 99, 235, 0.6) 15%,
-    rgba(125, 227, 247, 0.6) 50%,
-    rgba(37, 99, 235, 0.6) 85%,
-    transparent
-  );
-}
 
 /* ---- 蓝色标记条（含发光阴影） ---- */
 .construct-heading-mark {
@@ -134,4 +118,32 @@
   .construct-close-btn {
     transition: background 0.15s ease;
   }
+}
+
+/* ---- 历史进程 横向滚动 ---- */
+.construct-history-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 165, 250, 0.4) transparent;
+}
+.construct-history-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.construct-history-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.construct-history-scroll::-webkit-scrollbar-thumb {
+  background: rgba(96, 165, 250, 0.4);
+  border-radius: 2px;
+}
+.construct-history-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 165, 250, 0.6);
+}
+
+/* ---- antd 图片预览：固定显示大小，避免过大铺满屏幕 ---- */
+.ant-image-preview-img {
+  max-width: min(88vw, 820px);
+  max-height: 72vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }

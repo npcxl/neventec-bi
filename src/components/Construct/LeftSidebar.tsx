@@ -1,16 +1,68 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useConstructProgress } from "../../hooks/useConstructProgress";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
 import { BoothModal } from "./modal/BoothModal";
 import type { ConstructDetailData } from "./modal/BoothModal";
 import { screenApi } from "../../api";
 
-function PanelTitle({ title }: { title: string }) {
+function PanelTitle({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <div className="relative h-12  shrink-0">
-      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
+      <div className="flex h-full w-full items-center justify-between bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] pr-3 text-sm font-medium text-[#d8efff]">
         <span className="pl-6 pb-3 text-[18px]">{title}</span>
+        {action && <div className="pb-2">{action}</div>}
       </div>
+    </div>
+  );
+}
+
+// 全部/当前阶段 切换控件
+function PeriodSwitcher({
+  allPeriod,
+  onChange,
+}: {
+  allPeriod: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div
+      className="flex items-center"
+      style={{
+        width: 124,
+        height: 26,
+        backgroundImage: "url('/img/period-all.png')",
+        backgroundSize: '100% 100%',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(true)}
+        className="h-full flex-1 bg-center bg-no-repeat text-[12px] text-white/80 transition-opacity hover:opacity-90"
+        style={{
+          backgroundSize: '100% 100%',
+          backgroundImage: allPeriod
+            ? "url('/img/period-current.png')"
+            : undefined,
+        }}
+        aria-pressed={allPeriod}
+      >
+        全部
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange(false)}
+        className="h-full flex-1 bg-center bg-no-repeat text-[12px] text-white/80 transition-opacity hover:opacity-90"
+        style={{
+          backgroundSize: '100% 100%',
+          backgroundImage: !allPeriod
+            ? "url('/img/period-current.png')"
+            : undefined,
+        }}
+        aria-pressed={!allPeriod}
+      >
+        当前
+      </button>
     </div>
   );
 }
@@ -32,19 +84,19 @@ function ProgressRow({ item }: { item: { name: string; completion: number; comme
   const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
   return (
     <div className="flex flex-shrink-0 items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
-      <span className="truncate text-[14px] text-[rgba(255,255,255,0.8)]" style={{ maxWidth: 88, minWidth: 0 }}>{item.name || '-'}</span>
+      <span className="truncate text-left text-[14px] text-[rgba(255,255,255,0.8)]" style={{ width: 96, minWidth: 96, maxWidth: 96 }}>{item.name || '-'}</span>
       <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[url('/img/progress-track-bg.png')] bg-[length:100%_100%]">
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-[14px] tabular-nums text-white shrink-0">{pct}%</span>
+      <span className="text-right text-[14px] tabular-nums text-white" style={{ width: 42, minWidth: 42 }}>{pct}%</span>
     </div>
   );
 }
 
-function ProgressOverviewList({ items }: { items: Array<{ name: string; completion: number; commence: number }> }) {
+function ProgressOverviewList({ items, switching }: { items: Array<{ name: string; completion: number; commence: number }>; switching?: boolean }) {
   const [startIndex, setStartIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -95,7 +147,17 @@ function ProgressOverviewList({ items }: { items: Array<{ name: string; completi
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]" style={{ height: VISIBLE_COUNT * ROW_HEIGHT }}>
-        暂无进程数据
+        {switching ? "正在切换数据..." : "暂无进程数据"}
+      </div>
+    );
+  }
+
+  if (switching) {
+    // 切换全部/当前期间：保留旧数据容器高度，显示切换中的刷新状态
+    return (
+      <div className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 text-sm text-[#93aed0]" style={{ height: Math.min(items.length, VISIBLE_COUNT) * ROW_HEIGHT + 8 }}>
+        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#2563EB] border-t-transparent" />
+        正在切换数据...
       </div>
     );
   }
@@ -138,6 +200,9 @@ export function ConstructLeftSidebar({
   exhibitionId = "",
   loading = false,
   processLoading = false,
+  allPeriod = true,
+  onAllPeriodChange,
+  overviewSwitching = false,
 }: {
   constructOverviewData?: any;
   constructProcessData?: any;
@@ -147,6 +212,9 @@ export function ConstructLeftSidebar({
   loading?: boolean;
   overviewLoading?: boolean;
   processLoading?: boolean;
+  allPeriod?: boolean;
+  onAllPeriodChange?: (v: boolean) => void;
+  overviewSwitching?: boolean;
 }) {
   const {
     processRows,
@@ -224,12 +292,23 @@ export function ConstructLeftSidebar({
     <aside className="flex h-full min-h-0 min-w-0 flex-col gap-3 xl:gap-3 overflow-hidden" style={{ background: 'url(/img/bg-diffuse.png) center/contain no-repeat' }}>
       {/* Progress overview — progress bars with page switching */}
       <section className="shrink-0 overflow-hidden">
-        <PanelTitle title="搭建进程总览" />
+        <PanelTitle
+          title="搭建进程总览"
+          action={
+            onAllPeriodChange ? (
+              <PeriodSwitcher allPeriod={allPeriod} onChange={onAllPeriodChange} />
+            ) : undefined
+          }
+        />
         {processOverviewItems.length > 0 ? (
-          <ProgressOverviewList items={processOverviewItems} />
+          <ProgressOverviewList
+            key={allPeriod ? "all" : "current"}
+            switching={overviewSwitching}
+            items={processOverviewItems}
+          />
         ) : (
           <div className="flex h-[calc(5*34px)] items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]">
-            暂无进程数据
+            {overviewSwitching ? "正在切换数据..." : "暂无进程数据"}
           </div>
         )}
       </section>
@@ -238,12 +317,12 @@ export function ConstructLeftSidebar({
       <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <PanelTitle title="搭建进度明细" />
         <div className="flex min-h-0 flex-1 flex-col px-[16px] py-[8px] min-w-0">
-          <div className="grid min-w-0 shrink-0 grid-cols-[16%_12%_20%_28%_24%] gap-2 overflow-hidden px-3 py-1.5 text-[14px] text-[#93aed0] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
-            <span className="block truncate whitespace-nowrap text-center">展位号</span>
-            <span className="block truncate whitespace-nowrap text-center">面积</span>
-            <span className="block truncate whitespace-nowrap text-center">主体结构</span>
-            <span className="block truncate whitespace-nowrap text-center">最新进程</span>
-            <span className="block truncate whitespace-nowrap text-center">展位进度</span>
+          <div className="grid min-w-0 shrink-0 grid-cols-[16%_12%_20%_28%_24%] gap-2 overflow-hidden px-3 py-2 text-[14px] text-[rgba(255,255,255,0.8)] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
+            <span className="block truncate whitespace-nowrap text-left">展位号</span>
+            <span className="block truncate whitespace-nowrap text-left">面积</span>
+            <span className="block truncate whitespace-nowrap text-left">主体结构</span>
+            <span className="block truncate whitespace-nowrap text-left">最新进程</span>
+            <span className="block truncate whitespace-nowrap text-left">展位进度</span>
           </div>
           <div className="min-h-0 flex-1 overflow-hidden">
             {isProcessLoading ? (
@@ -274,23 +353,23 @@ export function ConstructLeftSidebar({
                       onClick={() => handleRowClick(row)}
                       className={`progress-detail-row grid h-full grid-cols-[16%_12%_20%_28%_24%] items-center gap-2 px-3 text-[14px] leading-tight border-b border-dashed border-[#334155]${isSelected ? ' is-selected' : ''}`}
                     >
-                      <div className="flex min-w-0 items-center justify-center whitespace-nowrap">
-                        <span className="min-w-0 truncate text-center font-medium tabular-nums text-[#93aed0]">
+                      <div className="flex min-w-0 items-center justify-start whitespace-nowrap">
+                        <span className="min-w-0 truncate text-left font-medium tabular-nums text-[#93aed0]">
                           {row.boothNumber || "-"}
                         </span>
                       </div>
-                      <div className="flex min-w-0 items-center justify-center">
-                        <span className="truncate text-center tabular-nums text-[#dbeeff]">
+                      <div className="flex min-w-0 items-center justify-start">
+                        <span className="truncate text-left tabular-nums text-[#dbeeff]">
                           {row.area || "-"}
                         </span>
                       </div>
-                      <div className="min-w-0 truncate text-center text-[#d8efff]">
+                      <div className="min-w-0 truncate text-left text-[#d8efff]">
                         {MAIN_STRUCTURE_MATERIAL[row.mainStructureMaterial] ?? row.mainStructureMaterial ?? "-"}
                       </div>
-                      <div className="min-w-0 truncate text-center text-[#d8efff]">
+                      <div className="min-w-0 truncate text-left text-[#d8efff]">
                         {row.latestLine || "-"}
                       </div>
-                      <div className={`min-w-0 truncate whitespace-nowrap text-center ${meta.color}`}>
+                      <div className={`min-w-0 truncate whitespace-nowrap text-left ${meta.color}`}>
                         {row.progressLabel || "-"}
                       </div>
                     </div>

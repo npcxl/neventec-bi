@@ -262,7 +262,7 @@ export function SafetyRightSidebar({
       onMouseEnter={() => setIsRiskPaused(true)}
       onMouseLeave={() => setIsRiskPaused(false)}
     >
-      <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
+      <div className={isLandscape ? "shrink-0 w-full" : "shrink-0 w-full"}>
         <PanelTitle title="违规风险等级" />
       </div>
       <div className="min-h-0 flex-1 p-2.5">
@@ -281,7 +281,7 @@ export function SafetyRightSidebar({
 
   const carouselSection = (vertical?: boolean) => (
     <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex h-full min-h-0 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
-      <div className={isLandscape ? "shrink-0 w-1/2" : "shrink-0 w-full"}>
+      <div className={isLandscape ? "shrink-0 w-full" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>
       <div className="min-h-0 flex-1 overflow-hidden">

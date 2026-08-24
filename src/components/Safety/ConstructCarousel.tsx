@@ -35,7 +35,6 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
   const { trackRef, containerRef, visibleItems, hoverPausedRef } = useWindowedCarousel(
     normalizedPictures,
     normalizedPictures.length,
-    { horizontalPadding: 24 },
   );
 
   if (loading) {
@@ -56,7 +55,7 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
 
   // 竖版：自动垂直滚动（CSS animation）
   if (vertical) {
-    const cardHeight = 192; // 150px 图片 + 30px 标题 + 12px gap
+    const cardHeight = 162; // 150px 图片 + 12px gap
     const totalHeight = normalizedPictures.length * cardHeight;
     const duration = Math.max(12, normalizedPictures.length * 4);
     const style = {
@@ -70,40 +69,40 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
           {normalizedPictures.map((item, index) => (
             <div
               key={`a-${index}-${item.address}`}
-              className="flex-shrink-0 overflow-hidden rounded-lg bg-[rgba(5,15,28,0.9)]"
+              className="flex-shrink-0"
             >
-              <div className="relative flex items-center justify-center overflow-hidden bg-black/10">
+              <div className="relative overflow-hidden rounded-xl">
                 <Image
                   src={item.address}
                   alt={item.dataStr || `图片-${index + 1}`}
                   preview={{ src: item.address }}
                   className="h-[150px] w-full object-cover"
                 />
-              </div>
-              <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg px-3">
-                <span className="text-[14px] font-semibold text-[#cffafe]">
-                  {item.boothNo} - {item.exhibitor}
-                </span>
+                <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
+                  <span className="truncate text-[14px] font-semibold text-[#cffafe]">
+                    {item.boothNo} - {item.exhibitor}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
           {normalizedPictures.map((item, index) => (
             <div
               key={`b-${index}-${item.address}`}
-              className="flex-shrink-0 overflow-hidden rounded-lg bg-[rgba(5,15,28,0.9)]"
+              className="flex-shrink-0"
             >
-              <div className="relative flex items-center justify-center overflow-hidden bg-black/10">
+              <div className="relative overflow-hidden rounded-xl">
                 <Image
                   src={item.address}
                   alt={item.dataStr || `图片-${index + 1}`}
                   preview={{ src: item.address }}
                   className="h-[150px] w-full object-cover"
                 />
-              </div>
-              <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg px-3">
-                <span className="text-[14px] font-semibold text-[#cffafe]">
-                  {item.boothNo} - {item.exhibitor}
-                </span>
+                <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
+                  <span className="truncate text-[14px] font-semibold text-[#cffafe]">
+                    {item.boothNo} - {item.exhibitor}
+                  </span>
+                </div>
               </div>
             </div>
           ))}
@@ -114,34 +113,36 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
 
   return (
     <div
-      className="relative h-full overflow-hidden rounded-xl border border-white/10 bg-[rgba(8,23,42,0.72)]"
+      className="relative h-full overflow-hidden"
       onMouseEnter={() => { hoverPausedRef.current = true; }}
       onMouseLeave={() => { hoverPausedRef.current = false; }}
     >
-      <div ref={containerRef} className="flex h-full overflow-hidden">
-        <div ref={trackRef} className="flex h-full gap-3 px-3 py-3" style={{ willChange: "transform" }}>
-          {visibleItems.map(({ item, realIndex, slotIndex, isEager }) => (
-            <div
-              key={`${slotIndex}-${realIndex}-${item.address}`}
-              className="flex h-full flex-shrink-0 flex-col overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] shadow-[0_0_18px_rgba(0,229,255,0.05)]"
-              style={{ width: CARD_WIDTH }}
-            >
-              <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black/10">
-                <Image
-                  src={item.address}
-                  alt={item.dataStr || `图片-${realIndex + 1}`}
-                  preview={{ src: item.address }}
-                  loading={isEager ? "eager" : "lazy"}
-                  className="h-[150px] w-full object-cover"
-                />
+      <div className="flex h-full min-h-0 flex-col gap-2 p-3">
+        <div ref={containerRef} className="flex h-full min-h-0 overflow-hidden">
+          <div ref={trackRef} className="flex h-full gap-3" style={{ willChange: "transform" }}>
+            {visibleItems.map(({ item, realIndex, slotIndex, isEager }) => (
+              <div
+                key={`${slotIndex}-${realIndex}-${item.address}`}
+                className="flex h-full flex-shrink-0 flex-col"
+                style={{ width: CARD_WIDTH }}
+              >
+                <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl">
+                  <Image
+                    src={item.address}
+                    alt={item.dataStr || `图片-${realIndex + 1}`}
+                    preview={{ src: item.address }}
+                    loading={isEager ? "eager" : "lazy"}
+                    className="h-[150px] w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
+                    <span className="truncate text-[14px] font-semibold text-[#cffafe]">
+                      {item.boothNo} - {item.exhibitor}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex h-[30px] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-[rgba(5,15,28,0.9)] px-3 py-3">
-                <span className="text-[14px] font-semibold text-[#cffafe]">
-                  {item.boothNo} - {item.exhibitor}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

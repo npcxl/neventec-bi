@@ -14,6 +14,13 @@ type SafetyRecordRow = {
   riskAssessment?: string;
 };
 
+// 安全风险等级图例颜色（与 SafetyFloatCards RISK_LEGEND 保持一致）
+const SAFETY_RISK_COLORS = {
+  low: '#2563EB',     // 一般风险 - 蓝
+  medium: '#FA8C16',  // 较大风险 - 橙
+  high: '#F5222D',    // 严重风险 - 红
+};
+
 type ConstructProgressRow = {
   boothId?: string;
   boothNo?: string;
@@ -89,12 +96,10 @@ function createExhibitionOverviewStrategy(boothRows: BoothRow[]): ColorStrategy 
 function resolveConstructProgressColor(progressValue?: string) {
   const text = normalizeKey(progressValue);
   if (!text) return DEFAULT_COLOR;
-  if (text.includes('暂未入场')||text.includes('NOT_ADMISSIBLE_PROGRESS')) return '#8fb4d8';
   if (text.includes('搭建正常')||text.includes('NORMAL_PROGRESS')) return '#2563EB';
   if (text.includes('进度缓慢')||text.includes('搭建缓慢')||text.includes('SLOW_PROGRESS')) return '#FA8C16';
   if (text.includes('严重滞后')||text.includes('DELAY_PROGRESS')) return '#F5222D';
   if (text.includes('搭建完成')||text.includes('COMPLETED_PROGRESS')) return '#63F222';
-  if (text.includes('有搭建材料') || text.includes('未搭建')||text.includes('BUILDING_MATERIALS_NOT_BUILT')) return '#8fb4d8';
   return DEFAULT_COLOR;
 }
 
@@ -115,17 +120,23 @@ function createConstructOverviewStrategy(progressRows: ConstructProgressRow[] = 
 }
 
 function createSafetyOverviewStrategy(safetyRows: SafetyRecordRow[]): ColorStrategy {
-  const statusMap = safetyRows.reduce<Record<string, string>>((acc, row) => {
-    const status = normalizeKey(row.rectifyCheckStatus);
-    if (row.boothNo) acc[normalizeKey(row.boothNo)] = status;
-    if (row.boothId) acc[normalizeKey(row.boothId)] = status;
+  const riskMap = safetyRows.reduce<Record<string, SafetyRecordRow>>((acc, row) => {
+    if (row.boothNo) acc[normalizeKey(row.boothNo)] = row;
+    if (row.boothId) acc[normalizeKey(row.boothId)] = row;
     return acc;
   }, {});
- 
+
   return {
     getColor: (booth) => {
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
-      const status = statusMap[boothKey];
+      const row = riskMap[boothKey];
+      const risk = normalizeKey(row?.riskAssessment);
+      // 风险等级优先（与图例一致：一般/较大/严重）
+      if (risk.includes('严重') || risk.includes('重大') || risk.includes('高')) return SAFETY_RISK_COLORS.high;
+      if (risk.includes('较大') || risk.includes('中')) return SAFETY_RISK_COLORS.medium;
+      if (risk.includes('一般') || risk.includes('低')) return SAFETY_RISK_COLORS.low;
+      // 无风险等级时回退到整改状态
+      const status = normalizeKey(row?.rectifyCheckStatus);
       if (status === '整改合格') return 'rgba(99,242,34,0.8)';
       if (status === '待整改' || status === '未整改') return 'rgba(250,140,22,0.8)';
       if (status === '整改不合格') return 'rgba(245,34,45,0.8)';

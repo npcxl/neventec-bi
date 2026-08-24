@@ -53,19 +53,6 @@ function rectifyColor(status?: string) {
 }
 
 /* ============================================
-   收集所有图片地址
-   ============================================ */
-function collectImages(data: SafetyDetailData): string[] {
-  const urls: string[] = [];
-  data.safetyInfoList?.forEach((info) => {
-    info.imageAddress?.forEach((img) => {
-      if (img.address) urls.push(img.address);
-    });
-  });
-  return [...new Set(urls)];
-}
-
-/* ============================================
    字段行组件（复用构建信息样式）
    ============================================ */
 type FieldDef = {
@@ -138,7 +125,6 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
   if (!visible || !data) return null;
 
   const rColor = rectifyColor(data.rectifyCheckStatus);
-  const images = collectImages(data);
 
   const fields: FieldDef[] = [
     { label: "展位号", value: data.boothNo || "-" },
@@ -177,7 +163,7 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
             <span className="pr-4 text-white/60">展位号：{data.boothNo || "-"}</span>
             <span className="px-4" style={{ color: rColor }}>{data.rectifyCheckStatus || "-"}</span>
           </div>
-          <div className="construct-divider" />
+          <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
         </header>
 
         {/* Scrollable Content */}
@@ -196,7 +182,7 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
                   <FieldRow key={idx} field={field} />
                 ))}
               </div>
-              <div className="construct-divider" />
+              <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
             </div>
           </section>
 
@@ -206,7 +192,7 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
               <SectionHeading title="违规内容" />
               <div className="px-9 pb-4">
                 <p className="text-sm leading-6 text-white/80 whitespace-pre-wrap">{data.recordContent}</p>
-                <div className="construct-divider mt-4" />
+                <div className="bg-[url('/img/divider_tmp.png')] bg-no-repeat bg-center bg-cover h-[2px] mt-4 w-full" />
               </div>
             </section>
           )}
@@ -215,51 +201,94 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
           {data.safetyInfoList && data.safetyInfoList.length > 0 && (
             <section aria-labelledby="inspection-title">
               <SectionHeading
-                title="安全巡检记录"
+                title="违规记录"
                 right={
                   <span className="ml-auto text-sm leading-[22px] text-white/60">
                     共 <strong className="font-normal text-white">{data.safetyInfoList.length}</strong> 条
                   </span>
                 }
               />
-              <div className="construct-timeline-body">
-                {data.safetyInfoList.map((info, idx) => (
-                  <div className="construct-timeline-row" key={idx}>
-                    <span className="construct-timeline-dot" />
-                    <span>{info.recordContent || info.safetyStatus || "-"}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-2 px-6 pb-4">
+                {data.safetyInfoList.map((info, idx) => {
+                  const risk = info.riskAssessment || "";
+                  const riskColor = risk.includes("严重")
+                    ? "#F5222D"
+                    : risk.includes("较大") || risk.includes("重大")
+                      ? "#FA8C16"
+                      : "#2563EB";
+                  const firstImage = info.imageAddress?.find((img) => img.address)?.address;
+                  return (
+                    <div
+                      key={idx}
+                      className="flex min-w-0 items-start gap-3 rounded-lg border border-[rgba(128,185,255,0.14)] bg-[rgba(8,23,42,0.5)] px-3 py-2.5"
+                    >
+                      {/* 左侧图片 */}
+                      <div className="shrink-0">
+                        {firstImage ? (
+                          <Image
+                            src={firstImage}
+                            alt={`巡检图片${idx + 1}`}
+                            width={120}
+                            height={90}
+                            className="rounded border border-[rgba(96,165,250,0.28)] object-cover"
+                          />
+                        ) : (
+                          <div
+                            className="flex h-[90px] w-[120px] items-center justify-center rounded border border-dashed border-[rgba(128,185,255,0.18)] bg-[rgba(6,17,34,0.4)] text-[11px] text-white/40"
+                          >
+                            无图片
+                          </div>
+                        )}
+                      </div>
+                      {/* 右侧内容 */}
+                      <div className="min-w-0 flex-1">
+                        {/* 顶部：整改状态 + 风险（幽灵样式） */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {info.safetyStatus && (
+                            <span className="construct-ghost-tag font-medium" style={{ color: "#60A5FA" }}>
+                              {info.safetyStatus}
+                            </span>
+                          )}
+                          {info.riskAssessment && (
+                            <span className="construct-ghost-tag" style={{ color: riskColor }}>
+                              {info.riskAssessment}
+                            </span>
+                          )}
+                        </div>
+                        {/* 违规内容 */}
+                        {info.recordContent && (
+                          <div className="mt-2 text-[15px] leading-6 text-white/85 whitespace-pre-wrap">
+                            {info.recordContent}
+                          </div>
+                        )}
+                        {/* 创建人 / 整改时间 */}
+                        <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-white/55">
+                          {info.createBy && <span>创建人：{info.createBy}</span>}
+                          {info.targetCheckTime && <span>整改时间：{info.targetCheckTime}</span>}
+                        </div>
+                        {/* 多张图片（除主图外的其他图片） */}
+                        {info.imageAddress && info.imageAddress.length > 1 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {info.imageAddress.map((img, i) => img.address && (
+                              <Image
+                                key={`${idx}-${i}-${img.address}`}
+                                src={img.address}
+                                alt={`巡检图片${i + 1}`}
+                                width={64}
+                                height={48}
+                                className="shrink-0 rounded border border-[rgba(96,165,250,0.28)] object-cover"
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
           )}
 
-          {/* 现场图片 */}
-          {images.length > 0 && (
-            <section aria-labelledby="images-title">
-              <SectionHeading
-                title="现场图片"
-                right={
-                  <span className="ml-3 text-sm leading-[22px] text-white/60">
-                    共 <strong className="font-normal text-white">{images.length}</strong> 张
-                  </span>
-                }
-              />
-              <div className="construct-image-scroll">
-                <div className="inline-flex gap-2 pb-1">
-                  {images.map((url, idx) => (
-                    <Image
-                      key={`${url}-${idx}`}
-                      src={url}
-                      alt={`安全图片${idx + 1}`}
-                      width={168}
-                      height={96}
-                      className="shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
 
 
           </>)}

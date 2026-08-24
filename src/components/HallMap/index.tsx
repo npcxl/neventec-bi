@@ -7,6 +7,8 @@ type HallMapProps = {
   /** 业务颜色策略，传入则优先使用；否则用 booth.status 取默认颜色 */
   getBoothColor?: (booth: Booth, index: number) => string;
   onBoothClick?: (booth: Booth) => void;
+  /** 展位号 → 步骤序号(1-based)，在对应展位右上角绘制序号徽章 */
+  boothBadges?: Record<string, number>;
 };
 
 type Camera = {
@@ -86,7 +88,7 @@ function wrapText(
 
 // ===================== 组件 =====================
 
-export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallMapProps) {
+export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBadges }: HallMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
@@ -101,6 +103,8 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
   getBoothColorRef.current = getBoothColor;
   const onBoothClickRef = useRef(onBoothClick);
   onBoothClickRef.current = onBoothClick;
+  const boothBadgesRef = useRef(boothBadges);
+  boothBadgesRef.current = boothBadges;
 
   // ========== 加载背景图 ==========
   useEffect(() => {
@@ -189,14 +193,14 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
       }
       ctx.closePath();
       ctx.fillStyle = color;
-      ctx.globalAlpha = isHovered ? 0.65 : 0.5;
+      ctx.globalAlpha = isHovered ? 0.7 : 0.55;
       ctx.fill();
       ctx.globalAlpha = 1;
 
       // 绘制描边
       ctx.strokeStyle = color;
       ctx.lineWidth = isHovered ? 2 : 1;
-      ctx.globalAlpha = isHovered ? 0.9 : 0.5;
+      ctx.globalAlpha = isHovered ? 1 : 0.8;
       ctx.stroke();
       ctx.globalAlpha = 1;
 
@@ -220,8 +224,8 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
       const codeFontSize = Math.max(8, Math.min(24, Math.min(bw * 0.16, bh * 0.28)));
       const nameFontSize = Math.max(7, Math.min(20, codeFontSize * 0.78));
 
-      // 显示等级
-      const showCode = bw >= 26 && bh >= 16;
+      // 显示等级（展位号不在地图上显示，保留 booth.id 用于点击/hover 逻辑）
+      const showCode = false;
       const showName = bw >= 48 && bh >= 30;
 
       // 名称最大行数
@@ -274,6 +278,41 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick }: HallM
 
       ctx.shadowBlur = 0;
       ctx.restore();
+
+      // ===== 展位右上角 步骤序号徽章 =====
+      const badge = boothBadgesRef.current?.[booth.boothNo ?? booth.id];
+      if (badge != null) {
+        // 展位右上角坐标（屏幕像素）
+        const bx = Math.max(...xs) * scale + offsetX;
+        const by = Math.min(...ys) * scale + offsetY;
+        const size = Math.max(8, Math.min(15, Math.min(bw, bh) * 0.14));
+        const badgeW = Math.round(size * 2);
+        const badgeH = Math.round(size * 1.8);
+        const corner = Math.round(Math.max(2, size * 0.4));
+
+        ctx.save();
+        // 圆角矩形：左上、左下、右下圆角，右上直角贴合展位角
+        const x0 = bx - badgeW;
+        const y0 = by;
+        ctx.beginPath();
+        ctx.moveTo(x0 + corner, y0);
+        ctx.lineTo(bx, y0);
+        ctx.lineTo(bx, y0 + badgeH);
+        ctx.lineTo(x0 + corner, y0 + badgeH);
+        ctx.quadraticCurveTo(x0, y0 + badgeH, x0, y0 + badgeH - corner);
+        ctx.lineTo(x0, y0 + corner);
+        ctx.quadraticCurveTo(x0, y0, x0 + corner, y0);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fill();
+        // 序号文字
+        ctx.font = `700 ${Math.round(badgeH * 0.6)}px sans-serif`;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(badge), x0 + badgeW / 2, y0 + badgeH / 2 + 1);
+        ctx.restore();
+      }
     }
 
     ctx.restore();

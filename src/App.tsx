@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Flex, Image } from "antd";
 import ScreenAdapter from "./components/ScreenAdapter";
 import { DashboardHeader } from "./components/DashboardHeader";
@@ -249,18 +249,42 @@ const CurrentTimeButton = memo(function CurrentTimeButton() {
     (window as any).__setLayoutVersion?.();
   };
 
+  const isLandscape = layout === "landscape";
+
   return (
     <div className="absolute right-6 top-[40px] z-30 flex items-center gap-2 text-[13px] text-[#dbeeff]">
-      <select
-        value={layout}
-        onChange={(e) => handleLayoutChange(e.target.value as DashboardOrientation)}
-        className="rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.85)] px-2 py-1 text-[13px] text-white outline-none cursor-pointer hover:border-[#2563EB]/70"
-      >
-        <option value="landscape">横版显示</option>
-        <option value="portrait">竖版显示</option>
-      </select>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => !isLandscape && handleLayoutChange("landscape")}
+          className="block h-[24px] cursor-pointer border-0 bg-transparent p-0 outline-none"
+          aria-label="横版显示"
+          aria-pressed={isLandscape}
+        >
+          <img
+            src={isLandscape ? "/img/landscape-selected.png" : "/img/landscape-unselected.png"}
+            alt="横板"
+            className="block h-[24px] w-auto select-none"
+            draggable={false}
+          />
+        </button>
+        <button
+          type="button"
+          onClick={() => isLandscape && handleLayoutChange("portrait")}
+          className="block h-[24px] cursor-pointer border-0 bg-transparent p-0 outline-none"
+          aria-label="竖版显示"                           
+          aria-pressed={!isLandscape}
+        >
+          <img
+            src={isLandscape ? "/img/portrait-unselected.png" : "/img/portrait-selected.png"}
+            alt="竖版"
+            className="block h-[24px] w-auto select-none"
+            draggable={false}
+          />
+        </button>
+      </div>
       <Button2 mode="refresh-current-time" onModeChange={() => setCurrentTime(new Date())}>
-        当前时间：{" "}
+        {" "}
         <span className="font-medium text-white">
           {formatCurrentTime(currentTime)}
         </span>
@@ -279,6 +303,7 @@ const ExhibitionMapPanel = memo(function ExhibitionMapPanel({
   safetyRows,
   constructProcessData,
   galleryRows,
+  currentStageSteps,
 }: {
   selectedHallId: string;
   hallMode: ModuleKey;
@@ -292,6 +317,7 @@ const ExhibitionMapPanel = memo(function ExhibitionMapPanel({
   safetyRows: SafetyRow[];
   constructProcessData: any;
   galleryRows: HallSummary[];
+  currentStageSteps?: Array<{ name?: string; title?: string }> | null;
 }) {
   return (
     <>
@@ -316,6 +342,7 @@ const ExhibitionMapPanel = memo(function ExhibitionMapPanel({
             : (constructProcessData?.rows ?? constructProcessData?.data ?? [])
         }
         galleryRows={galleryRows}
+        currentStageSteps={currentStageSteps}
       />
     </>
   );
@@ -340,7 +367,16 @@ export default function App() {
   const initialPrefs = useMemo(() => readPersistedPrefs(DEFAULT_EXHIBITION_ID), [DEFAULT_EXHIBITION_ID]);
   const [hallMode, setHallMode] = useState<ModuleKey>(initialPrefs?.hallMode ?? "ExhibitionOverview");
   const [selectedHallId, setSelectedHallId] = useState<string>(initialPrefs?.selectedHallId ?? "all");
+  //搭建进程总览：allPeriod=true 查询所有阶段，false 仅当前阶段
+  const [allPeriod, setAllPeriod] = useState(true);
+  //搭建进程总览 切换全部/当前时的刷新状态，用于重新渲染 + 视觉反馈
+  const [exhibitionProcessLoading, setExhibitionProcessLoading] = useState(false);
+  const handleAllPeriodChange = useCallback((v: boolean) => {
+    setAllPeriod(v);
+    setExhibitionProcessLoading(true);
+  }, []);
   const [rightSidebarVisible, setRightSidebarVisible] = useState(true);
+  const [mapDetailOpen, setMapDetailOpen] = useState(false);
   const [initData, setInitData] = useState<{
     exhibitionId: string;
     halls: Array<{ hallId: string; hallName: string }>;
@@ -352,6 +388,7 @@ export default function App() {
   const [boothRows, setBoothRows] = useState<BoothRow[]>([]); //展位信息
   const [constructOverviewData, setConstructOverviewData] = useState<any>(null); //搭建信息概览
   const [constructProcessData, setConstructProcessData] = useState<any>(null); //搭建进度
+  const [currentStageSteps, setCurrentStageSteps] = useState<any>(null); //当前阶段搭建进程(施工进程Steps)
   const [constructMaterialData, setConstructMaterialData] = useState<any>(null); //搭建材料
   const [boothProgressData, setBoothProgressData] = useState<any>(null); //展位进度
   const [constructCarouselState, setConstructCarouselState] = useState<{ key: string; pictures: any[] }>({ key: "", pictures: [] });
@@ -753,6 +790,7 @@ export default function App() {
                   "getMaterialStatistics",
                   "getBoothProcess",
                   "getExhibitionProcess",
+                  "getCurrentStageConstructProcess",
                 ]
               : [
                   "getConstructOverviewByHallId",
@@ -760,6 +798,7 @@ export default function App() {
                   "getMaterialStatistics",
                   "getBoothProcessByHallId",
                   "getExhibitionProcessByHallId",
+                  "getCurrentStageConstructProcess",
                 ];
           logRequestGroup("ConstructOverview", requestLabels);
 
@@ -767,22 +806,24 @@ export default function App() {
           const criticalRequests =
             selectedHallId === "all"
               ? [
-                  screenApi.getConstructOverview(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getConstructOverview(DEFAULT_EXHIBITION_ID, allPeriod, controller.signal),
                   screenApi.getConstructProcess(DEFAULT_EXHIBITION_ID, controller.signal),
                   screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, controller.signal),
                   screenApi.getBoothProcess(DEFAULT_EXHIBITION_ID, controller.signal),
+                  screenApi.getCurrentStageConstructProcess(DEFAULT_EXHIBITION_ID, undefined, controller.signal),
                 ]
               : [
-                  screenApi.getConstructOverviewByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
+                  screenApi.getConstructOverviewByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, allPeriod, controller.signal),
                   screenApi.getConstructProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
                   screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, controller.signal),
                   screenApi.getBoothProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
+                  screenApi.getCurrentStageConstructProcess(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
                 ];
           // Background: exhibitionProcess only (boothProgressPicture is handled by ConstructCarousel effect)
           const backgroundRequests =
             selectedHallId === "all"
-              ? [screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, controller.signal)]
-              : [screenApi.getExhibitionProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal)];
+              ? [screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, allPeriod, controller.signal)]
+              : [screenApi.getExhibitionProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, allPeriod, controller.signal)];
 
           const criticalResult = await withTimeout(
             Promise.all(criticalRequests),
@@ -797,16 +838,18 @@ export default function App() {
           });
 
           if (cancelled || !criticalResult) return;
-          const [overviewRes, processRes, materialRes, boothProcessRes] = criticalResult as any[];
+          const [overviewRes, processRes, materialRes, boothProcessRes, currentStageRes] = criticalResult as any[];
           const nextConstructOverviewData = (overviewRes as any)?.data ?? overviewRes ?? null;
           const nextConstructProcessData = (processRes as any)?.data ?? processRes ?? null;
           const nextConstructMaterialData = (materialRes as any)?.data ?? materialRes ?? null;
           const nextBoothProgressData = (boothProcessRes as any)?.data ?? boothProcessRes ?? null;
+          const nextCurrentStageSteps = (currentStageRes as any)?.data ?? currentStageRes ?? null;
 
           setConstructOverviewData(nextConstructOverviewData);
           setConstructProcessData(nextConstructProcessData);
           setConstructMaterialData(nextConstructMaterialData);
           setBoothProgressData(nextBoothProgressData);
+          setCurrentStageSteps(nextCurrentStageSteps);
 
           void Promise.all(backgroundRequests)
             .then(([exhibitionProcessRes]) => {
@@ -1055,6 +1098,52 @@ export default function App() {
     };
   }, [hallMode, selectedHallId]);
 
+  // allPeriod 切换时立即刷新展会进程数据（避免等待下一轮 90s 轮询）
+  const prevAllPeriodRef = useRef(allPeriod);
+  useEffect(() => {
+    if (prevAllPeriodRef.current === allPeriod) return;
+    prevAllPeriodRef.current = allPeriod;
+    if (hallMode !== "ConstructOverview") {
+      setExhibitionProcessLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    const loadExhibitionProcess = async () => {
+      try {
+        const res =
+          selectedHallId === "all"
+            ? await screenApi.getExhibitionProcess(
+                DEFAULT_EXHIBITION_ID,
+                allPeriod,
+                controller.signal,
+              )
+            : await screenApi.getExhibitionProcessByHallId(
+                DEFAULT_EXHIBITION_ID,
+                selectedHallId,
+                allPeriod,
+                controller.signal,
+              );
+        if (!cancelled) {
+          const payload = res?.data ?? res ?? null;
+          setExhibitionProcessData(payload);
+        }
+      } catch (error) {
+        if (!isAbortError(error)) {
+          console.error("[App][ExhibitionProcess] allPeriod reload failed", error);
+        }
+      } finally {
+        if (!cancelled) setExhibitionProcessLoading(false);
+      }
+    };
+    void loadExhibitionProcess();
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allPeriod, hallMode, selectedHallId]);
+
   useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
@@ -1123,6 +1212,9 @@ export default function App() {
     loading: isModuleLoading && hallMode === "ConstructOverview",
     overviewLoading: isSwitchLoading && hallMode === "ConstructOverview",
     processLoading: false,
+    allPeriod,
+    onAllPeriodChange: handleAllPeriodChange,
+    overviewSwitching: exhibitionProcessLoading,
   };
   const safetyCollectRows = Array.isArray(safetyCollect)
     ? safetyCollect
@@ -1263,11 +1355,13 @@ export default function App() {
               selectedHallId === "all"
                 ? await screenApi.getConstructOverview(
                     DEFAULT_EXHIBITION_ID,
+                    allPeriod,
                     signal,
                   )
                 : await screenApi.getConstructOverviewByHallId(
                     DEFAULT_EXHIBITION_ID,
                     selectedHallId,
+                    allPeriod,
                     signal,
                   );
             setConstructOverviewData(safeData<any>(res, null));
@@ -1314,6 +1408,17 @@ export default function App() {
             setBoothProgressData(safeData<any>(res, null));
           },
         },
+        {
+          key: "currentStageConstructProcess",
+          run: async (signal: AbortSignal) => {
+            const res = await screenApi.getCurrentStageConstructProcess(
+              DEFAULT_EXHIBITION_ID,
+              selectedHallId === "all" ? undefined : selectedHallId,
+              signal,
+            );
+            setCurrentStageSteps(safeData<any>(res, null));
+          },
+        },
         // boothProgressPicture is fetched by ConstructCarousel effect only
         {
           key: "exhibitionProcess",
@@ -1322,11 +1427,13 @@ export default function App() {
               selectedHallId === "all"
                 ? await screenApi.getExhibitionProcess(
                     DEFAULT_EXHIBITION_ID,
+                    allPeriod,
                     signal,
                   )
                 : await screenApi.getExhibitionProcessByHallId(
                     DEFAULT_EXHIBITION_ID,
                     selectedHallId,
+                    allPeriod,
                     signal,
                   );
             setExhibitionProcessData(safeData<any>(res, null));
@@ -1433,7 +1540,7 @@ export default function App() {
         },
       },
     ];
-  }, [DEFAULT_EXHIBITION_ID, hallMode, selectedHallId]);
+  }, [DEFAULT_EXHIBITION_ID, hallMode, selectedHallId, allPeriod]);
 
   useSequentialApiPolling({
     tasks: pollingTasks,
@@ -1674,7 +1781,7 @@ export default function App() {
             <>
               <DashboardHeader title={expoName} />
               {hallMode === "ConstructOverview" && selectedHallId !== "all" && isLandscape && (
-                <ConstructFloatCards />
+                <ConstructFloatCards steps={currentStageSteps} />
               )}
               <MenuButtonGroup
                 items={menuButtons}
@@ -1712,6 +1819,7 @@ export default function App() {
                             }
                             galleryRows={galleryRows}
                             fillAvailableHeight
+                            currentStageSteps={currentStageSteps}
                           />
                           {/* 收起/展开 RightSidebar 的按钮 */}
                           <button
@@ -1758,10 +1866,12 @@ export default function App() {
                               boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
                               boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
                               progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                              latestLine: item.lines?.[0]?.content ?? item.content ?? item.progressValue ?? item.latestLine ?? '',
                             }))}
                             galleryRows={galleryRows}
                             compact={hallMode === "ConstructOverview"}
                             fillAvailableHeight
+                            currentStageSteps={currentStageSteps}
                           />
                           <button
                             className="absolute bottom-4 right-4 z-40 flex h-7 w-7 items-center justify-center rounded border border-[#2563EB]/40 bg-[rgba(8,22,44,0.8)] text-white text-xs leading-none hover:bg-[rgba(37,99,235,0.3)] transition-colors"
@@ -1831,6 +1941,7 @@ export default function App() {
                         safetyRows={safetyRows}
                         constructProcessData={constructProcessData}
                         galleryRows={galleryRows}
+                        currentStageSteps={currentStageSteps}
                       />
                       <ExhibitionRightSidebar
                         boothRows={boothRows}
@@ -1861,12 +1972,15 @@ export default function App() {
                             boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
                             boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
                             progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
+                            latestLine: item.lines?.[0]?.content ?? item.content ?? item.progressValue ?? item.latestLine ?? '',
                           }))}
                           galleryRows={galleryRows}
                           compact={hallMode === "ConstructOverview"}
+                          onDetailChange={setMapDetailOpen}
+                          currentStageSteps={currentStageSteps}
                         />
-                        {selectedHallId !== "all" && (
-                          <ConstructFloatCards variant="portrait" />
+                        {selectedHallId !== "all" && !mapDetailOpen && (
+                          <ConstructFloatCards variant="portrait" steps={currentStageSteps} />
                         )}
                       </div>
                       <ConstructRightSidebar {...constructRightSidebarProps} />
@@ -1887,8 +2001,9 @@ export default function App() {
                           safetyRows={safetyRows}
                           galleryRows={galleryRows}
                           compact={hallMode === "SafetyOverview"}
+                          onDetailChange={setMapDetailOpen}
                         />
-                        {selectedHallId !== "all" && (
+                        {selectedHallId !== "all" && !mapDetailOpen && (
                           <SafetyFloatCards variant="portrait" />
                         )}
                       </div>

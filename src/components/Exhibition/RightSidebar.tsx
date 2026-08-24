@@ -85,7 +85,7 @@ export function ExhibitionRightSidebar({
   // Shared sections extracted so they render once regardless of layout
   const expenseSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <div className="shrink-0 w-2/3"><PanelTitle title="特装费用缴纳" /></div>
+      <div className="shrink-0 w-full"><PanelTitle title="特装费用缴纳" /></div>
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         {loading ? (
           <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl">
@@ -161,7 +161,7 @@ export function ExhibitionRightSidebar({
 
   const unreportedSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-1 flex-col overflow-hidden"}>
-      <div className="shrink-0 w-2/3"><PanelTitle title="未报到展位汇总" /></div>
+      <div className="shrink-0 w-full"><PanelTitle title="未报到展位汇总" /></div>
       <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 pt-1">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -211,7 +211,7 @@ export function ExhibitionRightSidebar({
 
   const ordersSection = (
     <section className={isLandscape ? landscapeSectionClass : "flex min-h-0 flex-[0.38] flex-col overflow-hidden"}>
-      <div className="shrink-0 w-2/3"><PanelTitle title="水电气网络申报" /></div>
+      <div className="shrink-0 w-full"><PanelTitle title="水电气网络申报订单数量" /></div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-2">
         {(() => {
           const maxNum = Math.max(...orderItems.map((i) => i.num), 1);

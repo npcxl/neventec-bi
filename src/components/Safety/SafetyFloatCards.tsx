@@ -12,13 +12,15 @@ const RISK_LEGEND = [
   { color: '#2563EB', label: '一般风险' },
   { color: '#FA8C16', label: '较大风险' },
   { color: '#F5222D', label: '严重风险' },
-  { color: '#FA8C16', label: '隐患待整改', icon: '⚠' },
+
 ];
 
 const PROCESS_LEGEND = [
-  { color: '#63F222', label: '搭建正常', icon: '▲' },
-  { color: '#FA8C16', label: '进度缓慢', icon: '⊙' },
-  { color: '#F5222D', label: '严重滞后', icon: '▲' },
+  { color: '#7B61FF', label: '隐藏工艺', icon: '○' },
+  { color: '#FA8C16', label: '复杂工艺', icon: '△' },
+  { color: '#7DE3F7', label: '双层', icon: '▲' },
+  { color: '#2563EB', label: '吊点', icon: '⊙' },
+  { color: '#F5222D', label: '隐患待整改', icon: '⚠' },
 ];
 
 const glassCardStyle: React.CSSProperties = {
@@ -52,9 +54,9 @@ const bodyStyle: React.CSSProperties = {
 
 function LegendItem({ color, label, icon }: { color: string; label: string; icon?: string }) {
   return (
-    <Flex align="center" gap={10}>
+    <Flex align="center" gap={10} style={{ flex: 1, minWidth: 0 }}>
       {icon ? (
-        <span style={{ color, fontSize: 14, width: 14, textAlign: 'center' }}>{icon}</span>
+        <span style={{ color, fontSize: 14, width: 14, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
       ) : (
         <span
           style={{
@@ -66,7 +68,7 @@ function LegendItem({ color, label, icon }: { color: string; label: string; icon
           }}
         />
       )}
-      <Text style={{ color: '#fff', fontSize: 14, fontWeight: 500 }}>{label}</Text>
+      <Text style={{ color: '#fff', fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</Text>
     </Flex>
   );
 }
@@ -77,33 +79,39 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
   if (isPortrait) {
     return (
       <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-col gap-2 pointer-events-none">
-        {/* 第一行：安全风险预警 - 4个横向 */}
+        {/* 第一行：安全风险预警 - 横向 */}
         <Card
           size="small"
           style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
           styles={{
             header: { display: 'none' },
-            body: bodyStyle,
+            body: { ...bodyStyle, justifyContent: 'flex-start', padding: '8px 14px' },
           }}
         >
-          <Flex gap={20} align="center" wrap>
+          <Flex gap={24} align="center" wrap style={{ width: '100%' }}>
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>安全风险预警：</Text>
             {RISK_LEGEND.map((item) => (
               <LegendItem key={item.label} {...item} />
             ))}
           </Flex>
         </Card>
 
-        {/* 第二行：关键工序 - 3个横向 */}
+        {/* 第二行：关键工序 - 横向 */}
         <Card
           size="small"
           style={{ ...glassCardStyle, width: 'auto', pointerEvents: 'auto' }}
           styles={{
             header: { display: 'none' },
-            body: bodyStyle,
+            body: { ...bodyStyle, justifyContent: 'flex-start', padding: '8px 14px' },
           }}
         >
-          <Flex gap={20} align="center" wrap>
-            {PROCESS_LEGEND.map((item) => (
+          <Flex gap={24} align="center" wrap style={{ width: '100%' }}>
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>关键工序：</Text>
+            {PROCESS_LEGEND.slice(0, 2).map((item) => (
+              <LegendItem key={item.label} {...item} />
+            ))}
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0 }}>图例：</Text>
+            {PROCESS_LEGEND.slice(2).map((item) => (
               <LegendItem key={item.label} {...item} />
             ))}
           </Flex>

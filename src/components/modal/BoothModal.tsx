@@ -110,8 +110,9 @@ export function BoothModal({
           <div
             className="absolute left-5 right-5 bottom-0 h-[2px]"
             style={{
-              background:
-                "linear-gradient(90deg, transparent, rgba(37,99,235,0.6) 15%, rgba(125,227,247,0.6) 50%, rgba(37,99,235,0.6) 85%, transparent)",
+              backgroundImage: "url('/img/divider_tmp.png')",
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
             }}
           />
         </header>
@@ -187,8 +188,9 @@ export function BoothModal({
             <div
               className="absolute left-5 right-5 bottom-0 h-[2px]"
               style={{
-                background:
-                  "linear-gradient(90deg, transparent, rgba(37,99,235,0.6) 15%, rgba(125,227,247,0.6) 50%, rgba(37,99,235,0.6) 85%, transparent)",
+                backgroundImage: "url('/img/divider_tmp.png')",
+                backgroundSize: '100% 100%',
+                backgroundRepeat: 'no-repeat',
               }}
             />
           </div>

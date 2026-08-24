@@ -405,6 +405,27 @@ video {
   background: rgba(56, 189, 248, 0.6);
 }
 
+/* 搭建进程 Steps 滚动条 */
+.construct-steps-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(37, 99, 235, 0.5) transparent;
+}
+.construct-steps-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.construct-steps-scroll::-webkit-scrollbar-track {
+  background: rgba(14, 23, 54, 0.4);
+  border-radius: 3px;
+}
+.construct-steps-scroll::-webkit-scrollbar-thumb {
+  background: rgba(37, 99, 235, 0.5);
+  border-radius: 3px;
+}
+.construct-steps-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
+}
+
 
 
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export const CARD_WIDTH = 300;
+export const CARD_WIDTH = 330;
 export const CARD_GAP = 12;
-export const STEP = CARD_WIDTH + CARD_GAP; // 312px per card
+export const STEP = CARD_WIDTH + CARD_GAP; // 342px per card
 const SCROLL_SPEED = 0.8; // px per frame at 60fps
 const MAX_DOM_CARDS = 12;
 
