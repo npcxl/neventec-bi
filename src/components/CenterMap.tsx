@@ -18,6 +18,15 @@ import { useHallSorter } from "../hooks/useHallSorter";
 
 type HallMode = string;
 
+// 展位标记图标（关键工序 / 隐患）：使用 SVG 图片绘制在地图展位上
+const MARK_ICONS = {
+  hidden: "/img/隐藏工艺.svg",
+  complex: "/img/复杂工艺.svg",
+  double: "/img/双层.svg",
+  lift: "/img/吊点.svg",
+  risk: "/img/隐患待整改.svg",
+};
+
 type BoothRow = {
   boothNo?: string;
   boothId?: string;
@@ -247,6 +256,8 @@ export default function CenterMap({
   fillAvailableHeight = false,
   onDetailChange,
   currentStageSteps,
+  /** 关键工序-图纸核查汇总（现场安全选展馆时返回），用于地图展位符号标记 */
+  checkDrawingsSummary,
 }: {
   mode?: HallMode;
   moduleMode?: "ExhibitionOverview" | "ConstructOverview" | "SafetyOverview";
@@ -275,6 +286,13 @@ export default function CenterMap({
   fillAvailableHeight?: boolean;
   /** 当前阶段搭建进程步骤（getCurrentStageConstructProcess 返回，用于匹配明细最新进程显示序号徽章） */
   currentStageSteps?: Array<{ name?: string; title?: string }> | null;
+  /** 关键工序-图纸核查汇总列表 */
+  checkDrawingsSummary?: Array<{
+    boothNo?: string;
+    structureType?: string;
+    complexEngineering?: string;
+    liftingPoint?: string;
+  }> | null;
 }) {
   const [selected, setSelected] = useState<{
     code: string;
@@ -412,6 +430,34 @@ export default function CenterMap({
     }
     return badges;
   }, [currentStageSteps, progressRows]);
+  // 关键工序汇总 → 展位号 → 符号标记（隐藏工艺/复杂工艺/双层/吊点），现场安全选展馆时渲染到地图
+  const boothMarks = useMemo(() => {
+    const list = Array.isArray(checkDrawingsSummary) ? checkDrawingsSummary : [];
+    const marks: Record<string, string[]> = {};
+    if (moduleMode !== "SafetyOverview") return marks;
+    for (const item of list) {
+      const boothNo = item.boothNo;
+      if (!boothNo) continue;
+      const arr: string[] = [];
+      if (item.structureType && item.structureType.includes("双层")) {
+        arr.push(MARK_ICONS.double);
+      }
+      if (item.complexEngineering) {
+        if (item.complexEngineering.includes("复杂")) {
+          arr.push(MARK_ICONS.complex);
+        }
+        if (item.complexEngineering.includes("隐藏")) {
+          arr.push(MARK_ICONS.hidden);
+        }
+      }
+      if (item.liftingPoint && item.liftingPoint.includes("包含")) {
+        arr.push(MARK_ICONS.lift);
+      }
+      if (arr.length > 0) marks[String(boothNo)] = arr;
+    }
+    return marks;
+  }, [checkDrawingsSummary, moduleMode]);
+
   const safetyColorRows = useMemo(
     () =>
       safetyRows.map((row) => ({
@@ -423,12 +469,23 @@ export default function CenterMap({
       })),
     [safetyRows],
   );
-  const { getColor } = useBoothColorStrategy({
+  const { getColor, riskBoothNos } = useBoothColorStrategy({
     moduleMode,
     boothRows,
     safetyRows: safetyColorRows,
     progressRows,
   });
+
+  // 现场安全：有安全风险的展位 → 隐患待整改图标（绘制在展位中心，仅一个）
+  const riskMarks = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (moduleMode !== "SafetyOverview") return map;
+    for (const no of riskBoothNos) {
+      map[no] = MARK_ICONS.risk;
+    }
+    return map;
+  }, [riskBoothNos, moduleMode]);
+
   useEffect(() => {
     setSelected(null);
     setBoothDetail(null);
@@ -716,6 +773,8 @@ export default function CenterMap({
                   : undefined}
                   onBoothClick={handleBoothClick}
                   boothBadges={moduleMode === "ConstructOverview" ? boothBadges : undefined}
+                  boothMarks={moduleMode === "SafetyOverview" ? boothMarks : undefined}
+                  riskMarks={moduleMode === "SafetyOverview" ? riskMarks : undefined}
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">

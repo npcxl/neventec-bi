@@ -373,6 +373,17 @@ export const screenApi = {
   getCurrentStageConstructProcess: (exhibitionId: string, hallId?: string, signal?: AbortSignal) =>
     request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId }, signal }),
 
+  // 现场安全-关键工序 图纸核查汇总列表（选展馆时调用）
+  // exhibitionId 必填，hallId 可选
+  getCheckDrawingsSummary: (exhibitionId: string, hallId?: string, signal?: AbortSignal) =>
+    request<any>('a/api/checkDrawings/summary/list', {
+      query: {
+        exhibitionId,
+        ...(hallId ? { hallId } : {}),
+      },
+      signal,
+    }),
+
 };
 
 

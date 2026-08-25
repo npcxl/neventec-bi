@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Image } from "antd";
 import { useWindowedCarousel, CARD_WIDTH } from "../../hooks/useWindowedCarousel";
 import { thumbUrl, fullUrl } from "../../utils/image";
@@ -38,6 +38,19 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
     normalizedPictures.length,
   );
 
+  // 竖版：测量容器高度，判断内容是否超出，决定是否滚动
+  const verticalViewportRef = useRef<HTMLDivElement>(null);
+  const [verticalNeedsScroll, setVerticalNeedsScroll] = useState(true);
+  useLayoutEffect(() => {
+    const el = verticalViewportRef.current;
+    if (!el || !vertical) return;
+    const cardHeight = 232; // 220px 图片 + 12px gap
+    const gap = 12;
+    const viewportH = el.clientHeight;
+    const contentH = normalizedPictures.length * cardHeight - (normalizedPictures.length > 0 ? gap : 0);
+    setVerticalNeedsScroll(contentH > viewportH);
+  }, [vertical, normalizedPictures]);
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
@@ -65,7 +78,8 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
           alt={item.dataStr || `图片-${index + 1}`}
           preview={{ src: fullUrl(item.address) }}
           classNames={{ root: "block w-full" }}
-          className="h-[150px] w-full object-cover"
+          className="w-full object-cover"
+          style={{ height: 220 }}
         />
         <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 py-3 backdrop-blur-md">
           <span className="truncate text-[14px] font-semibold text-[#cffafe]">
@@ -76,9 +90,9 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
     </div>
   );
 
-  // 竖版：自动垂直滚动（CSS animation）
+  // 竖版：内容超出容器才自动垂直滚动（CSS animation），否则静态展示
   if (vertical) {
-    const cardHeight = 162; // 150px 图片 + 12px gap
+    const cardHeight = 232; // 220px 图片 + 12px gap
     const totalHeight = normalizedPictures.length * cardHeight;
     const duration = Math.max(12, normalizedPictures.length * 4);
     const style = {
@@ -89,11 +103,17 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
     return (
       <div className="demo-br2-scroll relative h-full overflow-hidden">
         <div className="flex h-full min-h-0 flex-col gap-2 p-3">
-          <div className="flex h-full min-h-0 flex-col overflow-hidden">
-            <div className="demo-br2-scroll-track flex flex-col gap-3" style={style}>
-              {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'a'))}
-              {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'b'))}
-            </div>
+          <div ref={verticalViewportRef} className="flex h-full min-h-0 flex-col overflow-hidden">
+            {verticalNeedsScroll ? (
+              <div className="demo-br2-scroll-track flex flex-col gap-3" style={style}>
+                {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'a'))}
+                {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'b'))}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {normalizedPictures.map((item, index) => renderPictureCard(item, index, 'a'))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -117,12 +137,13 @@ function ConstructCarousel({ pictures, loading = false, vertical = false }: Prop
               >
                 <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl">
                   <Image
-                    src={thumbUrl(item.address, 400, 300)}
+                    src={thumbUrl(item.address, 400, 220)}
                     alt={item.dataStr || `图片-${realIndex + 1}`}
                     preview={{ src: fullUrl(item.address) }}
                     loading={isEager ? "eager" : "lazy"}
                     classNames={{ root: "block w-full" }}
-                    className="h-[150px] w-full object-cover"
+                    className="w-full object-cover"
+                    style={{ height: 220 }}
                   />
                   <div className="absolute inset-x-0 top-0 z-10 flex h-[30px] items-center justify-center bg-[rgba(8,23,42,0.55)] px-3 backdrop-blur-md">
                     <span className="truncate text-[14px] font-semibold text-[#cffafe]">

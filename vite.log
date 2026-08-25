@@ -11,3 +11,16 @@ Port 9527 is in use, trying another one...
   [32m➜[39m  [1mNetwork[22m: [36mhttp://10.12.1.216:[1m9528[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.30.160.1:[1m9528[22m/[39m
   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.112.1:[1m9528[22m/[39m
+[2m19:05:47[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m19:05:54[22m [36m[1m[vite][22m[39m server restarted.
+[2m19:15:34[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m19:15:34[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[31mError: [safe-delete] 操作失败: ERROR c:\codes\neventec-bi\node_modules\.vite\deps: Error during a `trash` operation: Unknown { description: "Some operations were aborted" }[39m
+[2m19:15:35[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m19:15:35[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because vite config has changed
+[2m19:15:35[22m [36m[1m[vite][22m[39m server restarted.
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://10.12.1.216:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.30.160.1:[1m9528[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.112.1:[1m9528[22m/[39m

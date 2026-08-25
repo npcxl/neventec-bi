@@ -26,8 +26,8 @@ function isReported(row: BoothRow) {
 function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12">
-      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[14%] text-sm font-medium text-[#d8efff]">
+        <span className="pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );

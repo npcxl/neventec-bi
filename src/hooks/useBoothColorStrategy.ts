@@ -44,6 +44,8 @@ type UseBoothColorStrategyOptions = {
 
 type ColorStrategy = {
   getColor: (booth: DemoBooth, index: number) => string;
+  /** 现场安全模式下有安全风险的展位号集合（key 经 normalizeKey），其他模式为空 */
+  riskBoothNos: Set<string>;
 };
 
 const DEFAULT_COLOR = 'rgba(5, 212, 248, 0.7)';
@@ -69,11 +71,18 @@ function resolvePaidColor(paid?: string) {
   return DEFAULT_COLOR;
 }
 
+function normalizeRiskLevel(value?: string): '' | 'low' | 'medium' | 'high' {
+  const v = normalizeKey(value).toUpperCase();
+  if (!v) return '';
+  if (v === 'LOWRISK' || v.includes('一般') || v.includes('低')) return 'low';
+  if (v === 'MEDIUMRISK' || v === 'MIDRISK' || v.includes('较大') || v.includes('中')) return 'medium';
+  if (v === 'HIGHRISK' || v.includes('重大') || v.includes('严重') || v.includes('高')) return 'high';
+  return '';
+}
+
 function resolveSafetyColor(status?: string) {
-  const text = normalizeKey(status);
-  if (!text) return DEFAULT_COLOR;
-  if (text.includes('一般风险')) return '#FA8C16';
-  if (text.includes('较大风险')) return '#F5222D';
+  const level = normalizeRiskLevel(status);
+  if (level) return SAFETY_RISK_COLORS[level];
   return DEFAULT_COLOR;
 }
 
@@ -90,6 +99,7 @@ function createExhibitionOverviewStrategy(boothRows: BoothRow[]): ColorStrategy 
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
       return resolvePaidColor(paidMap[boothKey]);
     },
+    riskBoothNos: new Set<string>(),
   };
 }
 
@@ -116,34 +126,68 @@ function createConstructOverviewStrategy(progressRows: ConstructProgressRow[] = 
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
       return resolveConstructProgressColor(progressMap[boothKey]);
     },
+    riskBoothNos: new Set<string>(),
   };
 }
 
+// 同一展位多条记录时，保留最新一条（后面的覆盖前面的），
+// 这样"第一天有隐患、第二天整改合格"的展位最终按最新状态取色，隐患不再显示
 function createSafetyOverviewStrategy(safetyRows: SafetyRecordRow[]): ColorStrategy {
   const riskMap = safetyRows.reduce<Record<string, SafetyRecordRow>>((acc, row) => {
-    if (row.boothNo) acc[normalizeKey(row.boothNo)] = row;
-    if (row.boothId) acc[normalizeKey(row.boothId)] = row;
+    const keys = [row.boothNo, row.boothId]
+      .filter((v): v is string => Boolean(v))
+      .map(normalizeKey);
+    for (const key of keys) {
+      acc[key] = row; // 后者覆盖前者 -> 保留最新记录
+    }
     return acc;
   }, {});
+  console.log('[地图取色-riskMap] 风险记录索引 keys=%o', Object.keys(riskMap));
+
+  // 基于同一 riskMap 计算"有安全风险"的展位集合（与 getColor 判定口径一致）
+  const riskBoothNos = new Set<string>();
+  for (const [key, row] of Object.entries(riskMap)) {
+    const level = normalizeRiskLevel(row?.riskAssessment);
+    const status = normalizeKey(row?.rectifyCheckStatus);
+    const isRisk =
+      Boolean(level) ||
+      status === '待整改' ||
+      status === '未整改' ||
+      status === '整改不合格' ||
+      status === '拒不整改';
+    if (isRisk) riskBoothNos.add(key);
+  }
 
   return {
     getColor: (booth) => {
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
       const row = riskMap[boothKey];
-      const risk = normalizeKey(row?.riskAssessment);
-      // 风险等级优先（与图例一致：一般/较大/严重）
-      if (risk.includes('严重') || risk.includes('重大') || risk.includes('高')) return SAFETY_RISK_COLORS.high;
-      if (risk.includes('较大') || risk.includes('中')) return SAFETY_RISK_COLORS.medium;
-      if (risk.includes('一般') || risk.includes('低')) return SAFETY_RISK_COLORS.low;
-      // 无风险等级时回退到整改状态
-      const status = normalizeKey(row?.rectifyCheckStatus);
-      if (status === '整改合格') return 'rgba(99,242,34,0.8)';
-      if (status === '待整改' || status === '未整改') return 'rgba(250,140,22,0.8)';
-      if (status === '整改不合格') return 'rgba(245,34,45,0.8)';
-      if (status === '拒不整改') return 'rgba(37,99,235,0.8)';
-      if (status === '已作废' || status === '作废') return 'rgba(107,124,147,0.8)';
-      return 'rgba(5, 212, 248, 0.97)';
+      // 风险等级优先（与图例一致：一般/较大/重大 -> 蓝/橙/红），兼容枚举 code
+      const level = normalizeRiskLevel(row?.riskAssessment);
+      let color: string;
+      if (level) {
+        color = SAFETY_RISK_COLORS[level];
+      } else {
+        // 无风险等级时回退到整改状态
+        const status = normalizeKey(row?.rectifyCheckStatus);
+        if (status === '整改合格') color = 'rgba(99,242,34,0.8)';
+        else if (status === '待整改' || status === '未整改') color = 'rgba(250,140,22,0.8)';
+        else if (status === '整改不合格') color = 'rgba(245,34,45,0.8)';
+        else if (status === '拒不整改') color = 'rgba(37,99,235,0.8)';
+        else if (status === '已作废' || status === '作废') color = 'rgba(107,124,147,0.8)';
+        else color = 'rgba(5, 212, 248, 0.97)';
+      }
+      console.log(
+        '[地图取色] boothKey=%s | riskAssessment=%s | 归一化等级=%s | 整改状态=%s | 最终颜色=%s',
+        boothKey,
+        row?.riskAssessment ?? '(空)',
+        level || '(无)',
+        normalizeKey(row?.rectifyCheckStatus) || '(空)',
+        color,
+      );
+      return color;
     },
+    riskBoothNos,
   };
 }
 

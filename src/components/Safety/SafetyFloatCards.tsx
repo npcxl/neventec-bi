@@ -16,11 +16,11 @@ const RISK_LEGEND = [
 ];
 
 const PROCESS_LEGEND = [
-  { color: '#7B61FF', label: '隐藏工艺', icon: '○' },
-  { color: '#FA8C16', label: '复杂工艺', icon: '△' },
-  { color: '#7DE3F7', label: '双层', icon: '▲' },
-  { color: '#2563EB', label: '吊点', icon: '⊙' },
-  { color: '#F5222D', label: '隐患待整改', icon: '⚠' },
+  { label: '隐藏工艺', icon: '/img/隐藏工艺.svg' },
+  { label: '复杂工艺', icon: '/img/复杂工艺.svg' },
+  { label: '双层', icon: '/img/双层.svg' },
+  { label: '吊点', icon: '/img/吊点.svg' },
+  { label: '隐患待整改', icon: '/img/隐患待整改.svg' },
 ];
 
 const glassCardStyle: React.CSSProperties = {
@@ -52,22 +52,12 @@ const bodyStyle: React.CSSProperties = {
   justifyContent: 'center',
 };
 
-function LegendItem({ color, label, icon }: { color: string; label: string; icon?: string }) {
+function LegendItem({ label, icon }: { label: string; icon?: string }) {
   return (
     <Flex align="center" gap={8} style={{ flexShrink: 0, paddingRight: 20 }}>
       {icon ? (
-        <span style={{ color, fontSize: 14, width: 14, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
-      ) : (
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            flexShrink: 0,
-            borderRadius: 1,
-            backgroundColor: color,
-          }}
-        />
-      )}
+        <img src={icon} alt={label} style={{ width: 16, height: 16, flexShrink: 0, objectFit: 'contain' }} />
+      ) : null}
       <Text style={{ color: '#fff', fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</Text>
     </Flex>
   );
@@ -78,7 +68,7 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
 
   if (isPortrait) {
     return (
-      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-row gap-3 pointer-events-none">
+      <div className="absolute bottom-0 left-3 right-3 z-30 flex flex-row gap-3 pointer-events-none">
         {/* 卡片 1：安全风险预警 */}
         <Card
           size="small"

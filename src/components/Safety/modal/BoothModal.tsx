@@ -136,28 +136,35 @@ function safetyStatusLabel(status?: string) {
    枚举：HIGHRISK(高风险) 等；同时兼容后端返回的中文（高/中/低、严重/较大/一般）
    ============================================ */
 const RISK_COLORS: Record<string, string> = {
-  // 枚举 code
+  // 枚举 code（与 RISK_LEGEND 三级风险保持一致：蓝 / 橙 / 红）
   HIGHRISK: "#F5222D",
   MIDRISK: "#FA8C16",
-  LOWRISK: "#63F222",
-  // 与现场安全悬浮卡片（RISK_LEGEND）保持一致的三级风险文案
+  MEDIUMRISK: "#FA8C16",
+  LOWRISK: "#2563EB",
+  // 三级风险文案
   "重大风险": "#F5222D",
   "较大风险": "#FA8C16",
   "一般风险": "#2563EB",
-  // 其它兼容写法兜底
+  // 其它兼容写法兜底（统一为蓝 / 橙 / 红）
   "高风险": "#F5222D",
   "中风险": "#FA8C16",
-  "低风险": "#63F222",
+  "低风险": "#2563EB",
   "严重风险": "#F5222D",
   "高": "#F5222D",
   "中": "#FA8C16",
-  "低": "#63F222",
+  "低": "#2563EB",
 };
 
 const RISK_LABELS: Record<string, string> = {
-  HIGHRISK: "高风险",
-  MIDRISK: "中风险",
+  // 枚举 code -> 第二个值（中文三级风险文案）
+  HIGHRISK: "重大风险",
+  MEDIUMRISK: "较大风险",
+  MIDRISK: "较大风险",
   LOWRISK: "一般风险",
+  // 兼容后端直接返回中文等级
+  "高风险": "重大风险",
+  "中风险": "较大风险",
+  "低风险": "一般风险",
 };
 
 function riskColor(value?: string) {

@@ -9,6 +9,10 @@ type HallMapProps = {
   onBoothClick?: (booth: Booth) => void;
   /** 展位号 → 步骤序号(1-based)，在对应展位右上角绘制序号徽章 */
   boothBadges?: Record<string, number>;
+  /** 展位号 → 关键工序图标路径数组（SVG 图片，绘制在展位上） */
+  boothMarks?: Record<string, string[]>;
+  /** 有安全风险的展位号 → 隐患图标路径（命中则在展位中心绘制） */
+  riskMarks?: Record<string, string>;
 };
 
 type Camera = {
@@ -88,7 +92,7 @@ function wrapText(
 
 // ===================== 组件 =====================
 
-export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBadges }: HallMapProps) {
+export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBadges, boothMarks, riskMarks }: HallMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
@@ -105,6 +109,29 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
   onBoothClickRef.current = onBoothClick;
   const boothBadgesRef = useRef(boothBadges);
   boothBadgesRef.current = boothBadges;
+  const boothMarksRef = useRef(boothMarks);
+  boothMarksRef.current = boothMarks;
+  const riskMarksRef = useRef(riskMarks);
+  riskMarksRef.current = riskMarks;
+
+  // SVG 图标图片缓存（路径 → 已加载的 Image）
+  const imagesCacheRef = useRef<Record<string, HTMLImageElement>>({});
+  // 保存最新的 draw 函数，供图片加载完成后触发重绘（避免与 draw 形成循环依赖）
+  const drawRef = useRef<() => void>(() => {});
+  // 获取（按需加载）图标图片：未加载则创建 Image 并在加载完成后触发重绘
+  const getMarkImage = useCallback((src: string): HTMLImageElement => {
+    const cache = imagesCacheRef.current;
+    const existing = cache[src];
+    if (existing && existing.complete && existing.naturalWidth > 0) return existing;
+    const img = existing ?? new Image();
+    if (!img.src) img.src = src;
+    img.onload = () => {
+      cache[src] = img;
+      drawRef.current();
+    };
+    cache[src] = img;
+    return img;
+  }, []);
 
   // ========== 加载背景图 ==========
   useEffect(() => {
@@ -143,11 +170,17 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
   }, []);
 
   // ========== 绘制 ==========
-  const draw = useCallback(() => {
+  const draw = useCallback((time?: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    const t = time ?? performance.now();
+    // 隐患图标闪烁：慢脉冲（约 1.8s 周期），alpha 在 0.5~1.0 间变化
+    const pulse = 0.5 + 0.5 * Math.sin((t / 1800) * Math.PI * 2);
+    const riskAlpha = 0.5 + 0.5 * pulse;
+    const riskGlow = 6 + 10 * pulse;
 
     const { width: worldW, height: worldH, booths } = hallDataRef.current;
     const { scale, offsetX, offsetY } = cameraRef.current;
@@ -180,6 +213,8 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         getBoothColorRef.current?.(booth, index) ??
         BOOTH_STATUS_COLORS[booth.status] ??
         BOOTH_STATUS_COLORS.normal;
+      // 调试：打印地图每个展位最终上色（getBoothColor 内部也会打印更细流程）
+      //console.log('[地图绘制] booth=%s | 使用业务颜色=%s | 最终颜色=%s', booth.boothNo || booth.id, Boolean(getBoothColorRef.current), color);
       const isHovered = hoveredBoothId === booth.id;
 
       const polygon = booth.polygon;
@@ -317,10 +352,58 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         ctx.fillText(text, x0 + badgeW / 2, y0 + badgeH / 2 + 1);
         ctx.restore();
       }
+
+      // ===== 关键工序符号标记（无背景色，绘制在展位右上角） =====
+      const marks = boothMarksRef.current?.[booth.boothNo ?? booth.id];
+      if (Array.isArray(marks) && marks.length > 0) {
+        const bx = Math.max(...xs) * scale + offsetX;
+        const by = Math.min(...ys) * scale + offsetY;
+        const fontSize = Math.max(8, Math.min(13, Math.min(bw, bh) * 0.15));
+        const gap = fontSize * 1.5;
+        let mx = bx - (marks.length * gap) + gap / 2;
+        const my = by + fontSize * 0.7;
+
+        ctx.save();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (const icon of marks) {
+          // SVG 图片图标（自带颜色，无需再着色）
+          const img = getMarkImage(icon);
+          if (img.complete && img.naturalWidth > 0) {
+            const s = fontSize * 1.4;
+            ctx.drawImage(img, mx - s / 2, my - s / 2, s, s);
+          }
+          mx += gap;
+        }
+        ctx.restore();
+      }
+
+      // ===== 安全隐患标记：绘制在展位中心（仅一个图标），慢闪烁 + 光晕 =====
+      const riskMap = riskMarksRef.current;
+      if (riskMap) {
+        const boothKey = String(booth.boothNo ?? booth.id).trim();
+        const riskIcon = riskMap[boothKey];
+        if (riskIcon) {
+          const s = Math.max(16, Math.min(30, Math.min(bw, bh) * 0.4));
+          const img = getMarkImage(riskIcon);
+          if (img.complete && img.naturalWidth > 0) {
+            ctx.save();
+            // 光晕：用与图标同色描边 + shadowBlur 形成脉动光影
+            ctx.globalAlpha = riskAlpha;
+            ctx.shadowColor = 'rgba(250, 140, 22, 0.9)';
+            ctx.shadowBlur = riskGlow;
+            // 先以放大尺寸绘制一次作为光晕底
+            ctx.drawImage(img, cx - s / 2, cy - s / 2, s, s);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+          }
+        }
+      }
     }
 
     ctx.restore();
   }, [hoveredBoothId]);
+  drawRef.current = draw;
 
   // 当 hallData 或 hoveredBoothId 变化时重绘
   useEffect(() => {
@@ -360,7 +443,19 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
     ro.observe(container);
     return () => { ro.disconnect(); if (rafId) cancelAnimationFrame(rafId); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hallData]);
+  }, [hallData, boothMarks, riskMarks]);
+
+  // ========== 隐患图标闪烁动画循环（仅当有隐患标记时运行） ==========
+  useEffect(() => {
+    if (!riskMarks || Object.keys(riskMarks).length === 0) return;
+    let raf = 0;
+    const tick = () => {
+      draw(performance.now());
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { if (raf) cancelAnimationFrame(raf); };
+  }, [riskMarks, draw]);
 
   // ========== Canvas 坐标转换（适配全局 transform:scale） ==========
   // 全局 ScreenAdapter 的 scale 导致 getBoundingClientRect 返回缩放后的像素，

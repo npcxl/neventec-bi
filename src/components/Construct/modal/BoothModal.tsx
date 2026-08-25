@@ -124,6 +124,28 @@ function label(map: Record<string, string>, v?: string) {
   return (v && map[v]) || v || "-";
 }
 
+/**
+ * 取搭建进程（content）中"序号最大的一条"并清洗：
+ * - 仅从形如 "8.内容" 的带序号行中，取序号数值最大的那行
+ * - 去掉开头的序号前缀后显示该条内容（不再做写死的文案改写，兼容后续新增的序号 9、10…）
+ */
+function cleanProcessContent(content?: string): string {
+  if (!content) return "-";
+  const numbered = content
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => /^\d+[.、]/.test(l));
+  if (numbered.length === 0) return "-";
+  const last = numbered
+    .map((line) => {
+      const m = line.match(/^(\d+)[.、]\s*(.*)$/);
+      return { seq: Number(m?.[1] ?? 0), text: m?.[2] ?? line };
+    })
+    .sort((a, b) => a.seq - b.seq)
+    .pop()!;
+  return last.text;
+}
+
 /** 历史进程日期格式化："2026-08-12 16:17:25" → "08-12 16:17:25" */
 function formatHistoryDate(date?: string): string {
   if (!date) return "-";
@@ -169,10 +191,14 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
       { label: "施工单位", value: data.constructionCompany || "-" },
       { label: "商品是否入场", value: label(EXHIBITS_ADMISSION, data.exhibitsAdmission) },
       { label: "是否包含吊点", value: label(LIFT_POINT, data.liftingPoint) },
-      { label: "搭建进度", value: pLabel, valueStyle: { color: pColor } },
+      {
+        label: "搭建进度",
+        value: pLabel + (data.progressPercentage != null ? ` 进度${data.progressPercentage}%` : ""),
+        valueStyle: { color: pColor },
+      },
       {
         label: "搭建进程",
-        value: data.progressPercentage != null ? `${data.progressPercentage}%` : "-",
+        value: cleanProcessContent(data.content),
       },
     ],
   };
@@ -251,10 +277,14 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
   const pLabel = label(PROGRESS_STATUS, data.progressStatus);
   const pColor = progressColor(data.progressStatus);
   const fields = buildFields(data, pLabel, pColor);
-  // 历史进程：按时间倒序，全部展示
+  // 历史进程：按 recordDate 时间正序展示，第1次巡查在最左
   const history = (data.historyProcess ?? [])
     .slice()
-    .sort((a, b) => String(b.recordDate ?? "").localeCompare(String(a.recordDate ?? "")));
+    .sort((a, b) => {
+      const ta = a.recordDate ? new Date(a.recordDate).getTime() : 0;
+      const tb = b.recordDate ? new Date(b.recordDate).getTime() : 0;
+      return ta - tb;
+    });
   // 展位巡查记录 - 图片列表（取 data.imageList）
   const inspectionImages = Array.isArray(data.imageList) ? data.imageList : [];
 
@@ -358,7 +388,7 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
             </div>
           </section>
 
-          {/* 历史进程（左右交替布局，倒序） */}
+          {/* 历史进程（横向时间线，第1次在最左） */}
           <section aria-labelledby="timeline-title">
             <SectionHeading
               title="历史进程"
@@ -373,7 +403,7 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                 <div className="construct-history-scroll overflow-x-auto pb-2">
                   <div className="inline-flex items-stretch">
                     {history.map((h, idx) => {
-                      const nth = history.length - idx;
+                      const nth = idx + 1;
                       const isLast = idx === history.length - 1;
                       return (
                         <div key={h.recordId ?? idx} className="flex shrink-0 items-stretch">

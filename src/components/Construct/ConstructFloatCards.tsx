@@ -66,7 +66,7 @@ export function ConstructFloatCards({
 
   if (isPortrait) {
     return (
-      <div className="absolute bottom-3 left-3 right-3 z-30 flex flex-row items-start gap-2 pointer-events-none">
+      <div className="absolute bottom-0 left-3 right-3 z-30 flex flex-row items-start gap-2 pointer-events-none">
         {/* 第一行：施工进程 - 横向步骤，超出左右滚动 */}
         <Card
         size="small"
@@ -179,7 +179,7 @@ export function ConstructFloatCards({
     <div style={{
       position: 'fixed',
       right: 60,
-      top: 240,
+      top: 320,
       zIndex: 9999,
       display: 'flex',
       flexDirection: 'column',

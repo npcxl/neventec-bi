@@ -35,6 +35,7 @@ type SafetyRightSidebarProps = {
   violationTypeData?: any;
   violationRecordData?: any;
   rectificationSituationData?: any;
+  checkDrawingsSummary?: any; // 关键工序-图纸核查汇总（选展馆时返回）
   hallId?: string;
   loading?: boolean;
   variant?: "landscape";
@@ -53,8 +54,8 @@ type RiskRow = {
 function PanelTitle({ title }: { title: string }) {
   return (
     <div className="relative h-12 ">
-      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] text-sm font-medium text-[#d8efff]">
-        <span className="pl-[24px] pb-3 text-[18px]">{title}</span>
+      <div className="flex h-full w-full items-center bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[14%] text-sm font-medium text-[#d8efff]">
+        <span className="pb-3 text-[18px]">{title}</span>
       </div>
     </div>
   );
@@ -70,6 +71,7 @@ export function SafetyRightSidebar({
   violationTypeData,
   violationRecordData,
   rectificationSituationData,
+  checkDrawingsSummary,
   loading = false,
   variant,
   safetyCarouselPictures = [],
@@ -141,8 +143,9 @@ export function SafetyRightSidebar({
       credits: { enabled: false },
       xAxis: {
         categories,
-        min: 0,
-        max: Math.min(categories.length - 1, VISIBLE_COUNT - 1),
+        ...(categories.length > 0
+          ? { min: 0, max: Math.min(categories.length - 1, VISIBLE_COUNT - 1) }
+          : {}),
         labels: {
           style: { color: '#9ec6ef', fontSize: '11px' },
         },
@@ -257,21 +260,13 @@ export function SafetyRightSidebar({
         <PanelTitle title="违规风险等级" />
       </div>
       <div className="min-h-0 flex-1 p-2.5">
-        {loading ? (
-          <div className="flex h-full items-center justify-center rounded-xl" />
-        ) : riskDates.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
-            暂无数据
-          </div>
-        ) : (
-          <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
-        )}
+        <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
       </div>
     </section>
   );
 
   const carouselSection = (vertical?: boolean) => (
-    <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex h-full min-h-0 flex-col overflow-hidden"} style={isLandscape ? { height: 268 } : undefined}>
+    <section className={isLandscape ? "flex flex-col overflow-hidden" : "flex h-full min-h-0 flex-col overflow-hidden"}>
       <div className={isLandscape ? "shrink-0 w-full" : "shrink-0 w-full"}>
         <PanelTitle title="现场图片" />
       </div>

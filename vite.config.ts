@@ -66,8 +66,8 @@ export default defineConfig({
     port: 9527,
     proxy: {
       '/ehs-api': {
-        target: 'https://glsz.s.369zhan.com',
-       // target:'http://admin.saas.jiuxiang.tech',
+     target: 'https://glsz.s.369zhan.com',
+       //target:'http://admin.saas.jiuxiang.tech',
         //rewrite: (path) => path.replace(/^\/ehs-api/, ''),
         changeOrigin: true,
         secure: false,

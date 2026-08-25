@@ -8,8 +8,8 @@ import { screenApi } from "../../api";
 function PanelTitle({ title, action }: { title: string; action?: ReactNode }) {
   return (
     <div className="relative h-12  shrink-0">
-      <div className="flex h-full w-full items-center justify-between bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[clamp(24px,2vw,36px)] pr-3 text-sm font-medium text-[#d8efff]">
-        <span className="pl-6 pb-3 text-[18px]">{title}</span>
+      <div className="flex h-full w-full items-center justify-between bg-[url('/img/sub-title.png')] bg-[length:100%_100%] bg-left bg-no-repeat pl-[14%] pr-3 text-sm font-medium text-[#d8efff]">
+        <span className="pb-3 text-[18px]">{title}</span>
         {action && <div className="pb-2">{action}</div>}
       </div>
     </div>
