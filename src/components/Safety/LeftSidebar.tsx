@@ -4,7 +4,7 @@ import Highcharts from 'highcharts/esm/highcharts.src.js';
 import 'highcharts/esm/highcharts-3d.src.js';
 import Scan from "../Scan";
 import { SeamlessVirtualList } from "../SeamlessVirtuaList";
-import { BoothModal } from "./modal/BoothModal";
+import { BoothModal, rectifyLabel, safetyStatusLabel, mergeRecordContent } from "./modal/BoothModal";
 import type { SafetyDetailData } from "./modal/BoothModal";
 import { screenApi } from "../../api";
 type GalleryRow = {
@@ -21,6 +21,10 @@ type SafetyInfo = {
   createBy?: string;
   createDate?: string;
   recordContent?: string;
+  /** 违规分组内容（如：施工状态） */
+  recordGroupContent?: string;
+  /** 违规标题内容（如：安全帽问题） */
+  recordHeaderContent?: string;
   targetCheckTime?: string;
   boothNo?: string;
   safetyStatus?: string;
@@ -324,8 +328,8 @@ export function SafetyLeftSidebar({
       <section className="relative flex-none overflow-hidden" style={{ height: 260 }}>
         <PanelTitle title="查处违规汇总" />
         {rectifiedCount + pendingCount + unRectifiedCount + cancelledCount + refusedCount === 0 ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-[rgba(255,255,255,0.4)] h-[212px]">
-            暂无数据
+          <div className="flex flex-1 items-center justify-center h-[212px]">
+            <img src="/img/empty/查处违规汇总.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
           </div>
         ) : (
         <div className="flex flex-col h-[212px] p-1">
@@ -379,8 +383,8 @@ export function SafetyLeftSidebar({
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
                 {visibleSafetyRows.length === 0 ? (
-                  <div className="flex h-20 items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
-                    暂无数据
+                  <div className="flex h-full w-full items-center justify-center">
+                    <img src="/img/empty/现场违规记录.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
                   </div>
                 ) : (
                 <SeamlessVirtualList
@@ -421,9 +425,9 @@ export function SafetyLeftSidebar({
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||
                             "#fff",
                         }}
-                        title={row.recordContent || "-"}
+                        title={mergeRecordContent(row) || "-"}
                       >
-                        {row.recordContent || "-"}
+                        {mergeRecordContent(row) || "-"}
                       </span>
 
                       <span
@@ -433,9 +437,9 @@ export function SafetyLeftSidebar({
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||
                             "#fff",
                         }}
-                        title={row.safetyStatus || "-"}
+                        title={safetyStatusLabel(row.safetyStatus)}
                       >
-                        {row.safetyStatus || "-"}
+                        {safetyStatusLabel(row.safetyStatus)}
                       </span>
 
                       <span
@@ -445,9 +449,9 @@ export function SafetyLeftSidebar({
                             rectifyCheckStatusColor(row.rectifyCheckStatus) ||
                             "#dbeeff",
                         }}
-                        title={row.rectifyCheckStatus || "-"}
+                        title={rectifyLabel(row.rectifyCheckStatus)}
                       >
-                        {row.rectifyCheckStatus || "-"}
+                        {rectifyLabel(row.rectifyCheckStatus)}
                       </span>
                     </div>
                     );

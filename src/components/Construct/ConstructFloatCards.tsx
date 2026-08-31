@@ -4,6 +4,7 @@
    竖版：absolute 覆盖在地图底部，上下两行
    ============================================ */
 
+import { useEffect, useRef } from 'react';
 import { Card, Steps, Flex, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -29,21 +30,10 @@ const glassCardStyle: React.CSSProperties = {
   backdropFilter: 'blur(8px)',
 };
 
-// 兼容接口返回结构：可能直接是数组，或 {data: [...]} / {rows: [...]} / {list: [...]}
+// currentStageSteps 已是 categoryList 数组，直接取；字段 name→title
 function normalizeSteps(raw: unknown): ConstructProcessStep[] {
-  if (!raw) return [];
-  const arr = Array.isArray(raw)
-    ? raw
-    : Array.isArray((raw as any).data)
-      ? (raw as any).data
-      : Array.isArray((raw as any).categoryList)
-        ? (raw as any).categoryList
-        : Array.isArray((raw as any).rows)
-          ? (raw as any).rows
-          : Array.isArray((raw as any).list)
-            ? (raw as any).list
-            : [];
-  return arr
+  if (!Array.isArray(raw)) return [];
+  return raw
     .map((item: any) => {
       if (typeof item === 'string') return { title: item };
       return {
@@ -63,6 +53,56 @@ export function ConstructFloatCards({
   const isPortrait = variant === 'portrait';
 
   const processSteps = normalizeSteps(steps);
+
+  // 施工进程列表自动滚动播放：内容超出可视区（多项）时启用，hover 时暂停。
+  // 按容器实际滚动方向（横向/竖向）自动选择 scrollLeft / scrollTop。
+  const portraitScrollRef = useRef<HTMLDivElement>(null);
+  const landscapeScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const containers = [portraitScrollRef.current, landscapeScrollRef.current].filter(
+      Boolean,
+    ) as HTMLDivElement[];
+    if (containers.length === 0) return;
+
+    const cleanups = containers.map((container) => {
+      const horizontal = container.scrollWidth > container.clientWidth + 1;
+      const vertical = container.scrollHeight > container.clientHeight + 1;
+      if (!horizontal && !vertical) return () => {};
+
+      let paused = false;
+      const onEnter = () => { paused = true; };
+      const onLeave = () => { paused = false; };
+      container.addEventListener('mouseenter', onEnter);
+      container.addEventListener('mouseleave', onLeave);
+
+      const SPEED = 0.5; // px per tick
+      const timer = window.setInterval(() => {
+        if (paused) return;
+        if (horizontal) {
+          if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 1) {
+            container.scrollLeft = 0;
+          } else {
+            container.scrollLeft += SPEED;
+          }
+        } else {
+          if (container.scrollTop + container.clientHeight >= container.scrollHeight - 1) {
+            container.scrollTop = 0;
+          } else {
+            container.scrollTop += SPEED;
+          }
+        }
+      }, 30);
+
+      return () => {
+        window.clearInterval(timer);
+        container.removeEventListener('mouseenter', onEnter);
+        container.removeEventListener('mouseleave', onLeave);
+      };
+    });
+
+    return () => cleanups.forEach((c) => c());
+  }, [processSteps.length, isPortrait]);
 
   if (isPortrait) {
     return (
@@ -93,39 +133,43 @@ export function ConstructFloatCards({
         >
         <Flex align="center" gap={12} style={{ minWidth: 0 }}>
           <Text style={{ color: '#7fc6ff', fontSize: 12, fontWeight: 500, flexShrink: 0 }}>搭建进程：</Text>
-          <div className="construct-steps-scroll" style={{ maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0 }}>
-            <Steps
-              direction="horizontal"
-              size="small"
-              current={-1}
-              className="!w-max"
-              items={processSteps.map((step) => ({
-                title: (
-                  <span
-                    style={{
-                      color: '#fff',
-                      fontSize: 11,
-                      whiteSpace: 'nowrap', 
-                      display: 'inline-block',
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {step.title}
-                  </span>
-                ),
-              }))}
-              styles={{
-                itemIcon: {
-                  color: '#fff',
-                  borderColor: '#fff',
-                  background: 'rgba(255,255,255,0.12)',
-                },
-                itemContent: {
-                  color: '#fff',
-                  minWidth: 'max-content',
-                },
-              }}
-            />
+          <div ref={portraitScrollRef} className="construct-steps-scroll" style={{ maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', flex: 1, minWidth: 0 }}>
+            {processSteps.length === 0 ? (
+              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>暂无进程数据</span>
+            ) : (
+              <Steps
+                direction="horizontal"
+                size="small"
+                current={-1}
+                className="!w-max"
+                items={processSteps.map((step) => ({
+                  title: (
+                    <span
+                      style={{
+                        color: '#fff',
+                        fontSize: 11,
+                        whiteSpace: 'nowrap', 
+                        display: 'inline-block',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {step.title}
+                    </span>
+                  ),
+                }))}
+                styles={{
+                  itemIcon: {
+                    color: '#fff',
+                    borderColor: '#fff',
+                    background: 'rgba(255,255,255,0.12)',
+                  },
+                  itemContent: {
+                    color: '#fff',
+                    minWidth: 'max-content',
+                  },
+                }}
+              />
+            )}
           </div>
         </Flex>
         </Card>
@@ -179,7 +223,7 @@ export function ConstructFloatCards({
     <div style={{
       position: 'fixed',
       right: 60,
-      top: 320,
+      top: 230,
       zIndex: 9999,
       display: 'flex',
       flexDirection: 'column',
@@ -207,39 +251,43 @@ export function ConstructFloatCards({
           },
         }}
       >
-        <div className="construct-steps-scroll" style={{ maxHeight: 260, overflowY: 'auto', overflowX: 'hidden' }}>
-          <Steps
-            direction="vertical"
-            size="small"
-            current={-1}
-            items={processSteps.map((step) => ({
-              title: (
-                <span
-                  style={{
-                    color: '#fff',
-                    fontSize: 12,
-                    whiteSpace: 'nowrap',
-                    display: 'inline-block',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {step.title}
-                </span>
-              ),
-            }))}
-            styles={{
-              itemIcon: {
-                color: '#fff',
-                borderColor: '#fff',
-                background: 'rgba(255,255,255,0.12)',
-              },
-              itemContent: {
-                color: '#fff',
-                minWidth: 'max-content',
-              },
-            }}
-            className="[&_.ant-steps-item-tail]:after:!border-l-[rgba(255,255,255,0.2)]"
-          />
+        <div ref={landscapeScrollRef} className="construct-steps-scroll" style={{ maxHeight: 200, overflowY: 'auto', overflowX: 'hidden' }}>
+          {processSteps.length === 0 ? (
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>暂无进程数据</span>
+          ) : (
+            <Steps
+              direction="vertical"
+              size="small"
+              current={-1}
+              items={processSteps.map((step) => ({
+                title: (
+                  <span
+                    style={{
+                      color: '#fff',
+                      fontSize: 12,
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block',
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {step.title}
+                  </span>
+                ),
+              }))}
+              styles={{
+                itemIcon: {
+                  color: '#fff',
+                  borderColor: '#fff',
+                  background: 'rgba(255,255,255,0.12)',
+                },
+                itemContent: {
+                  color: '#fff',
+                  minWidth: 'max-content',
+                },
+              }}
+              className="[&_.ant-steps-item-tail]:after:!border-l-[rgba(255,255,255,0.2)]"
+            />
+          )}
         </div>
       </Card>
 
@@ -267,7 +315,7 @@ export function ConstructFloatCards({
           },
         }}
       >
-        <Flex vertical gap={12} align="center">
+        <div className="grid grid-cols-2 gap-x-10 gap-y-4" style={{ width: '100%' }}>
           {PROGRESS_LEGEND.map((item) => (
             <Flex key={item.label} align="center" gap={10}>
               <span style={{
@@ -280,7 +328,7 @@ export function ConstructFloatCards({
               <Text style={{ color: '#fff', fontSize: 12 }}>{item.label}</Text>
             </Flex>
           ))}
-        </Flex>
+        </div>
       </Card>
     </div>
   );

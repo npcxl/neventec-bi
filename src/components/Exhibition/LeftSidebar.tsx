@@ -106,6 +106,10 @@ export function ExhibitionLeftSidebar({
             <div className="flex h-full items-center justify-center rounded-xl">
               <Spin size="large" />
             </div>
+          ) : visibleRows.length === 0 ? (
+            <div className="flex h-full items-center justify-center rounded-xl">
+              <img src="/img/empty/项目运营总览.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+            </div>
           ) : (
             <>
               {/* 第一行：管理展位总数 */}
@@ -163,7 +167,12 @@ export function ExhibitionLeftSidebar({
           </div>
 
           {/* 列表 */}
-          <div className="min-h-0 flex-1 overflow-hidden rounded-lg">
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg">
+            {visibleBoothRows.length === 0 && !loading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img src="/img/empty/项目运营总览.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+              </div>
+            )}
             <SeamlessVirtualList
               data={visibleBoothRows}
               itemHeight={38}

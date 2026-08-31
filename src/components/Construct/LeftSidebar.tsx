@@ -75,13 +75,15 @@ const ROW_HEIGHT = 34; // py-1(4px) + bar 20px + py-1(4px) + gap
 const MAIN_STRUCTURE_MATERIAL: Record<string, string> = {
   WOODINESS: "木质",
   PROXIMATEMATTER: "型材",
-  SPACERACK: "太空架",
+  SPACERACK: "铝合金桁架",
   ORDINARYTRUSS: "普通桁架",
 };
 
-function ProgressRow({ item }: { item: { name: string; completion: number; commence: number } }) {
+function ProgressRow({ item }: { item: { name: string; completion: number; commence: number; pct?: number } }) {
+  // 优先使用调用方给出的完成率（如接口返回的 completionRate），否则按 completion/(completion+commence) 计算
   const total = item.completion + item.commence;
-  const pct = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
+  const computed = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
+  const pct = Math.max(0, Math.min(100, item.pct ?? computed));
   return (
     <div className="flex flex-shrink-0 items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
       <span className="truncate text-left text-[14px] text-[rgba(255,255,255,0.8)]" style={{ width: 96, minWidth: 96, maxWidth: 96 }}>{item.name || '-'}</span>
@@ -147,7 +149,7 @@ function ProgressOverviewList({ items, switching }: { items: Array<{ name: strin
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]" style={{ height: VISIBLE_COUNT * ROW_HEIGHT }}>
-        {switching ? "正在切换数据..." : "暂无进程数据"}
+        {switching ? "正在切换数据..." : <img src="/img/empty/搭建进程总览.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "160px", objectFit: "contain" }} />}
       </div>
     );
   }
@@ -278,14 +280,28 @@ export function ConstructLeftSidebar({
   }, [exhibitionId, hallId]);
 
   // Process overview items for progress bars
+  // 兼容两种接口字段：
+  //  - 接口直接返回完成率 completionRate（0-100 或 0-1 比例）→ 优先使用
+  //  - 否则用 completion / (completion + commence) 计算
   const processOverviewItems = useMemo(() => {
-    const source = exhibitionProcessData?.data ?? exhibitionProcessData?.list ?? exhibitionProcessData?.rows ?? exhibitionProcessData?.result ?? exhibitionProcessData?.records ?? exhibitionProcessData?.content ?? exhibitionProcessData;
-    const arr: Array<{ name?: string; completion?: number; commence?: number }> = Array.isArray(source) ? source : Array.isArray(source?.data) ? source.data : [];
-    return arr.map((row) => ({
-      name: row.name || '-',
-      completion: Number(row.completion ?? 0),
-      commence: Number(row.commence ?? 0),
-    }));
+    const arr: Array<{
+      name?: string;
+      completion?: number;
+      commence?: number;
+      completionRate?: number | string;
+    }> = Array.isArray(exhibitionProcessData) ? exhibitionProcessData : [];
+    return arr.map((row) => {
+      const completion = Number(row.completion ?? 0);
+      const commence = Number(row.commence ?? 0);
+      // 直接取接口返回的完成率 completionRate（0-100 整数，如 4 即 4%），不做换算
+      const pct = Math.max(0, Math.min(100, Math.round(Number(row.completionRate ?? 0))));
+      return {
+        name: row.name || '-',
+        completion,
+        commence,
+        pct,
+      };
+    });
   }, [exhibitionProcessData]);
 
   return (
@@ -307,8 +323,12 @@ export function ConstructLeftSidebar({
             items={processOverviewItems}
           />
         ) : (
-          <div className="flex h-[calc(5*34px)] items-center justify-center px-4 pb-3 pt-1 text-sm text-[#93aed0]">
-            {overviewSwitching ? "正在切换数据..." : "暂无进程数据"}
+          <div className="flex h-[calc(5*34px)] items-center justify-center px-4 pb-3 pt-1">
+            {overviewSwitching ? (
+              <span className="text-sm text-[#93aed0]">正在切换数据...</span>
+            ) : (
+              <img src="/img/empty/搭建进程总览.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+            )}
           </div>
         )}
       </section>
@@ -330,8 +350,8 @@ export function ConstructLeftSidebar({
                 正在加载明细数据...
               </div>
             ) : processRows.length === 0 ? (
-              <div className="flex h-20 items-center justify-center text-sm text-[#93aed0]">
-                暂无明细数据
+              <div className="flex h-full w-full items-center justify-center">
+                <img src="/img/empty/搭建进度明细.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
               </div>
             ) : (
               <SeamlessVirtualList

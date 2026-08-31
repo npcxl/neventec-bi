@@ -149,8 +149,8 @@ export function ConstructOverviewChart({
 
   if (!hasData) {
     return (
-      <div className="flex h-full w-full items-center justify-center text-sm text-[#93aed0]">
-        暂无数据
+      <div className="flex h-full w-full items-center justify-center">
+        <img src="/img/empty/搭建进度统计.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
       </div>
     );
   }

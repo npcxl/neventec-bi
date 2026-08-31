@@ -407,12 +407,17 @@ video {
 
 /* 搭建进程 Steps 滚动条 */
 .construct-steps-scroll {
-  scrollbar-width: thin;
+  scrollbar-width: none;
   scrollbar-color: rgba(37, 99, 235, 0.5) transparent;
+}
+/* Firefox 默认也隐藏，hover 显示 */
+.construct-steps-scroll:hover {
+  scrollbar-width: thin;
 }
 .construct-steps-scroll::-webkit-scrollbar {
   width: 5px;
   height: 5px;
+  opacity: 0;
 }
 .construct-steps-scroll::-webkit-scrollbar-track {
   background: rgba(14, 23, 54, 0.4);
@@ -421,9 +426,14 @@ video {
 .construct-steps-scroll::-webkit-scrollbar-thumb {
   background: rgba(37, 99, 235, 0.5);
   border-radius: 3px;
+  /* 默认隐藏，hover 容器才显示 */
+  background-color: transparent;
+}
+.construct-steps-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(37, 99, 235, 0.5);
 }
 .construct-steps-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(56, 189, 248, 0.6);
+  background-color: rgba(56, 189, 248, 0.6);
 }
 
 

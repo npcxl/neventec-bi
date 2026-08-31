@@ -122,8 +122,8 @@ export function ConstructRightSidebar({
         <PanelTitle title="搭建进度统计" />
       </div>
       {entries.every((e) => e.count === 0) ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
-          暂无数据
+        <div className="flex flex-1 items-center justify-center">
+          <img src="/img/empty/搭建进度统计.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
         </div>
       ) : (
         <div

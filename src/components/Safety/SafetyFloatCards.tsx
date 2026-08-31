@@ -4,6 +4,7 @@
    竖版：absolute 覆盖在地图底部，上下两行
    ============================================ */
 
+import { useEffect, useRef } from 'react';
 import { Card, Flex, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -52,10 +53,21 @@ const bodyStyle: React.CSSProperties = {
   justifyContent: 'center',
 };
 
-function LegendItem({ label, icon }: { label: string; icon?: string }) {
+function LegendItem({ label, icon, color }: { label: string; icon?: string; color?: string }) {
   return (
     <Flex align="center" gap={8} style={{ flexShrink: 0, paddingRight: 20 }}>
-      {icon ? (
+      {color ? (
+        <span
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: 2,
+            background: color,
+            flexShrink: 0,
+            boxShadow: `0 0 6px ${color}66`,
+          }}
+        />
+      ) : icon ? (
         <img src={icon} alt={label} style={{ width: 16, height: 16, flexShrink: 0, objectFit: 'contain' }} />
       ) : null}
       <Text style={{ color: '#fff', fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap' }}>{label}</Text>
@@ -66,9 +78,48 @@ function LegendItem({ label, icon }: { label: string; icon?: string }) {
 export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrait' }) {
   const isPortrait = variant === 'portrait';
 
+  // 关键工序列表自动横向滚动播放：内容超出可视区时启用，hover 时暂停
+  const portraitProcessRef = useRef<HTMLDivElement>(null);
+  const landscapeProcessRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const containers = [portraitProcessRef.current, landscapeProcessRef.current].filter(
+      Boolean,
+    ) as HTMLDivElement[];
+    if (containers.length === 0) return;
+
+    const cleanups = containers.map((container) => {
+      if (container.scrollWidth <= container.clientWidth + 1) return () => {};
+
+      let paused = false;
+      const onEnter = () => { paused = true; };
+      const onLeave = () => { paused = false; };
+      container.addEventListener('mouseenter', onEnter);
+      container.addEventListener('mouseleave', onLeave);
+
+      const SPEED = 0.5;
+      const timer = window.setInterval(() => {
+        if (paused) return;
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth - 1) {
+          container.scrollLeft = 0;
+        } else {
+          container.scrollLeft += SPEED;
+        }
+      }, 30);
+
+      return () => {
+        window.clearInterval(timer);
+        container.removeEventListener('mouseenter', onEnter);
+        container.removeEventListener('mouseleave', onLeave);
+      };
+    });
+
+    return () => cleanups.forEach((c) => c());
+  }, [isPortrait]);
+
   if (isPortrait) {
     return (
-      <div className="absolute bottom-0 left-3 right-3 z-30 flex flex-row gap-3 pointer-events-none">
+      <div className="absolute bottom-1 left-3 right-3 z-30 flex flex-row gap-3 pointer-events-none">
         {/* 卡片 1：安全风险预警 */}
         <Card
           size="small"
@@ -93,7 +144,7 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
           }}
         >
           <Flex align="center" gap={0} wrap={false} style={{ minWidth: 0, width: '100%' }}>
-            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0, marginRight: 20 }}>安全风险预警：</Text>
+            <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0, marginRight: 20 }}>审图风险评级：</Text>
             {RISK_LEGEND.map((item) => (
               <LegendItem key={item.label} {...item} />
             ))}
@@ -123,7 +174,7 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
             },
           }}
         >
-          <div className="construct-steps-scroll" style={{ display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
+          <div ref={portraitProcessRef} className="construct-steps-scroll" style={{ display: 'flex', alignItems: 'center', gap: 0, overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
             <Text style={{ color: '#7fc6ff', fontSize: 13, fontWeight: 500, flexShrink: 0, marginRight: 20 }}>关键工序：</Text>
             {PROCESS_LEGEND.map((item) => (
               <LegendItem key={item.label} {...item} />
@@ -148,7 +199,7 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
       <Card
         size="small"
         title={
-          <span style={cardTitleStyle}>安全风险预警：</span>
+          <span style={cardTitleStyle}>审图风险评级：</span>
         }
         style={{ ...glassCardStyle, width: 260 }}
         styles={{
@@ -189,11 +240,11 @@ export function SafetyFloatCards({ variant }: { variant?: 'landscape' | 'portrai
           },
         }}
       >
-        <Flex align="center" gap={12} wrap>
+        <div ref={landscapeProcessRef} className="construct-steps-scroll" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', overflowY: 'hidden', width: '100%' }}>
           {PROCESS_LEGEND.map((item) => (
             <LegendItem key={item.label} {...item} />
           ))}
-        </Flex>
+        </div>
       </Card>
     </div>
   );

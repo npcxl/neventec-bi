@@ -3,6 +3,31 @@ import { Image } from "antd";
 import { thumbUrl, fullUrl } from "../../../utils/image";
 import "./index.css";
 
+/* 图片右下角"可点击放大预览"提示图标（pointer-events-none，不拦截点击） */
+function ZoomHintIcon({ size = 20, iconSize = 12 }: { size?: number; iconSize?: number }) {
+  return (
+    <span
+      className="pointer-events-none absolute bottom-1 right-1 flex items-center justify-center rounded bg-black/50"
+      style={{ width: size, height: size }}
+    >
+      <svg
+        width={iconSize}
+        height={iconSize}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#fff"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <line x1="16" y1="16" x2="21" y2="21" />
+        <line x1="11" y1="8" x2="11" y2="14" />
+        <line x1="8" y1="11" x2="14" y2="11" />
+      </svg>
+    </span>
+  );
+}
+
 /* ============================================
    展期枚举映射
    ============================================ */
@@ -55,6 +80,8 @@ export type ConstructDetailData = {
   boothNumber?: string;
   exhibitor?: string;
   constructionCompany?: string;
+  /** 施工单位（新字段，优先于 constructionCompany） */
+  actualConstruction?: string;
   excompanytype?: string;
   complexEngineering?: string;
   liftingPoint?: string;
@@ -75,6 +102,7 @@ export type ConstructDetailData = {
   constructProgressImages?: ConstructImageItem[];
   exhibitEntryImages?: ConstructImageItem[];
   imageList?: string[];
+  effectImages?: string[];
   lines?: ConstructLineItem[];
   historyProcess?: ConstructHistoryProcess[];
 };
@@ -84,7 +112,7 @@ export type ConstructDetailData = {
    ============================================ */
 
 const PROGRESS_STATUS: Record<string, string> = {
-  NOT_ADMISSIBLE_PROGRESS: "暂未入场(空地)",
+  NOT_ADMISSIBLE_PROGRESS: "未进场",
   NORMAL_PROGRESS: "搭建正常",
   SLOW_PROGRESS: "进度缓慢",
   DELAY_PROGRESS: "严重滞后",
@@ -111,7 +139,7 @@ const LIFT_POINT: Record<string, string> = {
 const MATERIAL: Record<string, string> = {
   WOODINESS: "木质",
   PROXIMATEMATTER: "型材",
-  SPACERACK: "太空架",
+  SPACERACK: "铝合金桁架",
   ORDINARYTRUSS: "普通桁架",
 };
 
@@ -181,6 +209,7 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
 } {
   return {
     left: [
+      { label: "展位号", value: data.boothNumber || "-" },
       { label: "参展商", value: data.exhibitor || "-" },
       { label: "展位类型", value: label(EXCOMPANY_TYPE, data.excompanytype) },
       { label: "关键工序", value: label(COMPLEX_ENG, data.complexEngineering) },
@@ -188,7 +217,7 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
       { label: "记录时间", value: data.recordDate || "-", nowrap: true, title: data.recordDate || "-" },
     ],
     right: [
-      { label: "施工单位", value: data.constructionCompany || "-" },
+      { label: "施工单位", value: data.actualConstruction || "-" },
       { label: "商品是否入场", value: label(EXHIBITS_ADMISSION, data.exhibitsAdmission) },
       { label: "是否包含吊点", value: label(LIFT_POINT, data.liftingPoint) },
       {
@@ -287,6 +316,8 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
     });
   // 展位巡查记录 - 图片列表（取 data.imageList）
   const inspectionImages = Array.isArray(data.imageList) ? data.imageList : [];
+  // 彩色效果图 - 图片列表（取 data.effectImages）
+  const effectImages = Array.isArray(data.effectImages) ? data.effectImages : [];
 
   return (
     <div
@@ -356,16 +387,18 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                   <div className="inline-flex gap-2">
                     <Image.PreviewGroup>
                       {inspectionImages.map((url, idx) => (
-                        <Image
-                          key={`${url}-${idx}`}
-                          src={thumbUrl(url, 300, 220)}
-                          alt={`巡查图片${idx + 1}`}
-                          width={150}
-                          height={110}
-                          loading="lazy"
-                          className="h-[110px] w-[150px] shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                          preview={{ src: fullUrl(url), zIndex: 2000 }}
-                        />
+                        <div key={`${url}-${idx}`} className="relative inline-block shrink-0">
+                          <Image
+                            src={thumbUrl(url, 300, 220)}
+                            alt={`巡查图片${idx + 1}`}
+                            width={150}
+                            height={110}
+                            loading="lazy"
+                            className="h-[110px] w-[150px] shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
+                            preview={{ src: fullUrl(url), zIndex: 2000 }}
+                          />
+                          <ZoomHintIcon />
+                        </div>
                       ))}
                     </Image.PreviewGroup>
                   </div>
@@ -421,15 +454,18 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                             {/* 图片 */}
                             {h.imageUrl && (
                               <Image.PreviewGroup>
-                                <Image
-                                  src={thumbUrl(h.imageUrl, 300, 220)}
-                                  alt={`第${nth}次巡查图片`}
-                                  loading="lazy"
-                                  width={150}
-                                  height={110}
-                                  className="mt-2 h-[110px] w-[150px] rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
-                                  preview={{ src: fullUrl(h.imageUrl), zIndex: 2000 }}
-                                />
+                                <div className="relative mt-2 inline-block">
+                                  <Image
+                                    src={thumbUrl(h.imageUrl, 300, 220)}
+                                    alt={`第${nth}次巡查图片`}
+                                    loading="lazy"
+                                    width={150}
+                                    height={110}
+                                    className="h-[110px] w-[150px] rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
+                                    preview={{ src: fullUrl(h.imageUrl), zIndex: 2000 }}
+                                  />
+                                  <ZoomHintIcon />
+                                </div>
                               </Image.PreviewGroup>
                             )}
                             {/* 下方：第X次巡查：进度名 */}
@@ -437,6 +473,12 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                               <span>第{nth}次巡查：</span>
                               <span>{label(PROGRESS_STATUS, h.progressStatus)}</span>
                             </div>
+                            {/* 下方：进度百分比 */}
+                            {typeof h.progressPercentage === 'number' && (
+                              <div className="mt-1 text-[14px] leading-5 text-center text-[#7fc6ff]">
+                                {h.progressPercentage}%
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
@@ -445,7 +487,47 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
                 </div>
               ) : (
                 <div className="flex h-20 items-center justify-center text-sm text-white/40">
-                  暂无历史进程
+                  暂无数据
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* 彩色效果图（横向滚动图片，位于历史进程下方） */}
+          <section aria-labelledby="effect-title">
+            <SectionHeading
+              title="彩色效果图"
+              right={
+                <span className="ml-auto text-sm leading-[22px] text-white/60">
+                  共 <strong className="font-normal text-white">{effectImages.length}</strong> 张图片
+                </span>
+              }
+            />
+            <div className="px-9 pb-6">
+              {effectImages.length > 0 ? (
+                <div className="construct-history-scroll overflow-x-auto pb-2">
+                  <div className="inline-flex gap-2">
+                    <Image.PreviewGroup>
+                      {effectImages.map((url, idx) => (
+                        <div key={`${url}-${idx}`} className="relative inline-block shrink-0">
+                          <Image
+                            src={thumbUrl(url, 300, 220)}
+                            alt={`彩色效果图${idx + 1}`}
+                            width={150}
+                            height={110}
+                            loading="lazy"
+                            className="h-[110px] w-[150px] shrink-0 rounded-md border border-[rgba(96,165,250,0.28)] object-cover"
+                            preview={{ src: fullUrl(url), zIndex: 2000 }}
+                          />
+                          <ZoomHintIcon />
+                        </div>
+                      ))}
+                    </Image.PreviewGroup>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-20 items-center justify-center text-sm text-white/40">
+                  暂无数据
                 </div>
               )}
             </div>

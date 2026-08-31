@@ -411,6 +411,16 @@ export default function App() {
       hallName?: string;
     }>
   >([]); //现场安全
+
+  // getExhibitionProcess 返回 { resultCode, data: [{name,completion,commence,...}] }（data 直接是数组）
+  // 统一用 unwrapCategoryList 取 data 数组，供地图序号 / 悬浮卡片 / 总览图表消费
+  const unwrapCategoryList = (res: any): any[] => {
+    const data = res?.data;
+    if (Array.isArray(data)) return data;
+    const list = data?.categoryList;
+    return Array.isArray(list) ? list : [];
+  };
+
   const [safetyCollect, setSafetyCollect] = useState<any>(null);
   const [violationTypeData, setViolationTypeData] = useState<any>(null); //违规类型
   const [violationRecordData, setViolationRecordData] = useState<any>(null); //违规记录
@@ -418,6 +428,7 @@ export default function App() {
     useState<any>(null); //违规情况
   const [orderCollectData, setOrderCollectData] = useState<any>(null); //水电网络申报
   const [checkDrawingsSummary, setCheckDrawingsSummary] = useState<any>(null); //关键工序-图纸核查汇总
+  const [boothViolations, setBoothViolations] = useState<any>(null); //展位违规（未整改）列表：hasUnfinishedRectify/ excompanytype
   const [expoName, setExpoName] = useState<string>(initialPrefs?.expoName || "展会标题-v1.0"); //展会标题
   const memoryMonitorTimerRef = useRef<number | null>(null);
   const memoryMonitorSnapshotRef = useRef<{
@@ -461,6 +472,7 @@ export default function App() {
     violationSituationData,
     orderCollectData,
     checkDrawingsSummary,
+    boothViolations,
   });
 
   useEffect(() => {
@@ -484,6 +496,7 @@ export default function App() {
       violationSituationData,
       orderCollectData,
       checkDrawingsSummary,
+      boothViolations,
     };
   }, [
     boothProgressData,
@@ -671,6 +684,8 @@ export default function App() {
       if (d.currentStageSteps !== undefined) setCurrentStageSteps(d.currentStageSteps);
       if (d.safetyRows !== undefined) setSafetyRows(d.safetyRows);
       if (d.safetyCollect !== undefined) setSafetyCollect(d.safetyCollect);
+      if (d.checkDrawingsSummary !== undefined) setCheckDrawingsSummary(d.checkDrawingsSummary);
+      if (d.boothViolations !== undefined) setBoothViolations(d.boothViolations);
       if (d.violationTypeData !== undefined) setViolationTypeData(d.violationTypeData);
       if (d.violationRecordData !== undefined) setViolationRecordData(d.violationRecordData);
       if (d.violationSituationData !== undefined) setViolationSituationData(d.violationSituationData);
@@ -793,16 +808,14 @@ export default function App() {
                   "getConstructProcess",
                   "getMaterialStatistics",
                   "getBoothProcess",
-                  "getExhibitionProcessDetail",
-                  "getCurrentStageConstructProcess",
+                  "getExhibitionProcessByHallId",
                 ]
               : [
                   "getConstructOverviewByHallId",
                   "getConstructProcessByHallId",
                   "getMaterialStatistics",
                   "getBoothProcessByHallId",
-                  "getExhibitionProcessDetail",
-                  "getCurrentStageConstructProcess",
+                  "getExhibitionProcessByHallId",
                 ];
           logRequestGroup("ConstructOverview", requestLabels);
 
@@ -823,15 +836,15 @@ export default function App() {
                   screenApi.getMaterialStatistics(DEFAULT_EXHIBITION_ID, controller.signal),
                   screenApi.getBoothProcessByHallId(DEFAULT_EXHIBITION_ID, selectedHallId, controller.signal),
                 ];
-          // Background: exhibitionProcess only (boothProgressPicture is handled by ConstructCarousel effect)
+          // Background: 进入搭建概览时立即并行拉取
+          //  - getExhibitionProcess（不带 hallId）→ currentStageSteps（悬浮卡片 + 地图序号徽章，所有展馆都一样）
+          //  - getExhibitionProcess（带 hallId）→ exhibitionProcessData（搭建进程总览图表，按 hallId 区分）
           const backgroundRequests = [
-            screenApi.getExhibitionProcessDetail(
+            screenApi.getExhibitionProcess(DEFAULT_EXHIBITION_ID, allPeriod, controller.signal),
+            screenApi.getExhibitionProcessByHallId(
               DEFAULT_EXHIBITION_ID,
-              {
-                hallId: selectedHallId === "all" ? undefined : selectedHallId,
-                boothId: selectedBoothId || undefined,
-                allPeriod,
-              },
+              selectedHallId === "all" ? undefined : selectedHallId,
+              allPeriod,
               controller.signal,
             ),
           ];
@@ -862,28 +875,32 @@ export default function App() {
           // 注：currentStageSteps 由 background 的 exhibitionProcessData 统一驱动（见下方 .then），不在此处赋值
 
           void Promise.all(backgroundRequests)
-            .then(([exhibitionProcessRes]) => {
+            .then(([exhibitionProcessRes, exhibitionProcessByHallRes]) => {
               if (cancelled) return;
-              const nextExhibitionProcessData = (exhibitionProcessRes as any)?.data ?? exhibitionProcessRes ?? null;
-              setExhibitionProcessData(nextExhibitionProcessData);
-              // currentStageSteps 用于地图序号徽章，使用支持 hallId 的 exhibitionProcessData（而非带 hallId 返回空的 getExhibitionProcess）
+              // 两个请求均为 getExhibitionProcess（路径相同）：前者不带 hallId（全馆公共），后者带 hallId（按馆区分）
+              // 返回结构 { resultCode, data:[{name,completion,commence,...}] }，unwrapCategoryList 直接取 data 数组
+              const nextExhibitionProcessData = unwrapCategoryList(exhibitionProcessRes);
+              const nextExhibitionProcessByHallData = unwrapCategoryList(exhibitionProcessByHallRes);
+              // currentStageSteps 仅由全馆 getExhibitionProcess 驱动（悬浮卡片 + 地图序号徽章，所有展馆一样）
               setCurrentStageSteps(nextExhibitionProcessData);
+              // exhibitionProcessData 由带 hallId 的 getExhibitionProcess 驱动（搭建进程总览图表，按馆区分）
+              setExhibitionProcessData(nextExhibitionProcessByHallData);
               saveCache(
                 {
                   constructOverviewData: nextConstructOverviewData,
                   constructProcessData: nextConstructProcessData,
                   constructMaterialData: nextConstructMaterialData,
                   boothProgressData: nextBoothProgressData,
-                  exhibitionProcessData: nextExhibitionProcessData,
                   currentStageSteps: nextExhibitionProcessData,
+                  exhibitionProcessData: nextExhibitionProcessByHallData,
                 },
                 {
                   constructOverviewData: nextConstructOverviewData,
                   constructProcessData: nextConstructProcessData,
                   constructMaterialData: nextConstructMaterialData,
                   boothProgressData: nextBoothProgressData,
-                  exhibitionProcessData: nextExhibitionProcessData,
                   currentStageSteps: nextExhibitionProcessData,
+                  exhibitionProcessData: nextExhibitionProcessByHallData,
                 },
               );
             })
@@ -910,6 +927,7 @@ export default function App() {
                   "getViolationRecordByHallId",
                   "getRectificationSituationByHallId",
                   "getCheckDrawingsSummary",
+                  "getBoothViolations",
                 ];
           logRequestGroup("SafetyOverview", requestLabels);
 
@@ -968,6 +986,11 @@ export default function App() {
                     selectedHallId,
                     controller.signal,
                   ),
+                  screenApi.getBoothViolations(
+                    DEFAULT_EXHIBITION_ID,
+                    selectedHallId,
+                    controller.signal,
+                  ),
                 ];
           const [
             collectRes,
@@ -976,6 +999,7 @@ export default function App() {
             violationRecordRes,
             rectificationSituationRes,
             checkDrawingsSummaryRes,
+            boothViolationsRes,
           ] =
             (await withTimeout(
               Promise.all(requests),
@@ -1020,12 +1044,15 @@ export default function App() {
             checkDrawingsSummaryRes?.data ??
             checkDrawingsSummaryRes ??
             null;
+          const nextBoothViolations =
+            boothViolationsRes?.data ?? boothViolationsRes ?? null;
           setSafetyRows(normalizedSafetyRows);
           setSafetyCollect(nextSafetyCollect);
           setViolationTypeData(nextViolationTypeData);
           setViolationRecordData(nextViolationRecordData);
           setViolationSituationData(nextViolationSituationData);
           setCheckDrawingsSummary(nextCheckDrawingsSummary);
+          setBoothViolations(nextBoothViolations);
           saveCache(
             {
               safetyRows: normalizedSafetyRows,
@@ -1034,6 +1061,7 @@ export default function App() {
               violationRecordData: nextViolationRecordData,
               violationSituationData: nextViolationSituationData,
               checkDrawingsSummary: nextCheckDrawingsSummary,
+              boothViolations: nextBoothViolations,
             },
             {
               safetyRows: normalizedSafetyRows,
@@ -1042,6 +1070,7 @@ export default function App() {
               violationRecordData: nextViolationRecordData,
               violationSituationData: nextViolationSituationData,
               checkDrawingsSummary: nextCheckDrawingsSummary,
+              boothViolations: nextBoothViolations,
             },
           );
         }
@@ -1139,18 +1168,14 @@ export default function App() {
     const controller = new AbortController();
     const loadExhibitionProcess = async () => {
       try {
-        const res = await screenApi.getExhibitionProcessDetail(
+        const res = await screenApi.getExhibitionProcessByHallId(
           DEFAULT_EXHIBITION_ID,
-          {
-            hallId: selectedHallId === "all" ? undefined : selectedHallId,
-            boothId: selectedBoothId || undefined,
-            allPeriod,
-          },
+          selectedHallId === "all" ? undefined : selectedHallId,
+          allPeriod,
           controller.signal,
         );
         if (!cancelled) {
-          const payload = res?.data ?? res ?? null;
-          setExhibitionProcessData(payload);
+          setExhibitionProcessData(unwrapCategoryList(res));
         }
       } catch (error) {
         if (!isAbortError(error)) {
@@ -1433,34 +1458,19 @@ export default function App() {
             setBoothProgressData(safeData<any>(res, null));
           },
         },
-        {
-          key: "currentStageConstructProcess",
-          run: async (signal: AbortSignal) => {
-            const res = await screenApi.getExhibitionProcessDetail(
-              DEFAULT_EXHIBITION_ID,
-              selectedHallId === "all" ? undefined : { hallId: selectedHallId },
-              signal,
-            );
-            const parsed = safeData<any>(res, null);
-            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-              setCurrentStageSteps(parsed);
-            }
-          },
-        },
+        // 注：exhibitionProcessData（搭建进程总览图表）由切换链路 / loadExhibitionProcess / polling 的带 hallId 的 getExhibitionProcess 驱动，
+        // currentStageSteps 由切换链路的 getExhibitionProcess（不带 hallId）独占驱动，避免两接口相互覆盖。
         // boothProgressPicture is fetched by ConstructCarousel effect only
         {
           key: "exhibitionProcess",
           run: async (signal: AbortSignal) => {
-            const res = await screenApi.getExhibitionProcessDetail(
+            const res = await screenApi.getExhibitionProcessByHallId(
               DEFAULT_EXHIBITION_ID,
-              {
-                hallId: selectedHallId === "all" ? undefined : selectedHallId,
-                boothId: selectedBoothId || undefined,
-                allPeriod,
-              },
+              selectedHallId === "all" ? undefined : selectedHallId,
+              allPeriod,
               signal,
             );
-            setExhibitionProcessData(safeData<any>(res, null));
+            setExhibitionProcessData(unwrapCategoryList(res));
           },
         },
       ];
@@ -1610,6 +1620,7 @@ export default function App() {
       violationSituationData,
       orderCollectData,
       checkDrawingsSummary,
+      boothViolations,
     };
   }, [
     boothProgressData,
@@ -1932,6 +1943,7 @@ export default function App() {
                             galleryRows={galleryRows}
                             compact={hallMode === "SafetyOverview"}
                             checkDrawingsSummary={checkDrawingsSummary}
+                            boothViolations={boothViolations}
                             fillAvailableHeight
                           />
                           <button
@@ -2029,6 +2041,7 @@ export default function App() {
                           galleryRows={galleryRows}
                           compact={hallMode === "SafetyOverview"}
                           checkDrawingsSummary={checkDrawingsSummary}
+                          boothViolations={boothViolations}
                           onDetailChange={setMapDetailOpen}
                         />
                         {selectedHallId !== "all" && !mapDetailOpen && (

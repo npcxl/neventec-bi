@@ -260,7 +260,13 @@ export function SafetyRightSidebar({
         <PanelTitle title="违规风险等级" />
       </div>
       <div className="min-h-0 flex-1 p-2.5">
-        <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
+        {riskDates.length === 0 ? (
+          <div className="flex h-full w-full items-center justify-center">
+            <img src="/img/empty/违规风险等级.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+          </div>
+        ) : (
+          <div ref={riskRef} className="h-full w-full rounded-xl p-2" />
+        )}
       </div>
     </section>
   );

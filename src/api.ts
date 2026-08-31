@@ -59,6 +59,10 @@ function shouldRetryStatus(status: number) {
   return RETRYABLE_STATUS_CODES.has(status);
 }
 
+
+
+
+
 async function request<T>(path: string, options: RequestOptions = {}) {
   const method = options.method ?? 'GET';
   const url = buildUrl(path, options.query);
@@ -238,6 +242,14 @@ export const screenApi = {
   getSafetyPageInfoByHallId: (expoid: string, hallId: string, signal?: AbortSignal) =>
     request<any>('a/api/safety/safetyHeader/pageInfo', { query: { expoid, hallId }, signal }),
 
+  // 2.2.2 展位违规（未整改）列表：hasUnfinishedRectify=true 的展位在地图显示感叹号
+  // excompanytype=标摊 的展位统一视为一般风险
+  getBoothViolations: (expoid: string, hallId?: string, signal?: AbortSignal) =>
+    request<any>('a/api/safety/safetyHeader/boothViolations', {
+      query: { expoid, ...(hallId ? { hallId } : {}) },
+      signal,
+    }),
+
 
   // 2.3 中部大屏数据 现场安全
   getSafetyScreenBooth: (expoid: string, hallId: string, boothNo?: string, signal?: AbortSignal) =>
@@ -341,9 +353,9 @@ export const screenApi = {
   // 3.7 展会进程情况（完成率）
   getExhibitionProcess: (exhibitionId: string, allPeriod = false, signal?: AbortSignal) =>
     request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, allPeriod }, signal }),
-  //3.7.1 获取指定展馆展会进程情况（完成率）
-  getExhibitionProcessByHallId: (exhibitionId: string, hallId: string, allPeriod = false, signal?: AbortSignal) =>
-    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, hallId, allPeriod }, signal }),
+  //3.7.1 获取指定展馆展会进程情况（完成率）—— 与 getExhibitionProcess 同路径，hallId 可选（不传即全馆）
+  getExhibitionProcessByHallId: (exhibitionId: string, hallId?: string, allPeriod = false, signal?: AbortSignal) =>
+    request<any>('a/api/inspection/record/summary/getExhibitionProcess', { query: { exhibitionId, ...(hallId ? { hallId } : {}), allPeriod }, signal }),
   //3.7.2 搭建进程总览专用（返回格式同之前：[{name,completion,commence,...}]），支持 hallId/boothId/allPeriod
   getExhibitionProcessDetail: (exhibitionId: string, opts?: { hallId?: string; boothId?: string; allPeriod?: boolean }, signal?: AbortSignal) =>
     request<any>('a/api/inspection/record/summary/getExhibitionProcessDetail', {

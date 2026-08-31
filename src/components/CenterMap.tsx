@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Empty, Image, Modal, message } from "antd";
+import { Image, Modal, message } from "antd";
 import { screenApi } from "../api";
 import XButton from "./Buttons";
 import HallOverviewMap from "./HallOverviewMap";
@@ -87,11 +87,19 @@ type SafetyDetail = {
   phone?: string;
   contactWay?: string;
   constructionCompany?: string;
+  /** 施工单位（新字段，优先于 constructionCompany） */
+  actualConstruction?: string;
   excompanytype?: string;
   sendViolationEmail?: string;
   liftingPoint?: string;
   structureType?: string;
   complexEngineering?: string;
+  /** 风险评级（一般/较大/重大） */
+  riskAssessment?: string;
+  /** 整改状态（英文枚举，如 RECTIFYED / WAIT_RECTIFY 等） */
+  rectifyCheckStatus?: string;
+  safetyStatus?: string;
+  targetCheckTime?: string;
   safetyInfoList?: Array<{
     riskAssessment?: string;
     createBy?: string;
@@ -100,6 +108,8 @@ type SafetyDetail = {
     targetCheckTime?: string;
     boothNo?: string;
     safetyStatus?: string;
+    /** 整改状态（英文枚举） */
+    rectifyCheckStatus?: string;
     boothId?: string;
     imageAddress?: Array<{ address?: string; id?: number; name?: string }>;
   }>;
@@ -189,11 +199,11 @@ const CONSTRUCT_ENUM_LABELS: Record<
   mainStructureMaterial: {
     WOODINESS: "木质",
     PROXIMATEMATTER: "型材",
-    SPACERACK: "太空架",
+    SPACERACK: "铝合金桁架",
     ORDINARYTRUSS: "普通桁架",
   },
   progressStatus: {
-    NOT_ADMISSIBLE_PROGRESS: "暂未入场(空地)",
+    NOT_ADMISSIBLE_PROGRESS: "未进场",
     NORMAL_PROGRESS: "搭建正常",
     SLOW_PROGRESS: "进度缓慢",
     DELAY_PROGRESS: "严重滞后",
@@ -258,6 +268,7 @@ export default function CenterMap({
   currentStageSteps,
   /** 关键工序-图纸核查汇总（现场安全选展馆时返回），用于地图展位符号标记 */
   checkDrawingsSummary,
+  boothViolations,
 }: {
   mode?: HallMode;
   moduleMode?: "ExhibitionOverview" | "ConstructOverview" | "SafetyOverview";
@@ -289,9 +300,19 @@ export default function CenterMap({
   /** 关键工序-图纸核查汇总列表 */
   checkDrawingsSummary?: Array<{
     boothNo?: string;
+    boothId?: string;
     structureType?: string;
     complexEngineering?: string;
     liftingPoint?: string;
+    riskAssessment?: string;
+  }> | null;
+  /** 展位违规（未整改）列表：hasUnfinishedRectify=true 显示感叹号；excompanytype=标摊 视为一般风险 */
+  boothViolations?: Array<{
+    boothNo?: string;
+    boothId?: string;
+    hasUnfinishedRectify?: boolean;
+    excompanytype?: string | number;
+    riskAssessment?: string;
   }> | null;
 }) {
   const [selected, setSelected] = useState<{
@@ -469,11 +490,13 @@ export default function CenterMap({
       })),
     [safetyRows],
   );
-  const { getColor, riskBoothNos } = useBoothColorStrategy({
+  const { getColor, riskBoothNos, unreportedBoothNos } = useBoothColorStrategy({
     moduleMode,
     boothRows,
     safetyRows: safetyColorRows,
     progressRows,
+    checkDrawingsSummary: checkDrawingsSummary ?? [],
+    boothViolations: boothViolations ?? [],
   });
 
   // 现场安全：有安全风险的展位 → 隐患待整改图标（绘制在展位中心，仅一个）
@@ -775,15 +798,13 @@ export default function CenterMap({
                   boothBadges={moduleMode === "ConstructOverview" ? boothBadges : undefined}
                   boothMarks={moduleMode === "SafetyOverview" ? boothMarks : undefined}
                   riskMarks={moduleMode === "SafetyOverview" ? riskMarks : undefined}
+                  unreportedBoothNos={
+                    moduleMode === "SafetyOverview" ? unreportedBoothNos : undefined
+                  }
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <Empty
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={
-                      <span className="text-slate-200/75">暂无展位数据</span>
-                    }
-                  />
+                  <img src="/img/empty/中心图.png" alt="暂无展位数据" style={{ maxWidth: "680px", maxHeight: "520px", objectFit: "contain" }} />
                 </div>
               )}
             </div>

@@ -13,6 +13,8 @@ type HallMapProps = {
   boothMarks?: Record<string, string[]>;
   /** 有安全风险的展位号 → 隐患图标路径（命中则在展位中心绘制） */
   riskMarks?: Record<string, string>;
+  /** "未报图"展位号集合（特装且无风险评级）：命中则不填充色块，仅绘制白色标边 */
+  unreportedBoothNos?: Set<string>;
 };
 
 type Camera = {
@@ -92,7 +94,7 @@ function wrapText(
 
 // ===================== 组件 =====================
 
-export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBadges, boothMarks, riskMarks }: HallMapProps) {
+export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBadges, boothMarks, riskMarks, unreportedBoothNos }: HallMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const bgImageRef = useRef<HTMLImageElement | null>(null);
@@ -113,6 +115,8 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
   boothMarksRef.current = boothMarks;
   const riskMarksRef = useRef(riskMarks);
   riskMarksRef.current = riskMarks;
+  const unreportedBoothNosRef = useRef(unreportedBoothNos);
+  unreportedBoothNosRef.current = unreportedBoothNos;
 
   // SVG 图标图片缓存（路径 → 已加载的 Image）
   const imagesCacheRef = useRef<Record<string, HTMLImageElement>>({});
@@ -227,17 +231,30 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         ctx.lineTo(polygon[i][0] * scale + offsetX, polygon[i][1] * scale + offsetY);
       }
       ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.globalAlpha = isHovered ? 0.7 : 0.55;
-      ctx.fill();
-      ctx.globalAlpha = 1;
 
-      // 绘制描边
-      ctx.strokeStyle = color;
-      ctx.lineWidth = isHovered ? 2 : 1;
-      ctx.globalAlpha = isHovered ? 1 : 0.8;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      // 未报图展位（特装且无任何风险评级）：不填充色块、不描边（仅 hover 时极淡高亮，保留交互反馈）
+      // key 需与 useBoothColorStrategy 的 normalizeKey（String().trim()）保持一致，不做大小写转换
+      const boothKeyUnreported = String(booth.boothNo ?? booth.id).trim();
+      const isUnreported = unreportedBoothNosRef.current?.has(boothKeyUnreported) ?? false;
+
+      if (isUnreported) {
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.globalAlpha = isHovered ? 0.5 : 0;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      } else {
+        ctx.fillStyle = color;
+        ctx.globalAlpha = isHovered ? 0.7 : 0.55;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // 绘制描边
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isHovered ? 2 : 1;
+        ctx.globalAlpha = isHovered ? 1 : 0.8;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
 
       // ===== 绘制文字（根据展位屏幕尺寸自适应排版） =====
       const xs = polygon.map((p) => p[0]);
@@ -378,7 +395,7 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
         ctx.restore();
       }
 
-      // ===== 安全隐患标记：绘制在展位中心（仅一个图标），慢闪烁 + 光晕 =====
+      // ===== 安全隐患标记：绘制在展位左下角（仅一个图标），慢闪烁 + 光晕 =====
       const riskMap = riskMarksRef.current;
       if (riskMap) {
         const boothKey = String(booth.boothNo ?? booth.id).trim();
@@ -387,13 +404,20 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
           const s = Math.max(16, Math.min(30, Math.min(bw, bh) * 0.4));
           const img = getMarkImage(riskIcon);
           if (img.complete && img.naturalWidth > 0) {
+            // 左下角坐标：左边界 + 内边距，下边界 - 内边距（图标以中心点定位）
+            const leftX = Math.min(...xs) * scale + offsetX;
+            const bottomY = Math.max(...ys) * scale + offsetY;
+            const pad = Math.max(2, s * 0.15);
+            const iconX = leftX + s / 2 + pad;
+            const iconY = bottomY - s / 2 - pad;
+
             ctx.save();
             // 光晕：用与图标同色描边 + shadowBlur 形成脉动光影
             ctx.globalAlpha = riskAlpha;
             ctx.shadowColor = 'rgba(250, 140, 22, 0.9)';
             ctx.shadowBlur = riskGlow;
             // 先以放大尺寸绘制一次作为光晕底
-            ctx.drawImage(img, cx - s / 2, cy - s / 2, s, s);
+            ctx.drawImage(img, iconX - s / 2, iconY - s / 2, s, s);
             ctx.shadowBlur = 0;
             ctx.restore();
           }
@@ -443,7 +467,7 @@ export default function HallMap({ hallData, getBoothColor, onBoothClick, boothBa
     ro.observe(container);
     return () => { ro.disconnect(); if (rafId) cancelAnimationFrame(rafId); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hallData, boothMarks, riskMarks]);
+  }, [hallData, boothMarks, riskMarks, unreportedBoothNos]);
 
   // ========== 隐患图标闪烁动画循环（仅当有隐患标记时运行） ==========
   useEffect(() => {

@@ -260,8 +260,8 @@ export function BoothModal({
                 );
               })
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-white/40">
-                暂无订单信息
+              <div className="flex h-full items-center justify-center">
+                <img src="/img/empty/水电气网络申报订单数量.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
               </div>
             )}
           </div>

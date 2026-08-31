@@ -21,6 +21,13 @@ const SAFETY_RISK_COLORS = {
   high: '#F5222D',    // 重大风险 - 红
 };
 
+// 地图填充色：审图风险评级（一般/较大/重大）对应的半透明填充，与图例色一致
+const SAFETY_RISK_FILL = {
+  low: 'rgba(37,99,235,0.8)',    // 一般风险 - 蓝
+  medium: 'rgba(250,140,22,0.8)', // 较大风险 - 橙
+  high: 'rgba(245,34,45,0.8)',    // 重大风险 - 红
+};
+
 type ConstructProgressRow = {
   boothId?: string;
   boothNo?: string;
@@ -40,12 +47,38 @@ type UseBoothColorStrategyOptions = {
   moduleMode: ModuleMode;
   boothRows?: BoothRow[];
   safetyRows?: SafetyRecordRow[];
+  progressRows?: ConstructProgressRow[];
+  /** 关键工序-图纸核查汇总（checkDrawings/summary/list），现场安全模式地图颜色按其 riskAssessment 取色 */
+  checkDrawingsSummary?: CheckDrawingSummaryRow[];
+  /** 展位违规（未整改）列表（safetyHeader/boothViolations）：
+   *  hasUnfinishedRectify=true → 地图显示感叹号；
+   *  excompanytype=标摊 → 统一视为一般风险（蓝色） */
+  boothViolations?: BoothViolationRow[];
+};
+
+type CheckDrawingSummaryRow = {
+  boothNo?: string;
+  boothId?: string;
+  riskAssessment?: string;
+};
+
+/** 展位违规（未整改）列表项（a/api/safety/safetyHeader/boothViolations） */
+type BoothViolationRow = {
+  boothNo?: string;
+  boothId?: string;
+  hasUnfinishedRectify?: boolean;
+  /** 展位类型：1/标摊 = 标摊，2/特装 = 特装 */
+  excompanytype?: string | number;
+  riskAssessment?: string;
 };
 
 type ColorStrategy = {
   getColor: (booth: DemoBooth, index: number) => string;
   /** 现场安全模式下有安全风险的展位号集合（key 经 normalizeKey），其他模式为空 */
   riskBoothNos: Set<string>;
+  /** 现场安全模式下"未报图"的展位号集合（key 经 normalizeKey）：
+   *  特装展位（excompanytype=2）且无任何风险评级（未报图）→ 不填色块，仅白色描边 */
+  unreportedBoothNos: Set<string>;
 };
 
 const DEFAULT_COLOR = 'rgba(5, 212, 248, 0.7)';
@@ -74,9 +107,10 @@ function resolvePaidColor(paid?: string) {
 function normalizeRiskLevel(value?: string): '' | 'low' | 'medium' | 'high' {
   const v = normalizeKey(value).toUpperCase();
   if (!v) return '';
-  if (v === 'LOWRISK' || v.includes('一般') || v.includes('低')) return 'low';
-  if (v === 'MEDIUMRISK' || v === 'MIDRISK' || v.includes('较大') || v.includes('中')) return 'medium';
+  // 注意顺序：high 必须先于 medium，否则「重大风险」含「中」字会被误判为较大风险
   if (v === 'HIGHRISK' || v.includes('重大') || v.includes('严重') || v.includes('高')) return 'high';
+  if (v === 'MEDIUMRISK' || v === 'MIDRISK' || v.includes('较大') || v.includes('中风险') || v.includes('中等')) return 'medium';
+  if (v === 'LOWRISK' || v.includes('一般') || v.includes('低')) return 'low';
   return '';
 }
 
@@ -100,17 +134,22 @@ function createExhibitionOverviewStrategy(boothRows: BoothRow[]): ColorStrategy 
       return resolvePaidColor(paidMap[boothKey]);
     },
     riskBoothNos: new Set<string>(),
+    unreportedBoothNos: new Set<string>(),
   };
 }
 
+// 与 ConstructFloatCards 搭建进度图例保持一致：未进场为灰色 #ccc
+const NOT_ENTERED_COLOR = '#ccc';
+
 function resolveConstructProgressColor(progressValue?: string) {
   const text = normalizeKey(progressValue);
-  if (!text) return DEFAULT_COLOR;
+  // 展位状态非 搭建正常/搭建完成/搭建缓慢/严重滞后 的，均视为"未进场"
   if (text.includes('搭建正常')||text.includes('NORMAL_PROGRESS')) return '#2563EB';
   if (text.includes('进度缓慢')||text.includes('搭建缓慢')||text.includes('SLOW_PROGRESS')) return '#FA8C16';
   if (text.includes('严重滞后')||text.includes('DELAY_PROGRESS')) return '#F5222D';
   if (text.includes('搭建完成')||text.includes('COMPLETED_PROGRESS')) return '#63F222';
-  return DEFAULT_COLOR;
+  // 其余（空值/未知状态等）一律判为未进场
+  return NOT_ENTERED_COLOR;
 }
 
 function createConstructOverviewStrategy(progressRows: ConstructProgressRow[] = []): ColorStrategy {
@@ -127,76 +166,129 @@ function createConstructOverviewStrategy(progressRows: ConstructProgressRow[] = 
       return resolveConstructProgressColor(progressMap[boothKey]);
     },
     riskBoothNos: new Set<string>(),
+    unreportedBoothNos: new Set<string>(),
   };
 }
 
-// 同一展位多条记录时，保留最新一条（后面的覆盖前面的），
-// 这样"第一天有隐患、第二天整改合格"的展位最终按最新状态取色，隐患不再显示
-function createSafetyOverviewStrategy(safetyRows: SafetyRecordRow[]): ColorStrategy {
-  const riskMap = safetyRows.reduce<Record<string, SafetyRecordRow>>((acc, row) => {
+// 现场安全总览地图颜色以"图纸核查汇总"(checkDrawings/summary/list) 接口的
+// riskAssessment（审图风险评级）为准，取适配审图风险评级的颜色（一般/较大/重大）。
+/** 判断展位类型是否为"标摊"（excompanytype：1 或 含"标摊"文字） */
+function isStandardBooth(excompanytype?: string | number): boolean {
+  if (excompanytype == null) return false;
+  const v = String(excompanytype).trim();
+  return v === '1' || v.includes('标摊') || v.toUpperCase() === 'STANDARD';
+}
+
+function createSafetyOverviewStrategy(
+  safetyRows: SafetyRecordRow[] = [],
+  checkDrawingsSummary: CheckDrawingSummaryRow[] = [],
+  boothViolations: BoothViolationRow[] = [],
+): ColorStrategy {
+  const riskMap = checkDrawingsSummary.reduce<Record<string, CheckDrawingSummaryRow>>(
+    (acc, row) => {
+      const keys = [row.boothNo, row.boothId]
+        .filter((v): v is string => Boolean(v))
+        .map(normalizeKey);
+      for (const key of keys) {
+        acc[key] = row; // 后者覆盖前者 -> 保留最新记录
+      }
+      return acc;
+    },
+    {},
+  );
+
+  // 展位违规（未整改）列表 → 感叹号集合 / 风险等级（完全以本接口为准，不再用 checkDrawingsSummary 的 riskAssessment 判感叹号）
+  //  - 标摊（excompanytype=1）→ 一律"一般风险"(low/蓝)配色，但**不显示感叹号**
+  //  - 感叹号仅取决于 hasUnfinishedRectify === true（不分展位类型）
+  const standardBoothNos = new Set<string>();
+  const unfinishedRectifyNos = new Set<string>();
+  for (const row of boothViolations) {
     const keys = [row.boothNo, row.boothId]
       .filter((v): v is string => Boolean(v))
       .map(normalizeKey);
+    if (keys.length === 0) continue;
     for (const key of keys) {
-      acc[key] = row; // 后者覆盖前者 -> 保留最新记录
+      if (row.hasUnfinishedRectify === true) {
+        unfinishedRectifyNos.add(key);
+      }
+      if (isStandardBooth(row.excompanytype)) {
+        standardBoothNos.add(key);
+      }
     }
-    return acc;
-  }, {});
-  console.log('[地图取色-riskMap] 风险记录索引 keys=%o', Object.keys(riskMap));
+  }
 
-  // 基于同一 riskMap 计算"有安全风险"的展位集合（与 getColor 判定口径一致）
+  // 感叹号集合 = 仅 hasUnfinishedRectify=true（标摊不显示感叹号）
   const riskBoothNos = new Set<string>();
-  for (const [key, row] of Object.entries(riskMap)) {
-    const level = normalizeRiskLevel(row?.riskAssessment);
-    const status = normalizeKey(row?.rectifyCheckStatus);
-    const isRisk =
-      Boolean(level) ||
-      status === '待整改' ||
-      status === '未整改' ||
-      status === '整改不合格' ||
-      status === '拒不整改';
-    if (isRisk) riskBoothNos.add(key);
+  for (const no of unfinishedRectifyNos) {
+    riskBoothNos.add(no);
+  }
+
+  // 未报图集合 = 特装展位（excompanytype=2）且无任何风险评级（未报图）
+  // → 不展示色块，仅白色标边
+  const unreportedBoothNos = new Set<string>();
+  for (const row of boothViolations) {
+    // 仅特装展位参与"未报图"判定
+    if (isStandardBooth(row.excompanytype)) continue;
+    const keys = [row.boothNo, row.boothId]
+      .filter((v): v is string => Boolean(v))
+      .map(normalizeKey);
+    if (keys.length === 0) continue;
+    // 无任何风险评级：既没有图纸核查的 riskAssessment，也没有未整改违规
+    const hasAssessment = keys.some(
+      (key) => Boolean(normalizeRiskLevel(riskMap[key]?.riskAssessment)),
+    );
+    const hasUnfinished = keys.some((key) => unfinishedRectifyNos.has(key));
+    if (!hasAssessment && !hasUnfinished) {
+      for (const key of keys) unreportedBoothNos.add(key);
+    }
   }
 
   return {
     getColor: (booth) => {
       const boothKey = normalizeKey(booth.booth_no || booth.raw_texts?.[0]);
-      const row = riskMap[boothKey];
-      // 风险等级优先（与图例一致：一般/较大/重大 -> 蓝/橙/红），兼容枚举 code
-      const level = normalizeRiskLevel(row?.riskAssessment);
-      let color: string;
-      if (level) {
-        color = SAFETY_RISK_COLORS[level];
-      } else {
-        // 无风险等级时回退到整改状态
-        const status = normalizeKey(row?.rectifyCheckStatus);
-        if (status === '整改合格') color = 'rgba(99,242,34,0.8)';
-        else if (status === '待整改' || status === '未整改') color = 'rgba(250,140,22,0.8)';
-        else if (status === '整改不合格') color = 'rgba(245,34,45,0.8)';
-        else if (status === '拒不整改') color = 'rgba(37,99,235,0.8)';
-        else if (status === '已作废' || status === '作废') color = 'rgba(107,124,147,0.8)';
-        else color = 'rgba(5, 212, 248, 0.97)';
-      }
-      console.log(
-        '[地图取色] boothKey=%s | riskAssessment=%s | 归一化等级=%s | 整改状态=%s | 最终颜色=%s',
-        boothKey,
-        row?.riskAssessment ?? '(空)',
-        level || '(无)',
-        normalizeKey(row?.rectifyCheckStatus) || '(空)',
-        color,
-      );
+      // 标摊一律"一般风险"；其他展位沿用图纸核查的 riskAssessment（若有）
+      const level = standardBoothNos.has(boothKey)
+        ? 'low'
+        : normalizeRiskLevel(riskMap[boothKey]?.riskAssessment);
+      const color = level ? SAFETY_RISK_FILL[level] : DEFAULT_COLOR;
       return color;
     },
     riskBoothNos,
+    unreportedBoothNos,
   };
 }
 
-function createStrategy(moduleMode: ModuleMode, boothRows: BoothRow[], safetyRows: SafetyRecordRow[], progressRows: ConstructProgressRow[]): ColorStrategy {
+function createStrategy(
+  moduleMode: ModuleMode,
+  boothRows: BoothRow[],
+  safetyRows: SafetyRecordRow[],
+  progressRows: ConstructProgressRow[],
+  checkDrawingsSummary: CheckDrawingSummaryRow[] = [],
+  boothViolations: BoothViolationRow[] = [],
+): ColorStrategy {
   if (moduleMode === 'ExhibitionOverview') return createExhibitionOverviewStrategy(boothRows);
   if (moduleMode === 'ConstructOverview') return createConstructOverviewStrategy(progressRows);
-  return createSafetyOverviewStrategy(safetyRows);
+  return createSafetyOverviewStrategy(safetyRows, checkDrawingsSummary, boothViolations);
 }
 
-export function useBoothColorStrategy({ moduleMode, boothRows = [], safetyRows = [], progressRows = [] as ConstructProgressRow[] }: UseBoothColorStrategyOptions & { progressRows?: ConstructProgressRow[] }) {
-  return useMemo(() => createStrategy(moduleMode, boothRows, safetyRows, progressRows), [boothRows, safetyRows, progressRows, moduleMode]);
+export function useBoothColorStrategy({
+  moduleMode,
+  boothRows = [],
+  safetyRows = [],
+  progressRows = [],
+  checkDrawingsSummary = [],
+  boothViolations = [],
+}: UseBoothColorStrategyOptions) {
+  return useMemo(
+    () =>
+      createStrategy(
+        moduleMode,
+        boothRows,
+        safetyRows,
+        progressRows,
+        checkDrawingsSummary,
+        boothViolations,
+      ),
+    [boothRows, safetyRows, progressRows, checkDrawingsSummary, boothViolations, moduleMode],
+  );
 }

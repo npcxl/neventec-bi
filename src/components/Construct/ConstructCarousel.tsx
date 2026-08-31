@@ -74,8 +74,8 @@ function ConstructCarousel({
 
   if (normalizedPictures.length === 0 && records.length === 0)
     return (
-      <div className="flex h-full items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
-        暂无图片
+      <div className="flex h-full w-full items-center justify-center">
+        <img src="/img/empty/现场图片空.png" alt="暂无图片" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
       </div>
     );
 

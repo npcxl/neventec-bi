@@ -130,8 +130,8 @@ const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onH
             </div>
           </button>
         )) : (
-          <div className="flex w-full min-h-[280px] items-center justify-center rounded-2xl bg-white/5 text-slate-200/70">
-            暂无馆级总览数据
+          <div className="flex w-full min-h-[280px] items-center justify-center">
+            <img src="/img/empty/中心图.png" alt="暂无馆级总览数据" style={{ maxWidth: "680px", maxHeight: "520px", objectFit: "contain" }} />
           </div>
         )}
       </div>

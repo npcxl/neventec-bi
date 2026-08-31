@@ -91,6 +91,10 @@ export function ExhibitionRightSidebar({
           <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl">
             <Spin size="large" />
           </div>
+        ) : totalBooth === 0 ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl">
+            <img src="/img/empty/特装费用缴纳.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+          </div>
         ) : (
           <>
             {/* 已缴费 / 未缴费 汇总 + 环形进度图（仅竖版显示） */}
@@ -181,29 +185,37 @@ export function ExhibitionRightSidebar({
           />
         </div>
         <div className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg">
-          <div className="grid flex-none grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-2 text-[14px] text-[rgba(255,255,255,0.8)] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
-            <span>序号</span>
-            <span>展位号</span>
-            <span>参展商</span>
-          </div>
-          <div className="min-h-0 flex-1 overflow-hidden">
-            <SeamlessVirtualList
-              data={unReportedRows}
-              itemHeight={38}
-              height="100%"
-              speed={0.35}
-              overscan={8}
-              pauseOnHover={false}
-              className="h-full"
-              renderItem={(row, index) => (
-                <div className="grid h-full grid-cols-[44px_72px_minmax(0,1fr)] items-center gap-2 border-b border-dashed border-[#334155] px-3 text-[14px] hover:bg-white/[0.08]">
-                  <span className="text-white">{index + 1}</span>
-                  <span className="truncate whitespace-nowrap text-white">{row.boothNo || "-"}</span>
-                  <span className="truncate whitespace-nowrap text-white">{row.exhibitor || "-"}</span>
-                </div>
-              )}
-            />
-          </div>
+          {unReportedRows.length === 0 ? (
+            <div className="flex min-h-0 flex-1 items-center justify-center">
+              <img src="/img/empty/未报到展位汇总.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
+            </div>
+          ) : (
+            <>
+              <div className="grid flex-none grid-cols-[44px_72px_minmax(0,1fr)] gap-2 px-3 py-2 text-[14px] text-[rgba(255,255,255,0.8)] bg-[url('/img/bg-list.png')] bg-[length:100%_100%]">
+                <span>序号</span>
+                <span>展位号</span>
+                <span>参展商</span>
+              </div>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <SeamlessVirtualList
+                  data={unReportedRows}
+                  itemHeight={38}
+                  height="100%"
+                  speed={0.35}
+                  overscan={8}
+                  pauseOnHover={false}
+                  className="h-full"
+                  renderItem={(row, index) => (
+                    <div className="grid h-full grid-cols-[44px_72px_minmax(0,1fr)] items-center gap-2 border-b border-dashed border-[#334155] px-3 text-[14px] hover:bg-white/[0.08]">
+                      <span className="text-white">{index + 1}</span>
+                      <span className="truncate whitespace-nowrap text-white">{row.boothNo || "-"}</span>
+                      <span className="truncate whitespace-nowrap text-white">{row.exhibitor || "-"}</span>
+                    </div>
+                  )}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>
@@ -241,8 +253,8 @@ export function ExhibitionRightSidebar({
           });
         })()}
         {orderItems.length === 0 && (
-          <div className="flex flex-1 items-center justify-center text-sm text-[rgba(255,255,255,0.4)]">
-            暂无数据
+          <div className="flex flex-1 items-center justify-center">
+            <img src="/img/empty/水电气网络申报订单数量.png" alt="暂无数据" style={{ maxWidth: "280px", maxHeight: "220px", objectFit: "contain" }} />
           </div>
         )}
       </div>

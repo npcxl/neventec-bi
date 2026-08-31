@@ -7,7 +7,7 @@ export type ConstructProgressMeta = {
 };
 
 export const CONSTRUCT_PROGRESS_META: Record<string, ConstructProgressMeta> = {
-  '10': { label: '暂未入场(空地)', color: 'text-[#8fb4d8]', icon: 'mdi:map-marker-off-outline' },
+  '10': { label: '未进场', color: 'text-[#8fb4d8]', icon: 'mdi:map-marker-off-outline' },
   '11': { label: '搭建正常', color: 'text-[#2563EB]', icon: 'mdi:check-circle-outline' },
   '12': { label: '搭建缓慢', color: 'text-[#FA8C16]', icon: 'mdi:clock-alert-outline' },
   '13': { label: '严重滞后', color: 'text-[#F5222D]', icon: 'mdi:alert-octagon-outline' },
@@ -26,6 +26,7 @@ export const CONSTRUCT_PROGRESS_NAME_TO_CODE: Record<string, string> = {
 
 export const CONSTRUCT_PROGRESS_ALIAS: Record<string, string> = {
   ...CONSTRUCT_PROGRESS_NAME_TO_CODE,
+  未进场: '10',
   暂未入场: '10',
   空地: '10',
   搭建正常: '11',
