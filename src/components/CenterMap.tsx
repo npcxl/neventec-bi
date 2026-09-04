@@ -87,8 +87,6 @@ type SafetyDetail = {
   phone?: string;
   contactWay?: string;
   constructionCompany?: string;
-  /** 施工单位（新字段，优先于 constructionCompany） */
-  actualConstruction?: string;
   excompanytype?: string;
   sendViolationEmail?: string;
   liftingPoint?: string;
@@ -110,6 +108,8 @@ type SafetyDetail = {
     safetyStatus?: string;
     /** 整改状态（英文枚举） */
     rectifyCheckStatus?: string;
+    /** 备注（remark）：非空才展示 */
+    remark?: string;
     boothId?: string;
     imageAddress?: Array<{ address?: string; id?: number; name?: string }>;
   }>;
@@ -154,6 +154,8 @@ type ConstructDetail = {
     configLineId?: number;
   }>;
   imageList?: string[];
+  /** 最新进程（与左下角"搭建进度明细"面板的 latestLine 同源） */
+  latestLine?: string;
   historyProcess?: Array<{
     recordId?: number;
     recordDate?: string;
@@ -290,7 +292,9 @@ export default function CenterMap({
   constructProcessRows?: Array<{
     boothId?: string;
     boothNo?: string;
+    boothNumber?: string;
     progressValue?: string;
+    latestLine?: string;
   }>;
   galleryRows?: GalleryRow[];
   compact?: boolean;
@@ -441,7 +445,7 @@ export default function CenterMap({
       if (!stepName) continue;
       progressRows.forEach((row: any) => {
         const line = String(
-          row.latestLine ?? row.content ?? row.progressValue ?? row.lines?.[0]?.content ?? '',
+          row.latestLine ?? row.content ?? row.progressValue ?? '',
         );
         const boothNo = row.boothNo ?? row.boothNumber ?? row.booth_id ?? row.boothId;
         if (boothNo && line.includes(stepName)) {
@@ -591,8 +595,16 @@ export default function CenterMap({
           setOrderInfos([]);
         } else if (moduleMode === "ConstructOverview") {
           const constructItem = item as ConstructDetail;
+          // 弹窗"搭建进程"与左下角"搭建进度明细"的"最新进程"同源（summary/all 计算出的 latestLine）
+          const matchedRow = progressRows.find(
+            (r: any) =>
+              String(r.boothNo ?? r.boothNumber ?? '') === String(boothId),
+          );
           console.log("[ConstructOverview detail item]", constructItem);
-          setConstructDetail(constructItem);
+          setConstructDetail({
+            ...constructItem,
+            latestLine: matchedRow?.latestLine ?? constructItem.latestLine,
+          });
           setBoothDetail(null);
           setSafetyDetail(null);
           setOrderInfos([]);
@@ -627,7 +639,7 @@ export default function CenterMap({
         }
       }
     },
-    [initData?.exhibitionId, moduleMode, mode],
+    [initData?.exhibitionId, moduleMode, mode, progressRows],
   );
 
   // HallMap 展位点击回调

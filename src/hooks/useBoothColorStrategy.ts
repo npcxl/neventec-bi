@@ -143,7 +143,6 @@ const NOT_ENTERED_COLOR = '#ccc';
 
 function resolveConstructProgressColor(progressValue?: string) {
   const text = normalizeKey(progressValue);
-  // 展位状态非 搭建正常/搭建完成/搭建缓慢/严重滞后 的，均视为"未进场"
   if (text.includes('搭建正常')||text.includes('NORMAL_PROGRESS')) return '#2563EB';
   if (text.includes('进度缓慢')||text.includes('搭建缓慢')||text.includes('SLOW_PROGRESS')) return '#FA8C16';
   if (text.includes('严重滞后')||text.includes('DELAY_PROGRESS')) return '#F5222D';

@@ -11,12 +11,13 @@ export type SafetyDetailData = {
   exhibitor?: string;
   company?: string;
   constructionCompany?: string;
-  actualConstruction?: string;
   recordContent?: string;
   /** 违规分组内容（如：施工状态） */
   recordGroupContent?: string;
   /** 违规标题内容（如：安全帽问题） */
   recordHeaderContent?: string;
+  /** 审图风险评级值（ex_exnum.check_grade：0一般/1较大/2重大） */
+  checkGradeValue?: string | number;
   riskAssessment?: string;
   rectifyCheckStatus?: string;
   safetyStatus?: string;
@@ -43,6 +44,8 @@ export type SafetyDetailData = {
     boothNo?: string;
     safetyStatus?: string;
     rectifyCheckStatus?: string;
+    /** 备注（remark）：非空才展示，位于创建人上方 */
+    remark?: string;
     imageAddress?: Array<{ address?: string }>;
   }>;
 };
@@ -195,6 +198,33 @@ function rectifyCheckStatusColor(rectifyCheckStatus?: string) {
 }
 
 /* ============================================
+   审图风险评级映射（checkGradeValue）
+   枚举 ex_exnum.check_grade：0=一般风险 / 1=较大风险 / 2=重大风险
+   ============================================ */
+const CHECK_GRADE_LABELS: Record<string, string> = {
+  "0": "一般风险",
+  "1": "较大风险",
+  "2": "重大风险",
+};
+const CHECK_GRADE_RISK_CODES: Record<string, string> = {
+  "0": "LOWRISK",
+  "1": "MEDIUMRISK",
+  "2": "HIGHRISK",
+};
+
+/** 审图评级值 -> 中文（0一般/1较大/2重大），无法识别时原样返回 */
+function checkGradeLabel(value?: string | number) {
+  if (value === undefined || value === null || value === "") return "";
+  return CHECK_GRADE_LABELS[String(value).trim()] ?? String(value);
+}
+
+/** 审图评级值 -> RISK_COLORS 的枚举码（用于取色） */
+function checkGradeRiskCode(value?: string | number) {
+  if (value === undefined || value === null || value === "") return "";
+  return CHECK_GRADE_RISK_CODES[String(value).trim()] ?? "";
+}
+
+/* ============================================
    风险评估映射（riskAssessment）
    枚举：HIGHRISK(高风险) 等；同时兼容后端返回的中文（高/中/低、严重/较大/一般）
    ============================================ */
@@ -313,25 +343,35 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
 
   if (!visible || !data) return null;
 
-  // 是否为标摊展位（标摊一律按"一般风险"展示风险评级）
-  const isStandardBoothType = excompanyTypeLabel(data.excompanytype) === "标摊";
-
-  // 展位基础信息：展商名称、展位号、展位类型 + 原审图信息字段（吊点、复杂工艺、施工单位、风险评级、结构类型）
+  // 展位基础信息：展商名称、展位号、展位类型 + 原审图信息字段（吊点、复杂工艺、施工单位、审图风险评级、结构类型）
   const boothFields: FieldDef[] = [
     { label: "展商名称", value: data.exhibitor || "-" },
     { label: "展位号", value: data.boothNo || "-" },
     { label: "展位类型", value: excompanyTypeLabel(data.excompanytype) },
     { label: "吊点", value: data.liftingPoint || "-" },
     { label: "复杂工艺", value: data.complexEngineering || "-" },
-    { label: "施工单位", value: data.actualConstruction || data.company || data.constructionCompany || "-" },
-    {
-      label: "审图风险评级",
-      // 标摊展位一律按"一般风险"展示（与地图规则一致）
-      value: isStandardBoothType ? riskLabel("LOWRISK") : riskLabel(data.riskAssessment),
-      valueStyle: {
-        color: isStandardBoothType ? riskColor("LOWRISK") : riskColor(data.riskAssessment),
-      },
-    },
+    { label: "施工单位", value: data.constructionCompany || "-" },
+    (() => {
+      // 1) 标摊展位默认"一般风险"
+      if (excompanyTypeLabel(data.excompanytype) === "标摊") {
+        return {
+          label: "审图风险评级",
+          value: riskLabel("LOWRISK"),
+          valueStyle: { color: riskColor("LOWRISK") },
+        } as FieldDef;
+      }
+      // 2) 弹窗详情独立取值：仅按审图评级值 checkGradeValue（0一般/1较大/2重大）
+      //    与地图渲染逻辑无关；无 checkGradeValue（或无法识别）→ "-"
+      const gradeCode = checkGradeRiskCode(data.checkGradeValue);
+      if (!gradeCode) {
+        return { label: "审图风险评级", value: "-" } as FieldDef;
+      }
+      return {
+        label: "审图风险评级",
+        value: checkGradeLabel(data.checkGradeValue),
+        valueStyle: { color: riskColor(gradeCode) },
+      } as FieldDef;
+    })(),
     { label: "结构类型", value: data.structureType || "-" },
   ];
 
@@ -524,6 +564,12 @@ export function BoothModal({ visible, onClose, data, loading = false }: SafetyBo
                       {/* 第一行（图片 + 违规内容）结束 */}
                       </div>
 
+                      {/* 备注（非空才展示，位于创建人上方；内容可能较长，超长自动换行） */}
+                      {info.remark && (
+                        <div className="min-w-0 max-w-full break-words whitespace-pre-wrap text-[15px] leading-6 text-white/85 [overflow-wrap:anywhere]">
+                          备注：{info.remark}
+                        </div>
+                      )}
                       {/* 第二行：创建人 / 整改时间（位于图片下方，左右分布） */}
                       {(info.createBy || info.targetCheckTime) && (
                         <div className="flex flex-wrap items-center gap-x-6 text-[15px] leading-7 text-white/70">

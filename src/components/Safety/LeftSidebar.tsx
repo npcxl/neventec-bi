@@ -28,6 +28,8 @@ type SafetyInfo = {
   targetCheckTime?: string;
   boothNo?: string;
   safetyStatus?: string;
+  /** 备注（remark）：非空才展示 */
+  remark?: string;
   boothId?: string;
   imageAddress?: Array<{ address?: string }>;
 };

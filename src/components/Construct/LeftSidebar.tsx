@@ -79,14 +79,18 @@ const MAIN_STRUCTURE_MATERIAL: Record<string, string> = {
   ORDINARYTRUSS: "普通桁架",
 };
 
-function ProgressRow({ item }: { item: { name: string; completion: number; commence: number; pct?: number } }) {
+function ProgressRow({ item, index }: { item: { name: string; completion: number; commence: number; pct?: number }; index: number }) {
   // 优先使用调用方给出的完成率（如接口返回的 completionRate），否则按 completion/(completion+commence) 计算
   const total = item.completion + item.commence;
   const computed = total > 0 ? Math.min(100, Math.round((item.completion / total) * 100)) : 0;
   const pct = Math.max(0, Math.min(100, item.pct ?? computed));
   return (
     <div className="flex flex-shrink-0 items-center gap-3 px-3 py-2 bg-[url('/img/order-item-bg.png')] bg-[length:100%_100%] bg-center bg-no-repeat rounded-md">
-      <span className="truncate text-left text-[14px] text-[rgba(255,255,255,0.8)]" style={{ width: 96, minWidth: 96, maxWidth: 96 }}>{item.name || '-'}</span>
+      {/* 序号徽章：与地图上悬浮卡片(ConstructFloatCards Steps)的步骤序号一致 */}
+      <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-white/40 bg-white/10 text-[12px] font-medium leading-none tabular-nums text-white/90">
+        {index}
+      </span>
+      <span className="truncate text-left text-[14px] text-[rgba(255,255,255,0.8)]" style={{ width: 84, minWidth: 84, maxWidth: 84 }}>{item.name || '-'}</span>
       <div className="flex h-4 flex-1 items-center overflow-hidden rounded-full bg-[url('/img/progress-track-bg.png')] bg-[length:100%_100%]">
         <div
           className="h-full rounded-full bg-[linear-gradient(90deg,#2563EB,#7DE3F7)] transition-all duration-700"
@@ -168,7 +172,7 @@ function ProgressOverviewList({ items, switching }: { items: Array<{ name: strin
     return (
       <div className="flex flex-col gap-3 px-4 pb-3 pt-1">
         {items.map((item, i) => (
-          <ProgressRow key={`${item.name}-${i}`} item={item} />
+          <ProgressRow key={`${item.name}-${i}`} item={item} index={i + 1} />
         ))}
       </div>
     );
@@ -187,7 +191,7 @@ function ProgressOverviewList({ items, switching }: { items: Array<{ name: strin
       >
         {displayItems.map((item, i) => {
           const globalIndex = (startIndex + i) % items.length;
-          return <ProgressRow key={`${globalIndex}-${item.name}`} item={item} />;
+          return <ProgressRow key={`${globalIndex}-${item.name}`} item={item} index={globalIndex + 1} />;
         })}
       </div>
     </div>
@@ -270,7 +274,15 @@ export function ConstructLeftSidebar({
         : Array.isArray(raw?.data)
           ? raw.data[0]
           : raw?.data ?? raw;
-      setDetailData(detail ?? null);
+      setDetailData(
+        detail
+          ? {
+              ...detail,
+              // 弹窗"搭建进程"与左下角"搭建进度明细"的"最新进程"同源（summary/all 计算出的 latestLine）
+              latestLine: row.latestLine,
+            }
+          : null,
+      );
     } catch {
       setDetailError(true);
       setDetailData(null);

@@ -1903,7 +1903,14 @@ export default function App() {
                               boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
                               boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
                               progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
-                              latestLine: item.lines?.[0]?.content ?? item.content ?? item.progressValue ?? item.latestLine ?? '',
+                              latestLine: (() => {
+                                const ls = Array.isArray(item?.lines) ? item.lines : [];
+                                for (let i = ls.length - 1; i >= 0; i--) {
+                                  const t = `${ls[i]?.content ?? ''}`.trim();
+                                  if (t !== '') return t;
+                                }
+                                return item.latestLine ?? '';
+                              })(),
                             }))}
                             galleryRows={galleryRows}
                             compact={hallMode === "ConstructOverview"}
@@ -2011,7 +2018,14 @@ export default function App() {
                             boothNumber: item.boothNumber ?? item.boothNo ?? item.exNun ?? item.booth_no,
                             boothNo: item.boothNo ?? item.exNun ?? item.booth_no ?? item.boothNumber,
                             progressValue: item.progressValue ?? item.progressStatus ?? item.status ?? item.processStatus,
-                            latestLine: item.lines?.[0]?.content ?? item.content ?? item.progressValue ?? item.latestLine ?? '',
+                            latestLine: (() => {
+                              const ls = Array.isArray(item?.lines) ? item.lines : [];
+                              for (let i = ls.length - 1; i >= 0; i--) {
+                                const t = `${ls[i]?.content ?? ''}`.trim();
+                                if (t !== '') return t;
+                              }
+                              return item.latestLine ?? '';
+                            })(),
                           }))}
                           galleryRows={galleryRows}
                           compact={hallMode === "ConstructOverview"}

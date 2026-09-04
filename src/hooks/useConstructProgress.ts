@@ -90,6 +90,21 @@ function toStringValue(value?: string | number) {
   return `${value ?? ''}`.trim();
 }
 
+/**
+ * 取"最新进程"：遍历搭建进度明细 lines，取最后一条非空 content 作为最新进程。
+ * 明确不取整段 content 字段（用户要求）。lines 顺序即明细顺序，末尾为最新。
+ */
+function latestProcessLine(row: any): string {
+  const lines = Array.isArray(row?.lines) ? row.lines : [];
+  if (lines.length === 0) return '-';
+  // 逆序遍历，返回第一条非空 content（即最新一条有内容的明细）
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const text = toStringValue(lines[i]?.content);
+    if (text !== '') return text;
+  }
+  return '-';
+}
+
 export function useConstructProgress({
   overviewData,
   processData,
@@ -153,7 +168,7 @@ export function useConstructProgress({
         progressLabel: progressMeta.label,
         progressColor: progressMeta.color,
         progressIcon: progressMeta.icon,
-        latestLine: row.lines?.[0]?.content ?? row.content ?? row.progressValue ?? '-',
+        latestLine: latestProcessLine(row),
         area: Number(row.area ?? row.squareMeter ?? row.sqm ?? 0),
         mainStructureMaterial: row.mainStructureMaterial ?? '-',
       };

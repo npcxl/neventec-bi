@@ -52,12 +52,13 @@ type ConstructRightSidebarProps = {
   loading?: boolean;
 };
 
+// 枚举口径（与后端一致）：11 搭建正常 / 12 进度缓慢 / 13 严重滞后 / 14 搭建完成 / 0 未进场
 const STATUS_CONFIG: { code: string; names: string[]; label: string; color: string }[] = [
-  { code: '11', names: ['搭建正常'], label: '搭建正常', color: '#2563EB' },
-  { code: '14', names: ['搭建完成'], label: '搭建完成', color: '#63F222' },
-  { code: '12', names: ['进度缓慢', '搭建缓慢'], label: '搭建缓慢', color: '#FA8C16' },
-  { code: '13', names: ['严重滞后'], label: '严重滞后', color: '#F5222D' },
-  { code: '10', names: ['暂未入场(空地)', '暂未入场'], label: '未进场', color: '#6B7C93' },
+  { code: '11', names: ['搭建正常', 'NORMAL_PROGRESS'], label: '搭建正常', color: '#2563EB' },
+  { code: '14', names: ['搭建完成', 'COMPLETED_PROGRESS'], label: '搭建完成', color: '#63F222' },
+  { code: '12', names: ['进度缓慢', '搭建缓慢', 'SLOW_PROGRESS'], label: '搭建缓慢', color: '#FA8C16' },
+  { code: '13', names: ['严重滞后', 'DELAY_PROGRESS'], label: '严重滞后', color: '#F5222D' },
+  { code: '0', names: ['未进场', '暂未入场', '暂未入场(空地)', 'NOT_ADMISSIBLE_PROGRESS'], label: '未进场', color: '#6B7C93' },
 ];
 
 type StatusEntry = { label: string; color: string; count: number };

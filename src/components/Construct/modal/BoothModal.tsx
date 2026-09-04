@@ -80,8 +80,6 @@ export type ConstructDetailData = {
   boothNumber?: string;
   exhibitor?: string;
   constructionCompany?: string;
-  /** 施工单位（新字段，优先于 constructionCompany） */
-  actualConstruction?: string;
   excompanytype?: string;
   complexEngineering?: string;
   liftingPoint?: string;
@@ -105,6 +103,8 @@ export type ConstructDetailData = {
   effectImages?: string[];
   lines?: ConstructLineItem[];
   historyProcess?: ConstructHistoryProcess[];
+  /** 最新进程（与左下角"搭建进度明细"面板的 latestLine 同源，取自 summary/all 数据） */
+  latestLine?: string;
 };
 
 /* ============================================
@@ -153,25 +153,17 @@ function label(map: Record<string, string>, v?: string) {
 }
 
 /**
- * 取搭建进程（content）中"序号最大的一条"并清洗：
- * - 仅从形如 "8.内容" 的带序号行中，取序号数值最大的那行
- * - 去掉开头的序号前缀后显示该条内容（不再做写死的文案改写，兼容后续新增的序号 9、10…）
+ * 搭建进度明细：遍历 lines（搭建进度明细），根据展位号遍历 取最新一条（最后一条，
+ * 不再解析整段 content。
  */
-function cleanProcessContent(content?: string): string {
-  if (!content) return "-";
-  const numbered = content
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => /^\d+[.、]/.test(l));
-  if (numbered.length === 0) return "-";
-  const last = numbered
-    .map((line) => {
-      const m = line.match(/^(\d+)[.、]\s*(.*)$/);
-      return { seq: Number(m?.[1] ?? 0), text: m?.[2] ?? line };
-    })
-    .sort((a, b) => a.seq - b.seq)
-    .pop()!;
-  return last.text;
+function latestProcessFromLines(lines?: ConstructLineItem[]): string {
+  console.log("latestProcessFromLines", lines);
+  if (!lines || lines.length === 0) return "-";
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const text = (lines[i]?.content ?? "").trim();
+    if (text !== "") return text;
+  }
+  return "-";
 }
 
 /** 历史进程日期格式化："2026-08-12 16:17:25" → "08-12 16:17:25" */
@@ -217,7 +209,7 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
       { label: "记录时间", value: data.recordDate || "-", nowrap: true, title: data.recordDate || "-" },
     ],
     right: [
-      { label: "施工单位", value: data.actualConstruction || "-" },
+      { label: "施工单位", value: data.constructionCompany || "-" },
       { label: "商品是否入场", value: label(EXHIBITS_ADMISSION, data.exhibitsAdmission) },
       { label: "是否包含吊点", value: label(LIFT_POINT, data.liftingPoint) },
       {
@@ -227,7 +219,7 @@ function buildFields(data: ConstructDetailData, pLabel: string, pColor: string):
       },
       {
         label: "搭建进程",
-        value: cleanProcessContent(data.content),
+        value: data.latestLine || latestProcessFromLines(data.lines),
       },
     ],
   };
@@ -251,7 +243,7 @@ function FieldRow({ field }: { field: FieldDef }) {
         </span>
       ) : (
         <span
-          className="min-w-0 max-w-full break-words text-white [overflow-wrap:anywhere]"
+          className="min-w-0 max-w-full break-words whitespace-pre-wrap text-white [overflow-wrap:anywhere]"
           style={field.valueStyle}
         >
           {field.value}
@@ -424,7 +416,7 @@ export function BoothModal({ visible, onClose, data }: BoothModalProps) {
           {/* 历史进程（横向时间线，第1次在最左） */}
           <section aria-labelledby="timeline-title">
             <SectionHeading
-              title="历史进程"
+              title="历史展位进度记录"
               right={
                 <span className="ml-auto text-sm leading-[22px] text-white/60">
                   共 <strong className="font-normal text-white">{history.length}</strong> 条
