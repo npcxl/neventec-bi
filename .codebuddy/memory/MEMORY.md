@@ -1,5 +1,10 @@
 # 项目长期记忆 (MEMORY.md)
 
+## 运行环境（2026-09-10 起）
+- 本机默认 shell 的 Node 仍是 **v16.20.2（已 EOL）**，但项目用 **Vite 6.4.2**（engines 要求 `^18 || ^20 || >=22`）。Node 16 下 `npm run dev` 会直接报 `crypto$2.getRandomValues is not a function`（resolveConfig 阶段调用全局 `crypto`，Node 19 前不存在）。
+- **约定**：跑 dev/build 前必须先切到 Node ≥18（已用 nvm 装好 **24.15.0**）：`nvm use 24.15.0 && npm run dev`。每次新 shell 都要先切。
+- dev 端口 7000（`vite.config.ts` 中 `server.host='0.0.0.0'`）。
+
 ## 现场安全 / 搭建信息概览 关键约定
 
 ### 两接口严格分工（2026-08-25 最终确认）

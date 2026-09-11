@@ -63,7 +63,7 @@ export default defineConfig({
   plugins: [react(), versionPlugin()],
   server: {
     host: '0.0.0.0',
-    port: 9527,
+    port: 7000,
     proxy: {
       '/ehs-api': {
          target: 'https://glsz.s.369zhan.com',

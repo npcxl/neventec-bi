@@ -35,8 +35,33 @@ function PanelTitle({ title }: { title: string }) {
 
 type OrderItem = { name: string; num: number };
 
+// 接口实际返回的字段名可能与声明不一致（name/num 只是理想形态，
+// 真实数据可能用 type/category/count/value 等），这里兼容多种命名。
+function pickName(item: Record<string, unknown>): string {
+  const candidates = ["name", "type", "category", "declareType", "title", "label", "项目", "类型"];
+  for (const key of candidates) {
+    const v = item[key];
+    if (typeof v === "string" && v.length > 0) return v;
+  }
+  return "其他";
+}
+
+function pickNum(item: Record<string, unknown>): number {
+  const candidates = ["num", "count", "value", "total", "数量", "number"];
+  for (const key of candidates) {
+    const v = item[key];
+    const n = typeof v === "number" ? v : Number(v);
+    if (!Number.isNaN(n)) return n;
+  }
+  return 0;
+}
+
 function normalizeOrderCollect(data: unknown): OrderItem[] {
-  if (Array.isArray(data)) return data as OrderItem[];
+  if (Array.isArray(data)) {
+    return data
+      .filter((d): d is Record<string, unknown> => !!d && typeof d === "object")
+      .map((d) => ({ name: pickName(d), num: pickNum(d) }));
+  }
   if (data && typeof data === "object") {
     const record = data as { data?: unknown; list?: unknown; rows?: unknown; result?: unknown };
     return normalizeOrderCollect(record.data ?? record.list ?? record.rows ?? record.result);
