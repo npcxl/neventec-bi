@@ -109,7 +109,7 @@ const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onH
           >
             <div className="relative flex h-full flex-col justify-between p-4">
               <div className="line-clamp-2 text-lg font-semibold text-slate-50">{hall.hallName}</div>
-              <div className="mt-4 grid grid-cols-3 gap-2 text-xs text-slate-200/80">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-200/80">
 
                 <div className="rounded-xl bg-white/5 px-2.5 py-2">
                   <div className="text-cyan-100/60">展位</div>
@@ -121,10 +121,10 @@ const HallOverviewMap = memo(function HallOverviewMap({ halls, activeHallId, onH
                   <div className="mt-0.5 text-base font-semibold text-slate-50">{hall.specialAreaCount}</div>
                 </div>
 
-                <div className="rounded-xl bg-white/5 px-2.5 py-2">
+                {/* <div className="rounded-xl bg-white/5 px-2.5 py-2">
                   <div className="text-cyan-100/60">标展</div>
                   <div className="mt-0.5 text-base font-semibold text-slate-50">{hall.standardAreaCount}</div>
-                </div>
+                </div> */}
                 
               </div>
             </div>
