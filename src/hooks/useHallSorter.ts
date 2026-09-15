@@ -5,9 +5,11 @@ type HallItem = {
   hallName: string;
 };
 
+// mixed：数字+字母（6A馆、6B馆、10A馆），排在同主号的纯数字之后
 type HallSortKey =
   | { type: 'number'; value: number; floor?: number }
-  | { type: 'alpha'; value: string; floor?: number };
+  | { type: 'mixed'; value: number; suffix: string }
+  | { type: 'alpha'; value: string };
 
 const hallSuffix = '(馆|展馆|展厅|厅)';
 
@@ -85,6 +87,20 @@ function parseHallSortKey(hallName: string): HallSortKey | null {
     };
   }
 
+  // 数字+字母：6A馆、6B馆、6A展厅、10B展厅
+  // 排序时视为「主号 + 后缀」，跟在同主号的纯数字馆之后（6号馆 → 6A馆 → 6B馆 → 7号馆）
+  const mixedMatch = name.match(
+    new RegExp(`^(\\d+)\\s*([A-Za-z])\\s*号?\\s*${hallSuffix}$`),
+  );
+
+  if (mixedMatch) {
+    return {
+      type: 'mixed',
+      value: Number(mixedMatch[1]),
+      suffix: mixedMatch[2].toUpperCase(),
+    };
+  }
+
   // 中文数字：一号馆、二号展厅、十号厅、十一号馆
   const chineseMatch = name.match(
     new RegExp(`^([零一二三四五六七八九十]+)\\s*号?\\s*${hallSuffix}$`),
@@ -136,25 +152,34 @@ function sortHallList(halls: HallItem[]) {
     const ak = a.sortKey!;
     const bk = b.sortKey!;
 
-    // 数字类排前面，字母类排后面
-    if (ak.type !== bk.type) {
-      return ak.type === 'number' ? -1 : 1;
+    // 纯字母类（A馆、B馆）整体排在数字类之后
+    if (ak.type === 'alpha' || bk.type === 'alpha') {
+      if (ak.type !== bk.type) {
+        return ak.type === 'alpha' ? 1 : -1;
+      }
+      // 字母排序：A馆、B馆、C馆、AA馆
+      return alphaToNum(String(ak.value)) - alphaToNum(String(bk.value));
     }
 
-    // 数字排序：5号展厅、6号展厅、7号展厅、8号展厅
+    // 数字 / 数字+字母：先按主号（5 → 6 → 6A → 6B → 7）
+    if (ak.value !== bk.value) {
+      return ak.value - bk.value;
+    }
+
+    // 同主号：纯数字馆排前面（无楼层优先，再按楼层升序）
     if (ak.type === 'number' && bk.type === 'number') {
-      if (ak.value !== bk.value) {
-        return ak.value - bk.value;
-      }
-      // 同主号：无楼层的排前面，有楼层的按楼层升序
       const af = ak.floor ?? 0;
       const bf = bk.floor ?? 0;
       return af - bf;
     }
 
-    // 字母排序：A馆、B馆、C馆、AA馆
-    if (ak.type === 'alpha' && bk.type === 'alpha') {
-      return alphaToNum(ak.value) - alphaToNum(bk.value);
+    if (ak.type === 'mixed' && bk.type === 'mixed') {
+      return ak.suffix.localeCompare(bk.suffix);
+    }
+
+    // 同主号下：数字馆 6号馆 在 6A馆 之前
+    if (ak.type !== bk.type) {
+      return ak.type === 'number' ? -1 : 1;
     }
 
     return a.index - b.index;
